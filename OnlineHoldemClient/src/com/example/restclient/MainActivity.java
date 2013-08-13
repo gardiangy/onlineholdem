@@ -8,10 +8,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.SeekBar;
-import android.widget.TextView;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -24,18 +25,22 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends Activity {
 
-    private static final String SERVICE_URL = "http://80.98.252.51:8080/OnlineHoldemServer/rest";
+    private static final String SERVICE_URL = "http://192.168.1.100:8080/rest";
 
     private static final String TAG = "MainActivity";
+
+    private Context mContext = this;
 
 
     /**
@@ -65,6 +70,8 @@ public class MainActivity extends Activity {
 
             }
         });
+
+
     }
 
     public void retrieveSampleData(View vw) {
@@ -76,6 +83,18 @@ public class MainActivity extends Activity {
 
         wst.execute(new String[]{sampleURL});
 
+    }
+
+    public void getMessageList(View vw) {
+
+
+        String sampleURL = SERVICE_URL + "/message/messages";
+
+        WebServiceTask wst = new WebServiceTask(WebServiceTask.GET_TASK, mContext,
+                "GETting data...");
+
+
+        wst.execute(new String[]{sampleURL});
 
     }
 
@@ -96,15 +115,14 @@ public class MainActivity extends Activity {
 
     }
 
-    public void handleResponse(String response) {
+    public void handleResponse(List<Message> response) {
+        ArrayAdapter<String> listAdapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.textView);
+        for (Message message : response) {
+            listAdapter.add(message.getValue());
+        }
 
-        EditText message = (EditText) findViewById(R.id.editText);
-
-        message.setText("");
-
-        TextView view = (TextView) findViewById(R.id.textView);
-
-        view.setText(response);
+        ListView listView = (ListView) findViewById(R.id.listView);
+        listView.setAdapter(listAdapter);
 
 
     }
@@ -119,7 +137,7 @@ public class MainActivity extends Activity {
                 InputMethodManager.HIDE_NOT_ALWAYS);
     }
 
-    private class WebServiceTask extends AsyncTask<String, Integer, String> {
+    private class WebServiceTask extends AsyncTask<String, Integer, List<Message>> {
 
         public static final int POST_TASK = 1;
         public static final int GET_TASK = 2;
@@ -172,38 +190,36 @@ public class MainActivity extends Activity {
 
         }
 
-        protected String doInBackground(String... urls) {
+        protected List<Message> doInBackground(String... urls) {
 
             String url = urls[0];
-            String result = "";
 
             HttpResponse response = doResponse(url);
+            List<Message> messages = null;
 
 
-            if (response == null) {
-                return result;
-            } else {
+            try {
+                String data = EntityUtils.toString(response.getEntity());
 
-                try {
+                JSONObject item = new JSONObject(data);
 
-                    result = inputStreamToString(response.getEntity()
-                            .getContent());
+                messages = parseJson(item);
 
-                } catch (IllegalStateException e) {
-                    Log.e(TAG, e.getLocalizedMessage(), e);
 
-                } catch (IOException e) {
-                    Log.e(TAG, e.getLocalizedMessage(), e);
-                }
+            } catch (IllegalStateException e) {
+                Log.e(TAG, e.getLocalizedMessage(), e);
 
+            } catch (IOException e) {
+                Log.e(TAG, e.getLocalizedMessage(), e);
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
 
-
-            return result;
+            return messages;
         }
 
         @Override
-        protected void onPostExecute(String response) {
+        protected void onPostExecute(List<Message> response) {
 
             handleResponse(response);
             pDlg.dismiss();
@@ -220,6 +236,7 @@ public class MainActivity extends Activity {
 
             return htpp;
         }
+
 
         private HttpResponse doResponse(String url) {
 
@@ -253,26 +270,37 @@ public class MainActivity extends Activity {
             return response;
         }
 
-        private String inputStreamToString(InputStream is) {
 
-            String line = "";
-            StringBuilder total = new StringBuilder();
+        public List<Message> parseJson(JSONObject item) throws JSONException {
+            List<Message> messageList = new ArrayList<Message>();
 
-            // Wrap a BufferedReader around the InputStream
-            BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+            JSONArray jsonArray;
 
-            try {
-                // Read response until the end
-                while ((line = rd.readLine()) != null) {
-                    total.append(line);
+
+            if (item != null) {
+
+                jsonArray = item.getJSONArray("message");
+
+                for (int counter = 0; counter < jsonArray.length(); counter++) {
+                    Message message = new Message();
+
+                    JSONObject messageItem = jsonArray.getJSONObject(counter);
+
+                    message.setId(messageItem.getLong("id"));
+
+                    message.setValue(messageItem.getString("value"));
+
+
+                    messageList.add(message);
+
                 }
-            } catch (IOException e) {
-                Log.e(TAG, e.getLocalizedMessage(), e);
+
             }
 
-            // Return full string
-            return total.toString();
+            return messageList;
+
         }
     }
+
 
 }

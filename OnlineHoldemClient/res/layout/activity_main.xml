@@ -1,50 +1,39 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context=".MainActivity" >
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingBottom="@dimen/activity_vertical_margin"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:paddingRight="@dimen/activity_horizontal_margin"
+                android:paddingTop="@dimen/activity_vertical_margin"
+                tools:context=".MainActivity" >
 
     <EditText
-        android:id="@+id/editText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/btnGet"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="90dp"
-        android:ems="10" />
+            android:id="@+id/editText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:layout_below="@+id/btnGet"
+            android:layout_centerHorizontal="true"/>
 
     <Button
-        android:id="@+id/btnBet"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:onClick="postData"
-        android:text="Bet" />
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="63dp"
-        android:text="TextView" />
+            android:id="@+id/btnBet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="postData"
+            android:text="Bet"
+            android:layout_below="@+id/chipBar"
+            android:layout_toRightOf="@+id/editText"/>
 
     <Button
-        android:id="@+id/btnGet"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignRight="@+id/textView"
-        android:layout_below="@+id/textView"
-        android:layout_marginTop="61dp"
-        android:onClick="retrieveSampleData"
-        android:text="Get" />
+            android:id="@+id/btnGet"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="61dp"
+            android:onClick="getMessageList"
+            android:text="Get"
+            android:layout_centerHorizontal="true"/>
 
     <SeekBar
             android:layout_width="wrap_content"
@@ -53,10 +42,17 @@
             android:layout_alignParentLeft="true"
             android:layout_marginLeft="33dp"
             android:max="1500"
-            android:min="30"
             android:progress="0"
             android:indeterminate="false"
             android:layout_alignBottom="@+id/btnSend"
             android:layout_toLeftOf="@+id/editText"/>
+
+    <ListView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/listView"
+            android:layout_below="@+id/editText"
+            android:layout_alignLeft="@+id/editText"
+            android:layout_marginTop="17dp"/>
 
 </RelativeLayout>
