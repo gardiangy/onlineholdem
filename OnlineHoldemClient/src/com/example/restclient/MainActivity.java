@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -137,7 +138,7 @@ public class MainActivity extends Activity {
                 InputMethodManager.HIDE_NOT_ALWAYS);
     }
 
-    private class WebServiceTask extends AsyncTask<String, Integer, List<Message>> {
+    private class WebServiceTask extends AsyncTask<String, List<Message>, List<Message>> {
 
         public static final int POST_TASK = 1;
         public static final int GET_TASK = 2;
@@ -157,6 +158,8 @@ public class MainActivity extends Activity {
         private ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
 
         private ProgressDialog pDlg = null;
+
+        private boolean run = true;
 
         public WebServiceTask(int taskType, Context mContext,
                               String processMessage) {
@@ -186,36 +189,40 @@ public class MainActivity extends Activity {
         protected void onPreExecute() {
 
             hideKeyboard();
-            showProgressDialog();
+            //showProgressDialog();
 
         }
 
         protected List<Message> doInBackground(String... urls) {
 
             String url = urls[0];
-
-            HttpResponse response = doResponse(url);
             List<Message> messages = null;
+            while(run){
 
+                SystemClock.sleep(500);
+                HttpResponse response = doResponse(url);
 
-            try {
-                String data = EntityUtils.toString(response.getEntity());
-
-                JSONObject item = new JSONObject(data);
-
-                messages = parseJson(item);
-
-
-            } catch (IllegalStateException e) {
-                Log.e(TAG, e.getLocalizedMessage(), e);
-
-            } catch (IOException e) {
-                Log.e(TAG, e.getLocalizedMessage(), e);
-            } catch (JSONException e) {
-                e.printStackTrace();
+                try {
+                    String data = EntityUtils.toString(response.getEntity());
+                    JSONObject item = new JSONObject(data);
+                    messages = parseJson(item);
+                } catch (IllegalStateException e) {
+                    Log.e(TAG, e.getLocalizedMessage(), e);
+                } catch (IOException e) {
+                    Log.e(TAG, e.getLocalizedMessage(), e);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                publishProgress(messages);
             }
 
             return messages;
+        }
+
+        @Override
+        protected void onProgressUpdate(List<Message>... response) {
+            handleResponse(response[0]);
+            //pDlg.dismiss();
         }
 
         @Override
