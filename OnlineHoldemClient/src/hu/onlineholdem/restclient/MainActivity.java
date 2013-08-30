@@ -1,4 +1,4 @@
-package com.example.restclient;
+package hu.onlineholdem.restclient;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -52,12 +53,12 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        SeekBar betBar = (SeekBar) findViewById(R.id.chipBar);
+        SeekBar betBar = (SeekBar) findViewById(R.id.betBar);
         betBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                Button betBtn = (Button) findViewById(R.id.btnBet);
-                betBtn.setText("Bet " + i);
+                TextView betValue = (TextView) findViewById(R.id.betValue);
+                betValue.setText("" + i);
 
             }
 
@@ -103,12 +104,13 @@ public class MainActivity extends Activity {
 
         String postURL = SERVICE_URL + "/";
 
-        EditText message = (EditText) findViewById(R.id.editText);
+        TextView betValue = (TextView) findViewById(R.id.betValue);
 
         WebServiceTask wst = new WebServiceTask(WebServiceTask.POST_TASK, this,
                 "Posting data...");
 
-        wst.addNameValuePair("message", message.getText().toString());
+        wst.addNameValuePair("actionType", vw.toString().toUpperCase());
+        wst.addNameValuePair("betValue", betValue.toString());
 
         // the passed String is the URL we will POST to
         wst.execute(new String[]{postURL});
@@ -122,8 +124,8 @@ public class MainActivity extends Activity {
             listAdapter.add(message.getValue());
         }
 
-        ListView listView = (ListView) findViewById(R.id.listView);
-        listView.setAdapter(listAdapter);
+//        ListView listView = (ListView) findViewById(R.id.listView);
+//        listView.setAdapter(listAdapter);
 
 
     }
@@ -188,7 +190,7 @@ public class MainActivity extends Activity {
         @Override
         protected void onPreExecute() {
 
-            hideKeyboard();
+            //hideKeyboard();
             //showProgressDialog();
 
         }
