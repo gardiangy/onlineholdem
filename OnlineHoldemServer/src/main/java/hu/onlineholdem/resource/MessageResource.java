@@ -1,19 +1,11 @@
 package hu.onlineholdem.resource;
 
 
-import hu.onlineholdem.dao.BaseDAO;
 import hu.onlineholdem.dao.MessageDAO;
 import hu.onlineholdem.entity.Message;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
-
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 @Path("/message")
