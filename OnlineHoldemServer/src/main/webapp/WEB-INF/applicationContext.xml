@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+                           http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd">
+
+    <context:component-scan base-package="hu.onlineholdem.resource" />
+
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://localhost:3306/holdem"/>
+        <property name="username" value="root"/>
+        <property name="password" value="root"/>
+    </bean>
+
+    <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <property name="persistenceUnitName" value="default"/>
+        <property name="dataSource" ref="dataSource"/>
+        <property name="jpaPropertyMap">
+            <props>
+                <prop key="eclipselink.weaving">false</prop>
+            </props>
+        </property>
+        <property name="jpaDialect">
+            <bean class="org.springframework.orm.jpa.vendor.EclipseLinkJpaDialect" />
+        </property>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+        <property name="entityManagerFactory" ref="entityManagerFactory"/>
+    </bean>
+
+    <jpa:repositories base-package="hu.onlineholdem.dao"
+            entity-manager-factory-ref="entityManagerFactory"
+            transaction-manager-ref="transactionManager"/>
+
+
+</beans>

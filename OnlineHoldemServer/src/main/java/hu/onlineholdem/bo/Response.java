@@ -1,11 +1,16 @@
 package hu.onlineholdem.bo;
 
+import com.sun.jersey.core.impl.provider.entity.XMLRootElementProvider;
+
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement
 public class Response {
 
     private String actionType;
-    private Integer betValue;
-    private Long playerId;
-    private Long gameId;
+    private String betValue;
+    private String playerId;
+    private String gameId;
 
     public String getActionType() {
         return actionType;
@@ -15,27 +20,27 @@ public class Response {
         this.actionType = actionType;
     }
 
-    public Integer getBetValue() {
+    public String getBetValue() {
         return betValue;
     }
 
-    public void setBetValue(Integer betValue) {
+    public void setBetValue(String betValue) {
         this.betValue = betValue;
     }
 
-    public Long getPlayerId() {
+    public String getPlayerId() {
         return playerId;
     }
 
-    public void setPlayerId(Long playerId) {
+    public void setPlayerId(String playerId) {
         this.playerId = playerId;
     }
 
-    public Long getGameId() {
+    public String getGameId() {
         return gameId;
     }
 
-    public void setGameId(Long gameId) {
+    public void setGameId(String gameId) {
         this.gameId = gameId;
     }
 }

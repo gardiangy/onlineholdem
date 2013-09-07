@@ -7,9 +7,19 @@
     id="WebApp_ID"
     version="3.0">
   <display-name>OnlineHoldem</display-name>
+
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>WEB-INF/applicationContext.xml</param-value>
+    </context-param>
+
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
   <servlet>
     <servlet-name>Online Holdem Service</servlet-name>
-    <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+    <servlet-class>com.sun.jersey.spi.spring.container.servlet.SpringServlet</servlet-class>
     <init-param>
         <param-name>com.sun.jersey.config.property.packages</param-name>
         <param-value>hu.onlineholdem</param-value>

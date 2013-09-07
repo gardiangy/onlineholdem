@@ -5,11 +5,15 @@
 	<persistence-unit name="default" transaction-type="RESOURCE_LOCAL">
 		<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
 		<class>hu.onlineholdem.entity.Message</class>
+		<class>hu.onlineholdem.entity.Game</class>
+		<class>hu.onlineholdem.entity.Player</class>
+		<class>hu.onlineholdem.entity.User</class>
+		<class>hu.onlineholdem.entity.Action</class>
 		<properties>
-			<property name="javax.persistence.jdbc.password" value="admin" />
+			<property name="javax.persistence.jdbc.password" value="root" />
 			<property name="javax.persistence.jdbc.user" value="root" />
 			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
-			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/demo" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/holdem" />
 			<property name="javax.persistence.logging.level" value="INFO" />
 
 		</properties>
