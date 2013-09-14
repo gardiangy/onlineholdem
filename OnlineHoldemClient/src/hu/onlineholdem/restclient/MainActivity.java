@@ -8,20 +8,15 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
@@ -42,8 +37,6 @@ public class MainActivity extends Activity {
 
     private static final String TAG = "MainActivity";
 
-    private Context mContext = this;
-
 
     /**
      * Called when the activity is first created.
@@ -52,6 +45,10 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        String getURL = SERVICE_URL + "/game";
+        RefreshTask refreshTask = new RefreshTask();
+        refreshTask.execute(new String[]{getURL});
 
         SeekBar betBar = (SeekBar) findViewById(R.id.betBar);
         betBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -76,71 +73,76 @@ public class MainActivity extends Activity {
 
     }
 
-    public void retrieveSampleData(View vw) {
-
-        String sampleURL = SERVICE_URL + "/message";
-
-        WebServiceTask wst = new WebServiceTask(WebServiceTask.GET_TASK, this,
-                "GETting data...");
-
-        wst.execute(new String[]{sampleURL});
-
-    }
-
-    public void getMessageList(View vw) {
-
-
-        String sampleURL = SERVICE_URL + "/message/messages";
-
-        WebServiceTask wst = new WebServiceTask(WebServiceTask.GET_TASK, mContext,
-                "GETting data...");
-
-
-        wst.execute(new String[]{sampleURL});
-
-    }
 
     public void postData(View vw) {
 
-        String postURL = SERVICE_URL + "/";
+        String postURL = SERVICE_URL + "/game";
 
         TextView betValue = (TextView) findViewById(R.id.betValue);
 
         WebServiceTask wst = new WebServiceTask(WebServiceTask.POST_TASK, this,
                 "Posting data...");
 
-        wst.addNameValuePair("actionType", vw.toString().toUpperCase());
-        wst.addNameValuePair("betValue", betValue.toString());
+        ActionType actionType = null;
+        int btnId = vw.getId();
+        if (btnId == R.id.btnCheck)
+            actionType = ActionType.CHECK;
+        if (btnId == R.id.btnBet)
+            actionType = ActionType.BET;
+        if (btnId == R.id.btnFold)
+            actionType = ActionType.FOLD;
+
+        wst.addNameValuePair("actionType", actionType.getName());
+        wst.addNameValuePair("betValue", betValue.getText().toString().equals("") ? "0" : betValue.getText().toString());
+        wst.addNameValuePair("playerId", "1");
+        wst.addNameValuePair("gameId", "1");
 
         // the passed String is the URL we will POST to
-        wst.execute(new String[]{postURL});
+        wst.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,new String[]{postURL});
 
 
     }
 
-    public void handleResponse(List<Message> response) {
-        ArrayAdapter<String> listAdapter = new ArrayAdapter<String>(this, R.layout.list_item, R.id.textView);
-        for (Message message : response) {
-            listAdapter.add(message.getValue());
+    public void handleResponse(Response response) {
+
+        TextView potView = (TextView) findViewById(R.id.potSize);
+        potView.setText("" + response.getPotSize());
+
+    }
+
+    public Response parseJson(JSONObject item) throws JSONException {
+        List<Player> playerList = new ArrayList<>();
+        Response response = new Response();
+
+        if (item != null) {
+
+
+            response.setPotSize(item.getInt("potSize"));
+
+            JSONArray playerArray = item.getJSONArray("players");
+
+            for (int counter = 0; counter < playerArray.length(); counter++) {
+                Player player = new Player();
+
+                JSONObject playerItem = playerArray.getJSONObject(counter);
+
+                player.setPlayerId(playerItem.getLong("playerId"));
+
+                player.setStackSize(playerItem.getInt("stackSize"));
+
+
+                playerList.add(player);
+
+            }
+            response.setPlayers(playerList);
+
         }
 
-//        ListView listView = (ListView) findViewById(R.id.listView);
-//        listView.setAdapter(listAdapter);
-
+        return response;
 
     }
 
-    private void hideKeyboard() {
-
-        InputMethodManager inputManager = (InputMethodManager) MainActivity.this
-                .getSystemService(Context.INPUT_METHOD_SERVICE);
-
-        inputManager.hideSoftInputFromWindow(MainActivity.this
-                .getCurrentFocus().getWindowToken(),
-                InputMethodManager.HIDE_NOT_ALWAYS);
-    }
-
-    private class WebServiceTask extends AsyncTask<String, List<Message>, List<Message>> {
+    private class WebServiceTask extends AsyncTask<String, Response, Response> {
 
         public static final int POST_TASK = 1;
         public static final int GET_TASK = 2;
@@ -195,43 +197,43 @@ public class MainActivity extends Activity {
 
         }
 
-        protected List<Message> doInBackground(String... urls) {
+        protected Response doInBackground(String... urls) {
 
             String url = urls[0];
-            List<Message> messages = null;
-            while(run){
+            Response response = null;
+//            while(run){
 
-                SystemClock.sleep(500);
-                HttpResponse response = doResponse(url);
+//                SystemClock.sleep(500);
+            HttpResponse httpResponse = doResponse(url);
 
-                try {
-                    String data = EntityUtils.toString(response.getEntity());
-                    JSONObject item = new JSONObject(data);
-                    messages = parseJson(item);
-                } catch (IllegalStateException e) {
-                    Log.e(TAG, e.getLocalizedMessage(), e);
-                } catch (IOException e) {
-                    Log.e(TAG, e.getLocalizedMessage(), e);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                publishProgress(messages);
+            try {
+                String data = EntityUtils.toString(httpResponse.getEntity());
+                JSONObject item = new JSONObject(data);
+                response = parseJson(item);
+            } catch (IllegalStateException e) {
+                Log.e(TAG, e.getLocalizedMessage(), e);
+            } catch (IOException e) {
+                Log.e(TAG, e.getLocalizedMessage(), e);
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
+//                publishProgress(messages);
+//            }
 
-            return messages;
+            return response;
         }
 
-        @Override
-        protected void onProgressUpdate(List<Message>... response) {
-            handleResponse(response[0]);
-            //pDlg.dismiss();
-        }
+//        @Override
+//        protected void onProgressUpdate(List<Message>... response) {
+//            handleResponse(response[0]);
+//            //pDlg.dismiss();
+//        }
 
         @Override
-        protected void onPostExecute(List<Message> response) {
+        protected void onPostExecute(Response response) {
 
             handleResponse(response);
-            pDlg.dismiss();
+//            pDlg.dismiss();
 
         }
 
@@ -261,7 +263,13 @@ public class MainActivity extends Activity {
                     case POST_TASK:
                         HttpPost httppost = new HttpPost(url);
                         // Add parameters
-                        httppost.setEntity(new UrlEncodedFormEntity(params));
+                        JSONObject json = new JSONObject();
+                        for (NameValuePair pair : params) {
+                            json.put(pair.getName(), pair.getValue());
+                        }
+                        httppost.setEntity(new StringEntity(json.toString()));
+                        httppost.setHeader("Accept", "application/json");
+                        httppost.setHeader("Content-type", "application/json");
 
                         response = httpclient.execute(httppost);
                         break;
@@ -280,35 +288,87 @@ public class MainActivity extends Activity {
         }
 
 
-        public List<Message> parseJson(JSONObject item) throws JSONException {
-            List<Message> messageList = new ArrayList<Message>();
-
-            JSONArray jsonArray;
+    }
 
 
-            if (item != null) {
+    private class RefreshTask extends AsyncTask<String, Response, Response> {
 
-                jsonArray = item.getJSONArray("message");
+        public static final int GET_TASK = 2;
 
-                for (int counter = 0; counter < jsonArray.length(); counter++) {
-                    Message message = new Message();
+        private static final String TAG = "RefreshTask";
 
-                    JSONObject messageItem = jsonArray.getJSONObject(counter);
+        // connection timeout, in milliseconds (waiting to connect)
+        private static final int CONN_TIMEOUT = 3000;
 
-                    message.setId(messageItem.getLong("id"));
+        // socket timeout, in milliseconds (waiting for data)
+        private static final int SOCKET_TIMEOUT = 5000;
 
-                    message.setValue(messageItem.getString("value"));
+        private boolean run = true;
 
+        protected Response doInBackground(String... urls) {
 
-                    messageList.add(message);
+            String url = urls[0];
+            Response response = null;
+            while (run) {
 
+                SystemClock.sleep(500);
+                HttpResponse httpResponse = doResponse(url);
+
+                try {
+                    String data = EntityUtils.toString(httpResponse.getEntity());
+                    JSONObject item = new JSONObject(data);
+                    response = parseJson(item);
+                } catch (IllegalStateException e) {
+                    Log.e(TAG, e.getLocalizedMessage(), e);
+                } catch (IOException e) {
+                    Log.e(TAG, e.getLocalizedMessage(), e);
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-
+                publishProgress(response);
             }
 
-            return messageList;
-
+            return response;
         }
+
+        @Override
+        protected void onProgressUpdate(Response... response) {
+            handleResponse(response[0]);
+        }
+
+        @Override
+        protected void onPostExecute(Response response) {
+            handleResponse(response);
+        }
+
+        // Establish connection and socket (data retrieval) timeouts
+        private HttpParams getHttpParams() {
+
+            HttpParams htpp = new BasicHttpParams();
+            HttpConnectionParams.setConnectionTimeout(htpp, CONN_TIMEOUT);
+            HttpConnectionParams.setSoTimeout(htpp, SOCKET_TIMEOUT);
+
+            return htpp;
+        }
+
+
+        private HttpResponse doResponse(String url) {
+
+            HttpClient httpclient = new DefaultHttpClient(getHttpParams());
+            HttpResponse response = null;
+
+            try {
+
+                HttpGet httpget = new HttpGet(url);
+                response = httpclient.execute(httpget);
+
+            } catch (Exception e) {
+                Log.e(TAG, e.getLocalizedMessage(), e);
+            }
+            return response;
+        }
+
+
     }
 
 

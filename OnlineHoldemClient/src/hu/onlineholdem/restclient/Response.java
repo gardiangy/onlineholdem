@@ -1,24 +1,26 @@
 package hu.onlineholdem.restclient;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Response {
 
-    private ActionType actionType;
-    private Integer betValue;
+    private Integer potSize;
+    private List<Player> players = new ArrayList<>();
 
-
-    public ActionType getActionType() {
-        return actionType;
+    public Integer getPotSize() {
+        return potSize;
     }
 
-    public void setActionType(ActionType actionType) {
-        this.actionType = actionType;
+    public void setPotSize(Integer potSize) {
+        this.potSize = potSize;
     }
 
-    public Integer getBetValue() {
-        return betValue;
+    public List<Player> getPlayers() {
+        return players;
     }
 
-    public void setBetValue(Integer betValue) {
-        this.betValue = betValue;
+    public void setPlayers(List<Player> players) {
+        this.players = players;
     }
 }
