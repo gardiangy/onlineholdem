@@ -1,8 +1,12 @@
 package hu.onlineholdem.entity;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 import java.io.Serializable;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.List;
 
 
@@ -27,10 +31,12 @@ public class Game implements Serializable {
 	private Integer potSize;
 
 	//bi-directional many-to-one association to Action
+    @JsonIgnore
 	@OneToMany(mappedBy="game", cascade={CascadeType.ALL})
 	private List<Action> actions;
 
 	//bi-directional many-to-one association to Player
+    @JsonIgnore
 	@OneToMany(mappedBy="game", cascade={CascadeType.ALL})
 	private List<Player> players;
 
@@ -60,7 +66,7 @@ public class Game implements Serializable {
 	public void setPotSize(Integer potSize) {
 		this.potSize = potSize;
 	}
-
+    @JsonIgnore
 	public List<Action> getActions() {
 		return this.actions;
 	}
@@ -69,6 +75,7 @@ public class Game implements Serializable {
 		this.actions = actions;
 	}
 
+    @JsonIgnore
 	public List<Player> getPlayers() {
 		return this.players;
 	}

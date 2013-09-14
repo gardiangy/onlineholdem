@@ -15,7 +15,7 @@
 			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
 			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/holdem" />
 			<property name="javax.persistence.logging.level" value="INFO" />
-
+            <property name="eclipselink.query-results-cache" value="false"/>
 		</properties>
 
 

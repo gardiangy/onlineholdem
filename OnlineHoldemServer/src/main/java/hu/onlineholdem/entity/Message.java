@@ -6,7 +6,6 @@ import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @Entity
-@XmlRootElement
 public class Message {
 	
 	@Id

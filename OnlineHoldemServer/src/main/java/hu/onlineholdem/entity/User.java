@@ -1,5 +1,7 @@
 package hu.onlineholdem.entity;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 import java.io.Serializable;
 import javax.persistence.*;
 import java.util.List;
@@ -67,6 +69,7 @@ public class User implements Serializable {
 		this.userPassword = userPassword;
 	}
 
+    @JsonIgnore
 	public List<Player> getPlayers() {
 		return this.players;
 	}

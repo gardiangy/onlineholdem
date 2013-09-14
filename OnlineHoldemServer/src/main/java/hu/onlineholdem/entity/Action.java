@@ -5,6 +5,7 @@ import hu.onlineholdem.enums.ActionType;
 import java.io.Serializable;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 
 /**

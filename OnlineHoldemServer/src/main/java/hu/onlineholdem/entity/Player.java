@@ -1,9 +1,12 @@
 package hu.onlineholdem.entity;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 import java.io.Serializable;
 import java.util.List;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 
 /**
@@ -21,7 +24,7 @@ public class Player implements Serializable {
 	private Long playerId;
 
 	@Column(name="stack_size", nullable=false)
-	private Long stackSize;
+	private Integer stackSize;
 
 	//bi-directional many-to-one association to User
 	@ManyToOne(fetch=FetchType.LAZY)
@@ -34,6 +37,7 @@ public class Player implements Serializable {
 	private Game game;
 
     //bi-directional many-to-one association to Action
+
     @OneToMany(mappedBy="player", cascade={CascadeType.ALL})
     private List<Action> actions;
 
@@ -48,11 +52,11 @@ public class Player implements Serializable {
 		this.playerId = playerId;
 	}
 
-	public Long getStackSize() {
+	public Integer getStackSize() {
 		return this.stackSize;
 	}
 
-	public void setStackSize(Long stackSize) {
+	public void setStackSize(Integer stackSize) {
 		this.stackSize = stackSize;
 	}
 
@@ -72,6 +76,7 @@ public class Player implements Serializable {
 		this.game = game;
 	}
 
+    @JsonIgnore
     public List<Action> getActions() {
         return actions;
     }

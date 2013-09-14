@@ -4,13 +4,12 @@ import com.sun.jersey.core.impl.provider.entity.XMLRootElementProvider;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement
-public class Response {
+public class ActionBO {
 
     private String actionType;
     private String betValue;
-    private String playerId;
-    private String gameId;
+    private Long playerId;
+    private Long gameId;
 
     public String getActionType() {
         return actionType;
@@ -28,19 +27,19 @@ public class Response {
         this.betValue = betValue;
     }
 
-    public String getPlayerId() {
+    public Long getPlayerId() {
         return playerId;
     }
 
-    public void setPlayerId(String playerId) {
+    public void setPlayerId(Long playerId) {
         this.playerId = playerId;
     }
 
-    public String getGameId() {
+    public Long getGameId() {
         return gameId;
     }
 
-    public void setGameId(String gameId) {
+    public void setGameId(Long gameId) {
         this.gameId = gameId;
     }
 }
