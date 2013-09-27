@@ -1,33 +1,17 @@
 package hu.onlineholdem.restclient;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.SystemClock;
-import android.util.Log;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,7 +31,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         String getURL = SERVICE_URL + "/game";
-        RefreshTask refreshTask = new RefreshTask();
+        RefreshTask refreshTask = new RefreshGameTask();
         refreshTask.execute(new String[]{getURL});
 
         SeekBar betBar = (SeekBar) findViewById(R.id.betBar);
@@ -80,7 +64,7 @@ public class MainActivity extends Activity {
 
         TextView betValue = (TextView) findViewById(R.id.betValue);
 
-        WebServiceTask wst = new WebServiceTask(WebServiceTask.POST_TASK, this,
+        WebServiceTask wst = new PostGameTask(WebServiceTask.POST_TASK, this,
                 "Posting data...");
 
         ActionType actionType = null;
@@ -103,14 +87,14 @@ public class MainActivity extends Activity {
 
     }
 
-    public void handleResponse(Response response) {
+    public void handleGameResponse(Response response) {
 
         TextView potView = (TextView) findViewById(R.id.potSize);
         potView.setText("" + response.getPotSize());
 
     }
 
-    public Response parseJson(JSONObject item) throws JSONException {
+    public Response parseGameJson(JSONObject item) throws JSONException {
         List<Player> playerList = new ArrayList<>();
         Response response = new Response();
 
@@ -142,234 +126,44 @@ public class MainActivity extends Activity {
 
     }
 
-    private class WebServiceTask extends AsyncTask<String, Response, Response> {
+    private class RefreshGameTask extends RefreshTask{
 
-        public static final int POST_TASK = 1;
-        public static final int GET_TASK = 2;
-
-        private static final String TAG = "WebServiceTask";
-
-        // connection timeout, in milliseconds (waiting to connect)
-        private static final int CONN_TIMEOUT = 3000;
-
-        // socket timeout, in milliseconds (waiting for data)
-        private static final int SOCKET_TIMEOUT = 5000;
-
-        private int taskType = GET_TASK;
-        private Context mContext = null;
-        private String processMessage = "Processing...";
-
-        private ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
-
-        private ProgressDialog pDlg = null;
-
-        private boolean run = true;
-
-        public WebServiceTask(int taskType, Context mContext,
-                              String processMessage) {
-
-            this.taskType = taskType;
-            this.mContext = mContext;
-            this.processMessage = processMessage;
-        }
-
-        public void addNameValuePair(String name, String value) {
-
-            params.add(new BasicNameValuePair(name, value));
-        }
-
-        private void showProgressDialog() {
-
-            pDlg = new ProgressDialog(mContext);
-            pDlg.setMessage(processMessage);
-            pDlg.setProgressDrawable(mContext.getWallpaper());
-            pDlg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            pDlg.setCancelable(false);
-            pDlg.show();
-
+        @Override
+        public void handleResponse(Response response) {
+            handleGameResponse(response);
         }
 
         @Override
-        protected void onPreExecute() {
-
-            //hideKeyboard();
-            //showProgressDialog();
-
-        }
-
-        protected Response doInBackground(String... urls) {
-
-            String url = urls[0];
-            Response response = null;
-//            while(run){
-
-//                SystemClock.sleep(500);
-            HttpResponse httpResponse = doResponse(url);
-
+        public Response parseJson(JSONObject jsonObject) {
             try {
-                String data = EntityUtils.toString(httpResponse.getEntity());
-                JSONObject item = new JSONObject(data);
-                response = parseJson(item);
-            } catch (IllegalStateException e) {
-                Log.e(TAG, e.getLocalizedMessage(), e);
-            } catch (IOException e) {
-                Log.e(TAG, e.getLocalizedMessage(), e);
+                return parseGameJson(jsonObject);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-//                publishProgress(messages);
-//            }
-
-            return response;
+            return null;
         }
-
-//        @Override
-//        protected void onProgressUpdate(List<Message>... response) {
-//            handleResponse(response[0]);
-//            //pDlg.dismiss();
-//        }
-
-        @Override
-        protected void onPostExecute(Response response) {
-
-            handleResponse(response);
-//            pDlg.dismiss();
-
-        }
-
-        // Establish connection and socket (data retrieval) timeouts
-        private HttpParams getHttpParams() {
-
-            HttpParams htpp = new BasicHttpParams();
-
-            HttpConnectionParams.setConnectionTimeout(htpp, CONN_TIMEOUT);
-            HttpConnectionParams.setSoTimeout(htpp, SOCKET_TIMEOUT);
-
-            return htpp;
-        }
-
-
-        private HttpResponse doResponse(String url) {
-
-            // Use our connection and data timeouts as parameters for our
-            // DefaultHttpClient
-            HttpClient httpclient = new DefaultHttpClient(getHttpParams());
-
-            HttpResponse response = null;
-
-            try {
-                switch (taskType) {
-
-                    case POST_TASK:
-                        HttpPost httppost = new HttpPost(url);
-                        // Add parameters
-                        JSONObject json = new JSONObject();
-                        for (NameValuePair pair : params) {
-                            json.put(pair.getName(), pair.getValue());
-                        }
-                        httppost.setEntity(new StringEntity(json.toString()));
-                        httppost.setHeader("Accept", "application/json");
-                        httppost.setHeader("Content-type", "application/json");
-
-                        response = httpclient.execute(httppost);
-                        break;
-                    case GET_TASK:
-                        HttpGet httpget = new HttpGet(url);
-                        response = httpclient.execute(httpget);
-                        break;
-                }
-            } catch (Exception e) {
-
-                Log.e(TAG, e.getLocalizedMessage(), e);
-
-            }
-
-            return response;
-        }
-
-
     }
 
+    private class PostGameTask extends WebServiceTask{
 
-    private class RefreshTask extends AsyncTask<String, Response, Response> {
-
-        public static final int GET_TASK = 2;
-
-        private static final String TAG = "RefreshTask";
-
-        // connection timeout, in milliseconds (waiting to connect)
-        private static final int CONN_TIMEOUT = 3000;
-
-        // socket timeout, in milliseconds (waiting for data)
-        private static final int SOCKET_TIMEOUT = 5000;
-
-        private boolean run = true;
-
-        protected Response doInBackground(String... urls) {
-
-            String url = urls[0];
-            Response response = null;
-            while (run) {
-
-                SystemClock.sleep(500);
-                HttpResponse httpResponse = doResponse(url);
-
-                try {
-                    String data = EntityUtils.toString(httpResponse.getEntity());
-                    JSONObject item = new JSONObject(data);
-                    response = parseJson(item);
-                } catch (IllegalStateException e) {
-                    Log.e(TAG, e.getLocalizedMessage(), e);
-                } catch (IOException e) {
-                    Log.e(TAG, e.getLocalizedMessage(), e);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                publishProgress(response);
-            }
-
-            return response;
+        public PostGameTask(int taskType, Context mContext, String processMessage) {
+            super(taskType, mContext, processMessage);
         }
 
         @Override
-        protected void onProgressUpdate(Response... response) {
-            handleResponse(response[0]);
+        public void handleResponse(Response response) {
+            handleGameResponse(response);
         }
 
         @Override
-        protected void onPostExecute(Response response) {
-            handleResponse(response);
-        }
-
-        // Establish connection and socket (data retrieval) timeouts
-        private HttpParams getHttpParams() {
-
-            HttpParams htpp = new BasicHttpParams();
-            HttpConnectionParams.setConnectionTimeout(htpp, CONN_TIMEOUT);
-            HttpConnectionParams.setSoTimeout(htpp, SOCKET_TIMEOUT);
-
-            return htpp;
-        }
-
-
-        private HttpResponse doResponse(String url) {
-
-            HttpClient httpclient = new DefaultHttpClient(getHttpParams());
-            HttpResponse response = null;
-
+        public Response parseJson(JSONObject jsonObject) {
             try {
-
-                HttpGet httpget = new HttpGet(url);
-                response = httpclient.execute(httpget);
-
-            } catch (Exception e) {
-                Log.e(TAG, e.getLocalizedMessage(), e);
+                return parseGameJson(jsonObject);
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-            return response;
+            return null;
         }
-
-
     }
-
 
 }
