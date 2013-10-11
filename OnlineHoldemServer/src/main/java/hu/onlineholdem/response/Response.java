@@ -1,29 +1,34 @@
 package hu.onlineholdem.response;
 
-import hu.onlineholdem.entity.Player;
-
-import javax.xml.bind.annotation.XmlRootElement;
-import java.util.ArrayList;
-import java.util.List;
+import hu.onlineholdem.enums.ResponseType;
 
 public class Response {
 
-    private Integer potSize;
-    private List<Player> players = new ArrayList<>();
+    private Object responseObject;
+    private ResponseType responseType;
+    private String errorMessage;
 
-    public Integer getPotSize() {
-        return potSize;
+    public Object getResponseObject() {
+        return responseObject;
     }
 
-    public void setPotSize(Integer potSize) {
-        this.potSize = potSize;
+    public void setResponseObject(Object responseObject) {
+        this.responseObject = responseObject;
     }
 
-    public List<Player> getPlayers() {
-        return players;
+    public ResponseType getResponseType() {
+        return responseType;
     }
 
-    public void setPlayers(List<Player> players) {
-        this.players = players;
+    public void setResponseType(ResponseType responseType) {
+        this.responseType = responseType;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 }

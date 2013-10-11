@@ -26,6 +26,12 @@ public class Player implements Serializable {
 	@Column(name="stack_size", nullable=false)
 	private Integer stackSize;
 
+    @Column(name="player_order", nullable=false)
+    private Integer playerOrder;
+
+    @Column(name="player_turn", nullable=false)
+    private Boolean playerTurn;
+
 	//bi-directional many-to-one association to User
 	@ManyToOne(fetch=FetchType.LAZY)
 	@JoinColumn(name="user_id", nullable=false)
@@ -60,7 +66,23 @@ public class Player implements Serializable {
 		this.stackSize = stackSize;
 	}
 
-	public User getUser() {
+    public Integer getPlayerOrder() {
+        return playerOrder;
+    }
+
+    public void setPlayerOrder(Integer playerOrder) {
+        this.playerOrder = playerOrder;
+    }
+
+    public Boolean getPlayerTurn() {
+        return playerTurn;
+    }
+
+    public void setPlayerTurn(Boolean playerTurn) {
+        this.playerTurn = playerTurn;
+    }
+
+    public User getUser() {
 		return this.user;
 	}
 
@@ -68,6 +90,7 @@ public class Player implements Serializable {
 		this.user = user;
 	}
 
+    @JsonIgnore
 	public Game getGame() {
 		return this.game;
 	}

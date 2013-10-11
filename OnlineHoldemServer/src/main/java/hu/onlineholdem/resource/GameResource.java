@@ -9,6 +9,7 @@ import hu.onlineholdem.entity.Action;
 import hu.onlineholdem.entity.Game;
 import hu.onlineholdem.entity.Player;
 import hu.onlineholdem.enums.ActionType;
+import hu.onlineholdem.enums.ResponseType;
 import hu.onlineholdem.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -51,12 +52,12 @@ public class GameResource {
 
         int newPotSize = game.getPotSize() + action.getBetValue();
         game.setPotSize(newPotSize);
+        Game persistedGame = gameDAO.save(game);
 
         Response response = new Response();
-        response.setPotSize(newPotSize);
-        response.setPlayers(game.getPlayers());
+        response.setResponseObject(persistedGame);
+        response.setResponseType(ResponseType.OK);
 
-        gameDAO.save(game);
 
         return response;
     }
@@ -68,8 +69,8 @@ public class GameResource {
         Game game = gameDAO.findOne(1l);
 
         Response response = new Response();
-        response.setPotSize(game.getPotSize());
-        response.setPlayers(game.getPlayers());
+        response.setResponseObject(game);
+        response.setResponseType(ResponseType.OK);
 
         return response;
     }

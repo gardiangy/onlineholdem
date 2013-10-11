@@ -36,7 +36,6 @@ public class Game implements Serializable {
 	private List<Action> actions;
 
 	//bi-directional many-to-one association to Player
-    @JsonIgnore
 	@OneToMany(mappedBy="game", cascade={CascadeType.ALL})
 	private List<Player> players;
 
@@ -75,7 +74,6 @@ public class Game implements Serializable {
 		this.actions = actions;
 	}
 
-    @JsonIgnore
 	public List<Player> getPlayers() {
 		return this.players;
 	}
