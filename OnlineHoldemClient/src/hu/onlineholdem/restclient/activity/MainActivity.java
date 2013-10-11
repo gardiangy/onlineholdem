@@ -1,4 +1,4 @@
-package hu.onlineholdem.restclient;
+package hu.onlineholdem.restclient.activity;
 
 import android.app.Activity;
 import android.content.Context;
@@ -15,9 +15,17 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import hu.onlineholdem.restclient.R;
+import hu.onlineholdem.restclient.entity.Game;
+import hu.onlineholdem.restclient.entity.Player;
+import hu.onlineholdem.restclient.enums.ActionType;
+import hu.onlineholdem.restclient.response.Response;
+import hu.onlineholdem.restclient.task.RefreshTask;
+import hu.onlineholdem.restclient.task.WebServiceTask;
+
 public class MainActivity extends Activity {
 
-    private static final String SERVICE_URL = "http://192.168.1.100:8080/rest";
+    private static final String SERVICE_URL = "http://192.168.1.101:8080/rest";
 
     private static final String TAG = "MainActivity";
 
@@ -64,8 +72,7 @@ public class MainActivity extends Activity {
 
         TextView betValue = (TextView) findViewById(R.id.betValue);
 
-        WebServiceTask wst = new PostGameTask(WebServiceTask.POST_TASK, this,
-                "Posting data...");
+        WebServiceTask wst = new PostGameTask(WebServiceTask.POST_TASK, this,"Posting data...");
 
         ActionType actionType = null;
         int btnId = vw.getId();
@@ -81,49 +88,42 @@ public class MainActivity extends Activity {
         wst.addNameValuePair("playerId", "1");
         wst.addNameValuePair("gameId", "1");
 
-        // the passed String is the URL we will POST to
         wst.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,new String[]{postURL});
 
 
     }
 
-    public void handleGameResponse(Response response) {
+    public void handleGameResponse(Response gameResponse) {
+
+        Game game = (Game) gameResponse.getResponseObject();
 
         TextView potView = (TextView) findViewById(R.id.potSize);
-        potView.setText("" + response.getPotSize());
+        potView.setText("" + game.getPotSize());
 
     }
 
     public Response parseGameJson(JSONObject item) throws JSONException {
         List<Player> playerList = new ArrayList<>();
-        Response response = new Response();
+        Response gameResponse = new Response();
 
         if (item != null) {
-
-
-            response.setPotSize(item.getInt("potSize"));
-
-            JSONArray playerArray = item.getJSONArray("players");
+            JSONObject gameJSON = item.getJSONObject("responseObject");
+            Game game = new Game();
+            game.setPotSize(gameJSON.getInt("potSize"));
+            JSONArray playerArray = gameJSON.getJSONArray("players");
 
             for (int counter = 0; counter < playerArray.length(); counter++) {
                 Player player = new Player();
 
                 JSONObject playerItem = playerArray.getJSONObject(counter);
-
                 player.setPlayerId(playerItem.getLong("playerId"));
-
                 player.setStackSize(playerItem.getInt("stackSize"));
-
-
                 playerList.add(player);
-
             }
-            response.setPlayers(playerList);
-
+            game.setPlayers(playerList);
+            gameResponse.setResponseObject(game);
         }
-
-        return response;
-
+        return gameResponse;
     }
 
     private class RefreshGameTask extends RefreshTask{

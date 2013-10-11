@@ -1,4 +1,4 @@
-package hu.onlineholdem.restclient;
+package hu.onlineholdem.restclient.util;
 
 import android.content.ContentValues;
 import android.content.Context;

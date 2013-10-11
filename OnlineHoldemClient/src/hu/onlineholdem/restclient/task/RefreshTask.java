@@ -1,4 +1,4 @@
-package hu.onlineholdem.restclient;
+package hu.onlineholdem.restclient.task;
 
 import android.os.AsyncTask;
 import android.os.SystemClock;
@@ -16,6 +16,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+
+import hu.onlineholdem.restclient.response.Response;
 
 public abstract class RefreshTask extends AsyncTask<String, Response, Response> {
 

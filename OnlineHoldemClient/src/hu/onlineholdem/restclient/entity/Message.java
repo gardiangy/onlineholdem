@@ -1,4 +1,4 @@
-package hu.onlineholdem.restclient;
+package hu.onlineholdem.restclient.entity;
 
 public class Message {
 

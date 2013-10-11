@@ -1,4 +1,4 @@
-package hu.onlineholdem.restclient;
+package hu.onlineholdem.restclient.task;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -22,6 +22,8 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
+import hu.onlineholdem.restclient.response.Response;
 
 public abstract class WebServiceTask extends AsyncTask<String, Response, Response> {
 

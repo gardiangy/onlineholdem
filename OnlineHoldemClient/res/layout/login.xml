@@ -10,12 +10,13 @@
         android:textColor="#372c24"
         android:gravity="center"
         android:layout_marginTop="20dip"
-        android:text="NickName"/>
+        android:text="UserName"/>
     <EditText android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dip"
         android:gravity="center"
         android:layout_marginBottom="20dip"
+        android:id="@+id/textUserName"
         android:singleLine="true"/>
     <TextView android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -28,6 +29,7 @@
         android:layout_marginTop="5dip"
         android:singleLine="true"
         android:gravity="center"
+        android:id="@+id/textPassword"
         android:password="true"/>
     <!-- Login button -->
     <Button android:id="@+id/btnLogin"
@@ -35,6 +37,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="30dip"
         android:gravity="center"
+        android:onClick="login"
         android:text="Login"/>
     <!-- Link to Registration Screen -->
     <TextView android:id="@+id/link_to_register"
@@ -46,5 +49,12 @@
         android:gravity="center"
         android:textSize="20sp"
         android:textColor="#0b84aa"/>
+    <TextView android:id="@+id/errorMsg"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#0b84aa"
+        android:textSize="20sp"
+        android:gravity="center"
+        android:layout_marginTop="10dip"/>
 
 </LinearLayout>
