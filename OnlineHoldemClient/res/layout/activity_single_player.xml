@@ -1,0 +1,88 @@
+<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingBottom="@dimen/activity_vertical_margin"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:paddingRight="@dimen/activity_horizontal_margin"
+                android:paddingTop="@dimen/activity_vertical_margin"
+
+                tools:context=".SinglePlayerActivity"
+    android:orientation="vertical">
+
+    <SeekBar
+        android:layout_width="252dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/betBar"
+        android:layout_row="18"
+        android:layout_column="25"
+        android:layout_columnSpan="10" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Pot"
+        android:id="@+id/potText"
+        android:layout_row="5"
+        android:layout_column="16"
+        android:layout_columnSpan="10"
+        android:layout_rowSpan="10"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:id="@+id/betValue"
+        android:layout_row="17"
+        android:layout_column="25"
+        android:layout_columnSpan="10" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/potSize"
+        android:layout_row="15"
+        android:layout_column="16"
+        android:layout_columnSpan="10"
+        android:layout_rowSpan="1"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Flop"
+        android:id="@+id/btnCheck"
+        android:layout_row="19"
+        android:layout_column="13"
+        android:layout_margin="5dp"
+        android:onClick="deal" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/check"
+        android:id="@+id/btnCheck"
+        android:layout_row="19"
+        android:layout_column="30"
+        android:layout_margin="5dp"
+        android:onClick="postData" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/bet"
+        android:id="@+id/btnBet"
+        android:layout_row="19"
+        android:layout_column="31"
+        android:layout_margin="5dp"
+        android:onClick="postData" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/fold"
+        android:id="@+id/btnFold"
+        android:layout_row="19"
+        android:layout_column="32"
+        android:layout_margin="5dp"
+        android:onClick="postData" />
+</GridLayout>
