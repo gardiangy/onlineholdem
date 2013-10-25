@@ -59,6 +59,14 @@
             android:layout_height="wrap_content"/>
     </RelativeLayout>
 
+    <RelativeLayout
+        android:id="@+id/seats"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:layout_below="@id/potLayout">
+    </RelativeLayout>
+
 
     <RelativeLayout
         android:layout_width="match_parent"
