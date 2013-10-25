@@ -49,6 +49,14 @@
             android:id="@+id/flop3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+        <ImageView
+            android:id="@+id/turn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <ImageView
+            android:id="@+id/river"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
     </RelativeLayout>
 
 
@@ -57,15 +65,42 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_alignParentBottom="true">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="bottom"
+            android:gravity="left">
 
         <Button
 
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Flop"
-            android:id="@+id/btnCheck"
-            android:layout_gravity="bottom"
-            android:onClick="deal" />
+            android:id="@+id/btnFlop"
+            android:onClick="dealFlop" />
+        <Button
+
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Turn"
+            android:id="@+id/btnTurn"
+            android:onClick="dealTurn" />
+        <Button
+
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="River"
+            android:id="@+id/btnRiver"
+            android:onClick="dealRiver" />
+            <Button
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Deal"
+                android:id="@+id/btnDeal"
+                android:onClick="deal" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"

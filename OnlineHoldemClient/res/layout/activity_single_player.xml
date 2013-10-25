@@ -54,7 +54,7 @@
         android:layout_row="19"
         android:layout_column="13"
         android:layout_margin="5dp"
-        android:onClick="deal" />
+        android:onClick="dealFlop" />
 
     <Button
         android:layout_width="wrap_content"
