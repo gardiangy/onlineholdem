@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/table">
 
-    <LinearLayout
+    <RelativeLayout
+        android:id="@+id/potLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_gravity="top">
+        android:layout_alignParentTop="true">
 
         <TextView
             android:layout_width="match_parent"
@@ -25,19 +26,19 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:id="@+id/potSize" />
-    </LinearLayout>
+    </RelativeLayout>
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/board"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="horizontal"
-        android:layout_gravity="center">
+        android:layout_below="@id/potLayout">
 
         <ImageView
             android:id="@+id/flop1"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"/>
 
         <ImageView
             android:id="@+id/flop2"
@@ -47,15 +48,15 @@
         <ImageView
             android:id="@+id/flop3"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
+            android:layout_height="wrap_content"/>
+    </RelativeLayout>
 
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_gravity="bottom">
+        android:layout_alignParentBottom="true">
 
         <Button
 
@@ -117,5 +118,5 @@
                     android:onClick="postData" />
             </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
-</LinearLayout>
+    </RelativeLayout>
+</RelativeLayout>

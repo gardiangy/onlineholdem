@@ -80,32 +80,32 @@ public class SinglePlayerActivity extends Activity{
     public void deal(View view){
         Collections.shuffle(deck,new Random());
         int resId = getResources().getIdentifier(deck.get(0).toString(), "drawable", this.getPackageName());
+        int res2Id = getResources().getIdentifier(deck.get(1).toString(), "drawable", this.getPackageName());
+        int res3Id = getResources().getIdentifier(deck.get(2).toString(), "drawable", this.getPackageName());
 
-        flop1.clearAnimation();
-        Animation flop1Anim = createAnimation(screenWidth/2 - 20,screenHight/2);
+        Animation flop1Anim = createAnimation(screenWidth/2 - 300,180);
         flop1.setAnimation(flop1Anim);
-        flop1.startAnimation(flop1Anim);
         flop1.setImageResource(resId);
+        flop1.startAnimation(flop1Anim);
 
-        resId = getResources().getIdentifier(deck.get(1).toString(), "drawable", this.getPackageName());
-        flop2.clearAnimation();
-        Animation flop2Anim = createAnimation(screenWidth/2,screenHight/2);
+        Animation flop2Anim = createAnimation(screenWidth/2 - 200,180);
         flop2.setAnimation(flop2Anim);
+        flop2.setImageResource(res2Id);
         flop2.startAnimation(flop2Anim);
-        flop2.setImageResource(resId);
 
-        resId = getResources().getIdentifier(deck.get(2).toString(), "drawable", this.getPackageName());
-        flop3.clearAnimation();
-        Animation flop3Anim = createAnimation(screenWidth/2 + 20 ,screenHight/2);
+        Animation flop3Anim = createAnimation(screenWidth/2 - 100,180);
         flop3.setAnimation(flop3Anim);
+        flop3.setImageResource(res3Id);
         flop3.startAnimation(flop3Anim);
-        flop3.setImageResource(resId);
+
     }
 
     public Animation createAnimation(int xTo, int yTo) {
-        TranslateAnimation translateAnimation = new TranslateAnimation(0,xTo,0,yTo);
+        TranslateAnimation translateAnimation = new TranslateAnimation(screenWidth/2,xTo,0,yTo);
 
-        translateAnimation.setDuration(1000);
+        translateAnimation.setRepeatMode(0);
+        translateAnimation.setDuration(500);
+        translateAnimation.setFillAfter(true);
 
         return  translateAnimation;
     }
