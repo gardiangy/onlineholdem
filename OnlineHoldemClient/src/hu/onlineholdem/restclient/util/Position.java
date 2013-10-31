@@ -1,11 +1,11 @@
 package hu.onlineholdem.restclient.util;
 
-public class TablePosition {
+public class Position {
 
     private int left;
     private int top;
 
-    public TablePosition(int left, int top) {
+    public Position(int left, int top) {
         this.left = left;
         this.top = top;
     }

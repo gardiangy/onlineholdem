@@ -7,6 +7,7 @@ import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
@@ -17,8 +18,9 @@ import java.util.List;
 
 import hu.onlineholdem.restclient.R;
 import hu.onlineholdem.restclient.entity.Player;
+import hu.onlineholdem.restclient.enums.ActionType;
 import hu.onlineholdem.restclient.thread.GameThread;
-import hu.onlineholdem.restclient.util.TablePosition;
+import hu.onlineholdem.restclient.util.Position;
 
 public class SinglePlayerActivity extends Activity {
 
@@ -29,6 +31,7 @@ public class SinglePlayerActivity extends Activity {
     private int screenHeight;
     private RelativeLayout seats;
     private List<Player> players = new ArrayList<>();
+    private int betAmount;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -48,16 +51,23 @@ public class SinglePlayerActivity extends Activity {
         display.getSize(size);
         screenWidth = size.x;
         screenHeight = size.y;
+        SeekBar betBar = (SeekBar) findViewById(R.id.betBar);
+        Button btnCheck = (Button) findViewById(R.id.btnCheck);
+        Button btnBet = (Button) findViewById(R.id.btnBet);
+        Button btnFold = (Button) findViewById(R.id.btnFold);
+        TextView betValue = (TextView) findViewById(R.id.betValue);
 
-        gameThread = new GameThread(screenWidth, screenHeight, flop1, flop2, flop3, turn, river, board, players,potSize, this, getResources(), this.getPackageName());
+        gameThread = new GameThread(screenWidth, screenHeight, flop1, flop2, flop3, turn, river, board, players,
+                potSize,btnCheck,btnBet,btnFold,betBar,betValue, this, getResources(), this.getPackageName());
         createPlayers(7);
 
-        SeekBar betBar = (SeekBar) findViewById(R.id.betBar);
+
         betBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 TextView betValue = (TextView) findViewById(R.id.betValue);
                 betValue.setText("" + i);
+                betAmount = i;
 
             }
 
@@ -88,8 +98,8 @@ public class SinglePlayerActivity extends Activity {
             textView.setBackgroundResource(R.drawable.seatnotactive);
 
             RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200, 100);
-            TablePosition tablePosition = getPlayerPostion(i);
-            layoutParams.setMargins(tablePosition.getLeft(), tablePosition.getTop(), 0, 0);
+            Position position = getPlayerPostion(i);
+            layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
 
             textView.setLayoutParams(layoutParams);
             textView.setText(player.getStackSize().toString());
@@ -109,24 +119,37 @@ public class SinglePlayerActivity extends Activity {
         gameThread.start();
     }
 
-    public TablePosition getPlayerPostion(int order) {
+    public Position getPlayerPostion(int order) {
         switch (order) {
             case 1:
-                return new TablePosition(screenWidth / 6 * 5, screenHeight / 14);
+                return new Position(screenWidth / 6 * 5, screenHeight / 14);
             case 2:
-                return new TablePosition(screenWidth / 7 * 6, screenHeight / 3);
+                return new Position(screenWidth / 7 * 6, screenHeight / 3);
             case 3:
-                return new TablePosition(screenWidth / 3 * 2, screenHeight / 7 * 4);
+                return new Position(screenWidth / 3 * 2, screenHeight / 7 * 4);
             case 4:
-                return new TablePosition(screenWidth / 5 * 2, screenHeight / 7 * 4);
+                return new Position(screenWidth / 5 * 2, screenHeight / 7 * 4);
             case 5:
-                return new TablePosition(screenWidth / 6, screenHeight / 7 * 4);
+                return new Position(screenWidth / 6, screenHeight / 7 * 4);
             case 6:
-                return new TablePosition(screenWidth / 40, screenHeight / 3);
+                return new Position(screenWidth / 40, screenHeight / 3);
             case 7:
-                return new TablePosition(screenWidth / 18, screenHeight / 14);
+                return new Position(screenWidth / 18, screenHeight / 14);
         }
         return null;
+    }
+
+    public void moveCheck(View view){
+        gameThread.setPlayerAction(ActionType.CHECK);
+    }
+
+    public void moveBet(View view){
+        gameThread.setPlayerAction(ActionType.BET);
+        gameThread.setPlayerBetAmount(betAmount);
+    }
+
+    public void moveFold(View view){
+        gameThread.setPlayerAction(ActionType.FOLD);
     }
 
 

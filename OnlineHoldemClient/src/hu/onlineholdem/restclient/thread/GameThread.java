@@ -2,10 +2,13 @@ package hu.onlineholdem.restclient.thread;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -20,6 +23,7 @@ import hu.onlineholdem.restclient.entity.Game;
 import hu.onlineholdem.restclient.entity.Player;
 import hu.onlineholdem.restclient.enums.ActionType;
 import hu.onlineholdem.restclient.enums.Suit;
+import hu.onlineholdem.restclient.util.Position;
 
 public class GameThread extends Thread {
 
@@ -31,7 +35,12 @@ public class GameThread extends Thread {
     private ImageView flop3;
     private ImageView turn;
     private ImageView river;
+    private Button btnCheck;
+    private Button btnBet;
+    private Button btnFold;
+    private SeekBar betBar;
     private TextView potsize;
+    private TextView betValue;
     private RelativeLayout board;
     private List<Player> players = new ArrayList<>();
     private Context context;
@@ -39,10 +48,14 @@ public class GameThread extends Thread {
     private String packageName;
     private SinglePlayerActivity activity;
     private Game game;
-    private Player actualPlayer;
+    private boolean isPlayerTurn;
+    private ActionType playerAction;
+    private ActionType previousAction;
+    private int playerBetAmount;
 
     public GameThread(int screenWidth, int screenHeight, ImageView flop1, ImageView flop2, ImageView flop3, ImageView turn, ImageView river,
-                      RelativeLayout board, List<Player> players,TextView potsize, Context context, Resources resources, String packageName) {
+                      RelativeLayout board, List<Player> players,TextView potsize,Button btnCheck,Button btnBet,Button btnFold,
+                      SeekBar betBar,TextView betValue,Context context, Resources resources, String packageName) {
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
         this.flop1 = flop1;
@@ -56,6 +69,11 @@ public class GameThread extends Thread {
         this.resources = resources;
         this.packageName = packageName;
         this.potsize = potsize;
+        this.btnCheck = btnCheck;
+        this.btnBet = btnBet;
+        this.btnFold = btnFold;
+        this.betBar = betBar;
+        this.betValue = betValue;
         activity = (SinglePlayerActivity) context;
     }
 
@@ -180,47 +198,55 @@ public class GameThread extends Thread {
                     player.getTextView().setBackgroundResource(R.drawable.seatactive);
                 }
             });
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
             if(!player.isUser()){
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 Random random = new Random();
                 int action = random.nextInt(3);
                 switch (action){
                     case 0: player.setActionType(ActionType.BET);
                             player.setBetAmount(200);
+                            previousAction = ActionType.BET;
                             break;
                     case 1: player.setActionType(ActionType.CHECK);
+                            previousAction = ActionType.CHECK;
                             break;
                     case 2: player.setActionType(ActionType.FOLD);
+                            previousAction = ActionType.FOLD;
                             break;
                     default:player.setActionType(ActionType.CHECK);
+                            previousAction = ActionType.CHECK;
                 }
 
                 if(player.getActionType().equals(ActionType.BET)){
                     moveBet(player.getBetAmount(),player);
                 }
                 if(player.getActionType().equals(ActionType.FOLD)){
-                    Animation card1Anim = createAnimation(player.getTextView().getRight() - 150,screenWidth / 2,player.getTextView().getTop() - 40,0,false);
-                    player.getCard1View().setAnimation(card1Anim);
-                    activity.runOnUiThread(new Runnable() {
-                        public void run() {
-                            player.getCard1View().startAnimation(player.getCard1View().getAnimation());
-                            board.removeView(player.getCard1View());
-                        }
-                    });
+                   moveFold(player);
+                }
+            }else{
+                isPlayerTurn = true;
+                showActionButtons(true);
 
-
-                    Animation card2Anim = createAnimation(player.getTextView().getRight() - 110,screenWidth / 2,player.getTextView().getTop() - 40,0,false);
-                    player.getCard2View().setAnimation(card2Anim);
-                    activity.runOnUiThread(new Runnable() {
-                        public void run() {
-                            player.getCard2View().startAnimation(player.getCard2View().getAnimation());
-                            board.removeView(player.getCard2View());
+                while (isPlayerTurn){
+                    try {
+                        if(null != playerAction){
+                            if(playerAction.equals(ActionType.BET)){
+                                moveBet(playerBetAmount,player);
+                            }
+                            if(playerAction.equals(ActionType.FOLD)){
+                                moveFold(player);
+                            }
+                            isPlayerTurn = false;
+                            showActionButtons(false);
                         }
-                    });
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
             activity.runOnUiThread(new Runnable() {
@@ -235,19 +261,65 @@ public class GameThread extends Thread {
 
     public void moveBet(int amount,final Player player){
         game.setPotSize(game.getPotSize() + amount);
-        activity.runOnUiThread(new Runnable() {
-            public void run() {
-                potsize.setText(game.getPotSize().toString());
-            }
-        });
+        player.setBetAmount(amount);
         player.setStackSize(player.getStackSize() - amount);
         activity.runOnUiThread(new Runnable() {
             public void run() {
+                potsize.setText(game.getPotSize().toString());
+                TextView chipsView = new TextView(context);
+                chipsView.setBackgroundResource(R.drawable.chips);
+                chipsView.setText(player.getBetAmount().toString());
+
+                RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(40,40);
+                Position position = getChipsPostion(player);
+                layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
+                chipsView.setLayoutParams(layoutParams);
+                board.addView(chipsView);
+
                 player.getTextView().setText(player.getStackSize().toString());
             }
         });
 
+    }
 
+    public void moveFold(final Player player){
+        Animation card1Anim = createAnimation(player.getTextView().getRight() - 150,screenWidth / 2,player.getTextView().getTop() - 40,0,false);
+        player.getCard1View().setAnimation(card1Anim);
+
+        Animation card2Anim = createAnimation(player.getTextView().getRight() - 110,screenWidth / 2,player.getTextView().getTop() - 40,0,false);
+        player.getCard2View().setAnimation(card2Anim);
+        activity.runOnUiThread(new Runnable() {
+            public void run() {
+                player.getCard1View().startAnimation(player.getCard1View().getAnimation());
+                board.removeView(player.getCard1View());
+
+                player.getCard2View().startAnimation(player.getCard2View().getAnimation());
+                board.removeView(player.getCard2View());
+            }
+        });
+
+    }
+
+    public void showActionButtons(final boolean show){
+        activity.runOnUiThread(new Runnable() {
+            public void run() {
+                if(show){
+                    btnCheck.setVisibility(View.VISIBLE);
+                    btnBet.setVisibility(View.VISIBLE);
+                    btnFold.setVisibility(View.VISIBLE);
+                    betBar.setVisibility(View.VISIBLE);
+                    betValue.setVisibility(View.VISIBLE);
+                }else{
+                    btnCheck.setVisibility(View.INVISIBLE);
+                    btnBet.setVisibility(View.INVISIBLE);
+                    btnFold.setVisibility(View.INVISIBLE);
+                    betBar.setVisibility(View.INVISIBLE);
+                    betValue.setVisibility(View.INVISIBLE);
+                    betValue.setText("");
+                }
+
+            }
+        });
     }
 
     @Override
@@ -277,5 +349,47 @@ public class GameThread extends Thread {
 
     }
 
+    public Position getChipsPostion(Player player) {
+        switch (player.getOrder()) {
+            case 1:
+                return new Position(player.getTextView().getLeft() - 70, player.getTextView().getTop() + 20);
+            case 2:
+                return new Position(player.getTextView().getLeft() - 50, player.getTextView().getTop() - 20);
+            case 3:
+                return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 100);
+            case 4:
+                return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 100);
+            case 5:
+                return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 100);
+            case 6:
+                return new Position(player.getTextView().getLeft() + 220, player.getTextView().getTop() + 20);
+            case 7:
+                return new Position(player.getTextView().getLeft() + 220, player.getTextView().getTop() + 20);
+        }
+        return null;
+    }
 
+    public boolean isPlayerTurn() {
+        return isPlayerTurn;
+    }
+
+    public void setPlayerTurn(boolean isPlayerTurn) {
+        this.isPlayerTurn = isPlayerTurn;
+    }
+
+    public ActionType getPlayerAction() {
+        return playerAction;
+    }
+
+    public void setPlayerAction(ActionType playerAction) {
+        this.playerAction = playerAction;
+    }
+
+    public int getPlayerBetAmount() {
+        return playerBetAmount;
+    }
+
+    public void setPlayerBetAmount(int playerBetAmount) {
+        this.playerBetAmount = playerBetAmount;
+    }
 }

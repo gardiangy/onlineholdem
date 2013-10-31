@@ -18,7 +18,7 @@ public class Player implements Serializable {
     private ImageView card1View;
     private ImageView card2View;
     private ActionType actionType;
-    private int betAmount;
+    private Integer betAmount;
 
 	public Player() {
 	}
@@ -71,11 +71,11 @@ public class Player implements Serializable {
         this.actionType = actionType;
     }
 
-    public int getBetAmount() {
+    public Integer getBetAmount() {
         return betAmount;
     }
 
-    public void setBetAmount(int betAmount) {
+    public void setBetAmount(Integer betAmount) {
         this.betAmount = betAmount;
     }
 

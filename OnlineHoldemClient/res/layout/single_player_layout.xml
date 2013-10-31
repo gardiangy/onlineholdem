@@ -107,7 +107,8 @@
             <SeekBar
                 android:layout_width="220dp"
                 android:layout_height="wrap_content"
-                android:id="@+id/betBar" />
+                android:id="@+id/betBar"
+                android:visibility="invisible"/>
 
             <LinearLayout
                 android:id="@+id/linearLayout"
@@ -121,7 +122,8 @@
                     android:text="@string/check"
                     android:layout_marginRight="10dp"
                     android:id="@+id/btnCheck"
-                    android:onClick="postData" />
+                    android:onClick="moveCheck"
+                    android:visibility="invisible"/>
 
                 <Button
 
@@ -130,7 +132,8 @@
                     android:text="@string/bet"
                     android:layout_marginRight="10dp"
                     android:id="@+id/btnBet"
-                    android:onClick="postData" />
+                    android:onClick="moveBet"
+                    android:visibility="invisible"/>
 
                 <Button
 
@@ -139,7 +142,8 @@
                     android:text="@string/fold"
                     android:padding="10dp"
                     android:id="@+id/btnFold"
-                    android:onClick="postData" />
+                    android:onClick="moveFold"
+                    android:visibility="invisible"/>
             </LinearLayout>
         </LinearLayout>
     </RelativeLayout>
