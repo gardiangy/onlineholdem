@@ -20,7 +20,7 @@ import hu.onlineholdem.restclient.entity.Player;
 import hu.onlineholdem.restclient.thread.GameThread;
 import hu.onlineholdem.restclient.util.TablePosition;
 
-public class SinglePlayerActivity extends Activity{
+public class SinglePlayerActivity extends Activity {
 
     private static final String TAG = "SinglePlayerActivity";
 
@@ -40,6 +40,7 @@ public class SinglePlayerActivity extends Activity{
         ImageView flop3 = (ImageView) findViewById(R.id.flop3);
         ImageView turn = (ImageView) findViewById(R.id.turn);
         ImageView river = (ImageView) findViewById(R.id.river);
+        TextView potSize = (TextView) findViewById(R.id.potSize);
         RelativeLayout board = (RelativeLayout) findViewById(R.id.board);
         seats = (RelativeLayout) findViewById(R.id.seats);
         Display display = getWindowManager().getDefaultDisplay();
@@ -48,7 +49,7 @@ public class SinglePlayerActivity extends Activity{
         screenWidth = size.x;
         screenHeight = size.y;
 
-        gameThread = new GameThread(screenWidth, screenHeight, flop1, flop2, flop3, turn, river, board, players,this,getResources(),this.getPackageName());
+        gameThread = new GameThread(screenWidth, screenHeight, flop1, flop2, flop3, turn, river, board, players,potSize, this, getResources(), this.getPackageName());
         createPlayers(7);
 
         SeekBar betBar = (SeekBar) findViewById(R.id.betBar);
@@ -74,26 +75,22 @@ public class SinglePlayerActivity extends Activity{
 
     }
 
-    public void createPlayers(int numberOfPlayers){
-        for(int i=1;i<=numberOfPlayers;i++){
+    public void createPlayers(int numberOfPlayers) {
+        for (int i = 1; i <= numberOfPlayers; i++) {
             Player player = new Player();
             player.setStackSize(1500);
             player.setOrder(i);
-            if(i == 5){
+            if (i == 4) {
                 player.setUser(true);
             }
 
             TextView textView = new TextView(this);
-            if(player.isUser()){
-                textView.setBackgroundResource(R.drawable.seatactive);
-            }else{
-                textView.setBackgroundResource(R.drawable.seatnotactive);
-            }
+            textView.setBackgroundResource(R.drawable.seatnotactive);
 
-
-            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200,100);
+            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200, 100);
             TablePosition tablePosition = getPlayerPostion(i);
-            layoutParams.setMargins(tablePosition.getLeft(),tablePosition.getTop(),0,0);
+            layoutParams.setMargins(tablePosition.getLeft(), tablePosition.getTop(), 0, 0);
+
             textView.setLayoutParams(layoutParams);
             textView.setText(player.getStackSize().toString());
             textView.setGravity(Gravity.CENTER);
@@ -108,24 +105,29 @@ public class SinglePlayerActivity extends Activity{
 
     }
 
-    public void startGame(View view){
+    public void startGame(View view) {
         gameThread.start();
     }
 
-    public TablePosition getPlayerPostion(int order){
-        switch (order){
-            case 1: return new TablePosition(screenWidth/6*5,screenHeight/14);
-            case 2: return new TablePosition(screenWidth/7*6,screenHeight/3);
-            case 3: return new TablePosition(screenWidth/3*2,screenHeight/7*4);
-            case 4: return new TablePosition(screenWidth/5*2,screenHeight/7*4);
-            case 5: return new TablePosition(screenWidth/6,screenHeight/7*4);
-            case 6: return new TablePosition(screenWidth/40,screenHeight/3);
-            case 7: return new TablePosition(screenWidth/18,screenHeight/14);
+    public TablePosition getPlayerPostion(int order) {
+        switch (order) {
+            case 1:
+                return new TablePosition(screenWidth / 6 * 5, screenHeight / 14);
+            case 2:
+                return new TablePosition(screenWidth / 7 * 6, screenHeight / 3);
+            case 3:
+                return new TablePosition(screenWidth / 3 * 2, screenHeight / 7 * 4);
+            case 4:
+                return new TablePosition(screenWidth / 5 * 2, screenHeight / 7 * 4);
+            case 5:
+                return new TablePosition(screenWidth / 6, screenHeight / 7 * 4);
+            case 6:
+                return new TablePosition(screenWidth / 40, screenHeight / 3);
+            case 7:
+                return new TablePosition(screenWidth / 18, screenHeight / 14);
         }
         return null;
     }
-
-
 
 
 }

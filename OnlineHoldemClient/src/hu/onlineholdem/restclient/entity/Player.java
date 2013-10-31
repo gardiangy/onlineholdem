@@ -1,8 +1,11 @@
 package hu.onlineholdem.restclient.entity;
 
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.Serializable;
+
+import hu.onlineholdem.restclient.enums.ActionType;
 
 public class Player implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -12,6 +15,10 @@ public class Player implements Serializable {
     private boolean isUser;
     private int order;
     private TextView textView;
+    private ImageView card1View;
+    private ImageView card2View;
+    private ActionType actionType;
+    private int betAmount;
 
 	public Player() {
 	}
@@ -54,5 +61,37 @@ public class Player implements Serializable {
 
     public void setTextView(TextView textView) {
         this.textView = textView;
+    }
+
+    public ActionType getActionType() {
+        return actionType;
+    }
+
+    public void setActionType(ActionType actionType) {
+        this.actionType = actionType;
+    }
+
+    public int getBetAmount() {
+        return betAmount;
+    }
+
+    public void setBetAmount(int betAmount) {
+        this.betAmount = betAmount;
+    }
+
+    public ImageView getCard1View() {
+        return card1View;
+    }
+
+    public void setCard1View(ImageView card1View) {
+        this.card1View = card1View;
+    }
+
+    public ImageView getCard2View() {
+        return card2View;
+    }
+
+    public void setCard2View(ImageView card2View) {
+        this.card2View = card2View;
     }
 }
