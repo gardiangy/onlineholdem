@@ -84,30 +84,10 @@
 
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Flop"
+            android:text="Start"
             android:id="@+id/btnFlop"
-            android:onClick="dealFlop" />
-        <Button
+            android:onClick="startGame" />
 
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Turn"
-            android:id="@+id/btnTurn"
-            android:onClick="dealTurn" />
-        <Button
-
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="River"
-            android:id="@+id/btnRiver"
-            android:onClick="dealRiver" />
-            <Button
-
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Deal"
-                android:id="@+id/btnDeal"
-                android:onClick="deal" />
         </LinearLayout>
 
         <LinearLayout

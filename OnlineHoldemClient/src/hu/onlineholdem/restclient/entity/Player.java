@@ -1,5 +1,7 @@
 package hu.onlineholdem.restclient.entity;
 
+import android.widget.TextView;
+
 import java.io.Serializable;
 
 public class Player implements Serializable {
@@ -7,6 +9,9 @@ public class Player implements Serializable {
 
 	private Long playerId;
 	private Integer stackSize;
+    private boolean isUser;
+    private int order;
+    private TextView textView;
 
 	public Player() {
 	}
@@ -26,4 +31,28 @@ public class Player implements Serializable {
 	public void setStackSize(Integer stackSize) {
 		this.stackSize = stackSize;
 	}
+
+    public boolean isUser() {
+        return isUser;
+    }
+
+    public void setUser(boolean isUser) {
+        this.isUser = isUser;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
+    }
+
+    public TextView getTextView() {
+        return textView;
+    }
+
+    public void setTextView(TextView textView) {
+        this.textView = textView;
+    }
 }
