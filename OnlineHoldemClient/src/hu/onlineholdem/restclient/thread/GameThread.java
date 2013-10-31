@@ -52,6 +52,7 @@ public class GameThread extends Thread {
     private ActionType playerAction;
     private ActionType previousAction;
     private int playerBetAmount;
+    private int previousBetAmount;
 
     public GameThread(int screenWidth, int screenHeight, ImageView flop1, ImageView flop2, ImageView flop3, ImageView turn, ImageView river,
                       RelativeLayout board, List<Player> players,TextView potsize,Button btnCheck,Button btnBet,Button btnFold,
@@ -193,6 +194,7 @@ public class GameThread extends Thread {
     }
     public void makeMoves(){
         for(final Player player : players){
+            final List<ActionType> availableActions = getAvailableActions();
             activity.runOnUiThread(new Runnable() {
                 public void run() {
                     player.getTextView().setBackgroundResource(R.drawable.seatactive);
@@ -205,30 +207,59 @@ public class GameThread extends Thread {
                     e.printStackTrace();
                 }
                 Random random = new Random();
-                int action = random.nextInt(3);
-                switch (action){
-                    case 0: player.setActionType(ActionType.BET);
-                            player.setBetAmount(200);
-                            previousAction = ActionType.BET;
-                            break;
-                    case 1: player.setActionType(ActionType.CHECK);
-                            previousAction = ActionType.CHECK;
-                            break;
-                    case 2: player.setActionType(ActionType.FOLD);
-                            previousAction = ActionType.FOLD;
-                            break;
-                    default:player.setActionType(ActionType.CHECK);
-                            previousAction = ActionType.CHECK;
+                int action = random.nextInt(availableActions.size());
+                ActionType randomAction = availableActions.get(action);
+                if(randomAction.equals(ActionType.CHECK)){
+                    previousAction = ActionType.CHECK;
+                    player.setActionType(ActionType.CHECK);
                 }
-
-                if(player.getActionType().equals(ActionType.BET)){
+                if(randomAction.equals(ActionType.BET)){
+                    player.setActionType(ActionType.BET);
+                    player.setBetAmount(200);
+                    previousBetAmount = player.getBetAmount();
+                    activity.setPreviousBetAmount(previousBetAmount);
+                    previousAction = ActionType.BET;
                     moveBet(player.getBetAmount(),player);
                 }
-                if(player.getActionType().equals(ActionType.FOLD)){
-                   moveFold(player);
+                if(randomAction.equals(ActionType.FOLD)){
+                    player.setActionType(ActionType.FOLD);
+                    moveFold(player);
+                }
+                if(randomAction.equals(ActionType.CALL)){
+                    previousAction = ActionType.CALL;
+                    player.setActionType(ActionType.CALL);
+                    player.setBetAmount(previousBetAmount);
+                    moveBet(previousBetAmount,player);
+                }
+                if(randomAction.equals(ActionType.RAISE)){
+                    previousAction = ActionType.RAISE;
+                    player.setActionType(ActionType.RAISE);
+                    if(previousBetAmount * 2 > 1500){
+                        player.setBetAmount(1500);
+                        moveBet(1500,player);
+                    }else{
+                        player.setBetAmount(previousBetAmount * 2);
+                        moveBet(previousBetAmount * 2,player);
+                    }
+
                 }
             }else{
                 isPlayerTurn = true;
+                activity.runOnUiThread(new Runnable() {
+                    public void run() {
+                        if(availableActions.contains(ActionType.CALL)){
+                            btnCheck.setText("CALL");
+                        }else{
+                            btnCheck.setText("CHECK");
+                        }
+                        if(availableActions.contains(ActionType.RAISE)){
+                            btnBet.setText("RAISE");
+                        }else{
+                            btnBet.setText("BET");
+                        }
+                    }
+                });
+
                 showActionButtons(true);
 
                 while (isPlayerTurn){
@@ -236,6 +267,16 @@ public class GameThread extends Thread {
                         if(null != playerAction){
                             if(playerAction.equals(ActionType.BET)){
                                 moveBet(playerBetAmount,player);
+                                previousAction = ActionType.BET;
+                                previousBetAmount = playerBetAmount;
+                            }
+                            if(playerAction.equals(ActionType.CALL)){
+                                moveBet(previousBetAmount,player);
+                                previousAction = ActionType.CALL;
+                            }
+                            if(playerAction.equals(ActionType.RAISE)){
+                                moveBet(player.getBetAmount(),player);
+                                previousAction = ActionType.RAISE;
                             }
                             if(playerAction.equals(ActionType.FOLD)){
                                 moveFold(player);
@@ -327,19 +368,12 @@ public class GameThread extends Thread {
 
         createGame();
         try {
-            Thread.sleep(1000);
             activity.runOnUiThread(new Runnable() {
                 public void run() {
                     deal();
                 }
             });
-            Thread.sleep(2000);
-            activity.runOnUiThread(new Runnable() {
-                public void run() {
-                    dealFlop();
-                }
-            });
-
+            Thread.sleep(1000);
             makeMoves();
 
 
@@ -367,6 +401,24 @@ public class GameThread extends Thread {
                 return new Position(player.getTextView().getLeft() + 220, player.getTextView().getTop() + 20);
         }
         return null;
+    }
+
+    public List<ActionType> getAvailableActions(){
+        List<ActionType> availableActions = new ArrayList<>();
+        if(null == previousAction || previousAction.equals(ActionType.CHECK) || previousAction.equals(ActionType.FOLD)){
+            availableActions.add(ActionType.CHECK);
+            availableActions.add(ActionType.BET);
+            availableActions.add(ActionType.FOLD);
+        }
+        if(null != previousAction){
+            if(previousAction.equals(ActionType.BET) || previousAction.equals(ActionType.CALL) || previousAction.equals(ActionType.RAISE)){
+                availableActions.add(ActionType.CALL);
+                availableActions.add(ActionType.RAISE);
+                availableActions.add(ActionType.FOLD);
+            }
+        }
+
+        return availableActions;
     }
 
     public boolean isPlayerTurn() {

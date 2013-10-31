@@ -4,6 +4,8 @@ public enum ActionType {
 
     CHECK("CHECK"),
     BET("BET"),
+    CALL("CALL"),
+    RAISE("RAISE"),
     FOLD("FOLD");
 
     private String name;

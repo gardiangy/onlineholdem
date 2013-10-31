@@ -32,6 +32,7 @@ public class SinglePlayerActivity extends Activity {
     private RelativeLayout seats;
     private List<Player> players = new ArrayList<>();
     private int betAmount;
+    private int previousBetAmount;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -140,11 +141,23 @@ public class SinglePlayerActivity extends Activity {
     }
 
     public void moveCheck(View view){
-        gameThread.setPlayerAction(ActionType.CHECK);
+        TextView textView = (TextView) view;
+        if("CALL".equals(textView.getText())){
+            gameThread.setPlayerAction(ActionType.CALL);
+            gameThread.setPlayerBetAmount(previousBetAmount);
+        }else{
+            gameThread.setPlayerAction(ActionType.CHECK);
+        }
+
     }
 
     public void moveBet(View view){
-        gameThread.setPlayerAction(ActionType.BET);
+        TextView textView = (TextView) view;
+        if("RAISE".equals(textView.getText())){
+            gameThread.setPlayerAction(ActionType.RAISE);
+        }else{
+            gameThread.setPlayerAction(ActionType.BET);
+        }
         gameThread.setPlayerBetAmount(betAmount);
     }
 
@@ -152,5 +165,11 @@ public class SinglePlayerActivity extends Activity {
         gameThread.setPlayerAction(ActionType.FOLD);
     }
 
+    public int getPreviousBetAmount() {
+        return previousBetAmount;
+    }
 
+    public void setPreviousBetAmount(int previousBetAmount) {
+        this.previousBetAmount = previousBetAmount;
+    }
 }
