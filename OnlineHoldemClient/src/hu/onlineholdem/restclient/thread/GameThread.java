@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -43,6 +44,7 @@ public class GameThread extends Thread {
     private TextView betValue;
     private RelativeLayout board;
     private List<Player> players = new ArrayList<>();
+    private List<Player> playersInRound;
     private Context context;
     private Resources resources;
     private String packageName;
@@ -92,6 +94,9 @@ public class GameThread extends Thread {
         game = new Game();
         game.setPlayers(players);
         game.setPotSize(0);
+
+        playersInRound = new ArrayList<>();
+        playersInRound.addAll(players);
     }
 
     public void dealFlop() {
@@ -193,7 +198,9 @@ public class GameThread extends Thread {
         return translateAnimation;
     }
     public void makeMoves(){
-        for(final Player player : players){
+        List<Player> playerList = new ArrayList<>();
+        playerList.addAll(playersInRound);
+        for(final Player player : playerList){
             final List<ActionType> availableActions = getAvailableActions();
             activity.runOnUiThread(new Runnable() {
                 public void run() {
@@ -236,10 +243,12 @@ public class GameThread extends Thread {
                     player.setActionType(ActionType.RAISE);
                     if(previousBetAmount * 2 > 1500){
                         player.setBetAmount(1500);
+                        previousBetAmount = 1500;
                         moveBet(1500,player);
                     }else{
                         player.setBetAmount(previousBetAmount * 2);
                         moveBet(previousBetAmount * 2,player);
+                        previousBetAmount = previousBetAmount *2;
                     }
 
                 }
@@ -277,12 +286,14 @@ public class GameThread extends Thread {
                             if(playerAction.equals(ActionType.RAISE)){
                                 moveBet(player.getBetAmount(),player);
                                 previousAction = ActionType.RAISE;
+                                previousBetAmount = player.getBetAmount();
                             }
                             if(playerAction.equals(ActionType.FOLD)){
                                 moveFold(player);
                             }
                             isPlayerTurn = false;
                             showActionButtons(false);
+                            playerAction = null;
                         }
                         Thread.sleep(500);
                     } catch (InterruptedException e) {
@@ -338,7 +349,7 @@ public class GameThread extends Thread {
                 board.removeView(player.getCard2View());
             }
         });
-
+        playersInRound.remove(player);
     }
 
     public void showActionButtons(final boolean show){
@@ -374,6 +385,24 @@ public class GameThread extends Thread {
                 }
             });
             Thread.sleep(1000);
+            makeMoves();
+            activity.runOnUiThread(new Runnable() {
+                public void run() {
+                    dealFlop();
+                }
+            });
+            makeMoves();
+            activity.runOnUiThread(new Runnable() {
+                public void run() {
+                    dealTurn();
+                }
+            });
+            makeMoves();
+            activity.runOnUiThread(new Runnable() {
+                public void run() {
+                    dealRiver();
+                }
+            });
             makeMoves();
 
 
