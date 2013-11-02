@@ -17,6 +17,7 @@ public class Player implements Serializable {
     private TextView textView;
     private ImageView card1View;
     private ImageView card2View;
+    private TextView chipView;
     private ActionType actionType;
     private Integer betAmount;
 
@@ -93,5 +94,13 @@ public class Player implements Serializable {
 
     public void setCard2View(ImageView card2View) {
         this.card2View = card2View;
+    }
+
+    public TextView getChipView() {
+        return chipView;
+    }
+
+    public void setChipView(TextView chipView) {
+        this.chipView = chipView;
     }
 }

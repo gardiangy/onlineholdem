@@ -101,6 +101,16 @@ public class GameThread extends Thread {
 
     public void dealFlop() {
 
+        for(Player player : playersInRound){
+            if(null != player.getChipView()){
+                Animation chipAnim = createAnimation(player.getChipView().getLeft(),screenWidth / 2,
+                        player.getChipView().getTop(), screenHeight / 3,true);
+                player.getChipView().setAnimation(chipAnim);
+                player.getChipView().startAnimation(chipAnim);
+            }
+            player.setChipView(null);
+        }
+
         int resId = resources.getIdentifier(deck.get(0).toString(), "drawable", packageName);
         int res2Id = resources.getIdentifier(deck.get(1).toString(), "drawable", packageName);
         int res3Id = resources.getIdentifier(deck.get(2).toString(), "drawable", packageName);
@@ -312,6 +322,9 @@ public class GameThread extends Thread {
     }
 
     public void moveBet(int amount,final Player player){
+        if(amount > player.getStackSize()){
+            amount = player.getStackSize();
+        }
         game.setPotSize(game.getPotSize() + amount);
         player.setBetAmount(amount);
         player.setStackSize(player.getStackSize() - amount);
@@ -320,13 +333,16 @@ public class GameThread extends Thread {
                 potsize.setText(game.getPotSize().toString());
                 TextView chipsView = new TextView(context);
                 chipsView.setBackgroundResource(R.drawable.chips);
+                chipsView.setTextSize(15);
                 chipsView.setText(player.getBetAmount().toString());
+
 
                 RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(40,40);
                 Position position = getChipsPostion(player);
                 layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
                 chipsView.setLayoutParams(layoutParams);
                 board.addView(chipsView);
+                player.setChipView(chipsView);
 
                 player.getTextView().setText(player.getStackSize().toString());
             }
