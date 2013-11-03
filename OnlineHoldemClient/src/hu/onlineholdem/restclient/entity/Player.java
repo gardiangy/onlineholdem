@@ -1,6 +1,7 @@
 package hu.onlineholdem.restclient.entity;
 
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.io.Serializable;
@@ -17,7 +18,7 @@ public class Player implements Serializable {
     private TextView textView;
     private ImageView card1View;
     private ImageView card2View;
-    private TextView chipView;
+    private RelativeLayout chipLayout;
     private ActionType actionType;
     private Integer betAmount;
 
@@ -96,11 +97,11 @@ public class Player implements Serializable {
         this.card2View = card2View;
     }
 
-    public TextView getChipView() {
-        return chipView;
+    public RelativeLayout getChipLayout() {
+        return chipLayout;
     }
 
-    public void setChipView(TextView chipView) {
-        this.chipView = chipView;
+    public void setChipLayout(RelativeLayout chipLayout) {
+        this.chipLayout = chipLayout;
     }
 }

@@ -108,7 +108,8 @@
                 android:layout_width="220dp"
                 android:layout_height="wrap_content"
                 android:id="@+id/betBar"
-                android:visibility="invisible"/>
+                android:visibility="invisible"
+                android:max="1500"/>
 
             <LinearLayout
                 android:id="@+id/linearLayout"
