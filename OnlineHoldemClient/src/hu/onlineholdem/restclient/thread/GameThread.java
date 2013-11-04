@@ -2,7 +2,6 @@ package hu.onlineholdem.restclient.thread;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.view.Gravity;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
@@ -104,16 +103,7 @@ public class GameThread extends Thread {
 
     public void dealFlop() {
 
-        for (Player player : playersInRound) {
-            if (null != player.getChipLayout()) {
-                Animation chipAnim = createAnimation(player.getChipLayout().getLeft(), screenWidth / 2,
-                        player.getChipLayout().getTop(), 0, true);
-                player.getChipLayout().setAnimation(chipAnim);
-                player.getChipLayout().startAnimation(chipAnim);
-            }
-            player.setChipLayout(null);
-            player.setBetAmount(null);
-        }
+        collectChips();
         previousBetAmount = 0;
         previousAction = null;
 
@@ -142,16 +132,7 @@ public class GameThread extends Thread {
     }
 
     public void dealTurn() {
-        for (Player player : playersInRound) {
-            if (null != player.getChipLayout()) {
-                Animation chipAnim = createAnimation(player.getChipLayout().getLeft(), screenWidth / 2,
-                        player.getChipLayout().getTop(), screenHeight / 3, true);
-                player.getChipLayout().setAnimation(chipAnim);
-                player.getChipLayout().startAnimation(chipAnim);
-            }
-            player.setChipLayout(null);
-            player.setBetAmount(null);
-        }
+        collectChips();
         previousBetAmount = 0;
         previousAction = null;
 
@@ -166,16 +147,7 @@ public class GameThread extends Thread {
     }
 
     public void dealRiver() {
-        for (Player player : playersInRound) {
-            if (null != player.getChipLayout()) {
-                Animation chipAnim = createAnimation(player.getChipLayout().getLeft(), screenWidth / 2,
-                        player.getChipLayout().getTop(), screenHeight / 3, true);
-                player.getChipLayout().setAnimation(chipAnim);
-                player.getChipLayout().startAnimation(chipAnim);
-            }
-            player.setChipLayout(null);
-            player.setBetAmount(null);
-        }
+        collectChips();
         previousBetAmount = 0;
         previousAction = null;
 
@@ -193,12 +165,8 @@ public class GameThread extends Thread {
 
         for (Player player : players) {
 
-            int resId;
-            if (player.isUser()) {
-                resId = resources.getIdentifier(deck.get(deck.size() - 1).toString(), "drawable", packageName);
-            } else {
-                resId = resources.getIdentifier("back", "drawable", packageName);
-            }
+            final int resId = player.isUser() ? resources.getIdentifier(deck.get(deck.size() - 1).toString(), "drawable", packageName)
+                    : resources.getIdentifier("back", "drawable", packageName);
 
 
             TextView textView = player.getTextView();
@@ -211,12 +179,9 @@ public class GameThread extends Thread {
             deck.remove(deck.size() - 1);
             player.setCard1View(card1);
 
-            int res2Id;
-            if (player.isUser()) {
-                res2Id = resources.getIdentifier(deck.get(deck.size() - 1).toString(), "drawable", packageName);
-            } else {
-                res2Id = resources.getIdentifier("back", "drawable", packageName);
-            }
+            final int res2Id = player.isUser() ? resources.getIdentifier(deck.get(deck.size() - 1).toString(), "drawable", packageName)
+                    : resources.getIdentifier("back", "drawable", packageName);
+
             Animation card2Anim = createAnimation(screenWidth / 2, textView.getRight() - 110, 0, textView.getTop() - 40, true);
             ImageView card2 = new ImageView(context);
             board.addView(card2);
@@ -231,7 +196,7 @@ public class GameThread extends Thread {
     }
 
     public Animation createAnimation(int xFrom, int xTo, int yFrom, int yTo, boolean fillAfter) {
-        TranslateAnimation translateAnimation = new TranslateAnimation(xFrom, xTo, yFrom, yTo);
+        TranslateAnimation translateAnimation = new TranslateAnimation(Animation.ABSOLUTE, xFrom, Animation.ABSOLUTE, xTo, Animation.ABSOLUTE, yFrom, Animation.ABSOLUTE, yTo);
 
         translateAnimation.setRepeatMode(0);
         translateAnimation.setDuration(500);
@@ -244,8 +209,8 @@ public class GameThread extends Thread {
         List<Player> playerList = new ArrayList<>();
         playerList.addAll(playersInRound);
         for (final Player player : playerList) {
-            if((null != player.getBetAmount() && player.getBetAmount() == previousBetAmount)
-                    || player.getStackSize() == 0){
+            if ((null != player.getBetAmount() && player.getBetAmount() == previousBetAmount)
+                    || player.getStackSize() == 0) {
                 continue;
             }
             final List<ActionType> availableActions = getAvailableActions();
@@ -282,8 +247,9 @@ public class GameThread extends Thread {
                 if (randomAction.equals(ActionType.CALL)) {
                     previousAction = ActionType.CALL;
                     player.setActionType(ActionType.CALL);
-                    player.setBetAmount(previousBetAmount);
-                    moveBet(previousBetAmount, player);
+                    int amount = player.getBetAmount() == null ? previousBetAmount : player.getBetAmount() + previousBetAmount;
+                    player.setBetAmount(amount);
+                    moveBet(amount, player);
                 }
                 if (randomAction.equals(ActionType.RAISE)) {
                     previousAction = ActionType.RAISE;
@@ -297,6 +263,7 @@ public class GameThread extends Thread {
                         moveBet(previousBetAmount * 2, player);
                         previousBetAmount = previousBetAmount * 2;
                     }
+                    activity.setPreviousBetAmount(previousBetAmount);
 
                 }
             } else {
@@ -331,9 +298,9 @@ public class GameThread extends Thread {
                                 previousAction = ActionType.CALL;
                             }
                             if (playerAction.equals(ActionType.RAISE)) {
-                                moveBet(player.getBetAmount(), player);
+                                moveBet(playerBetAmount, player);
                                 previousAction = ActionType.RAISE;
-                                previousBetAmount = player.getBetAmount();
+                                previousBetAmount = playerBetAmount;
                             }
                             if (playerAction.equals(ActionType.FOLD)) {
                                 moveFold(player);
@@ -368,11 +335,11 @@ public class GameThread extends Thread {
         activity.runOnUiThread(new Runnable() {
             public void run() {
                 potsize.setText(game.getPotSize().toString());
-                if(null != player.getChipLayout()){
+                if (null != player.getChipLayout()) {
                     TextView existingChipsTextViw = (TextView) player.getChipLayout().getChildAt(0);
                     int previousBetAmount = Integer.parseInt(existingChipsTextViw.getText().toString());
                     existingChipsTextViw.setText(player.getBetAmount() + previousBetAmount + "");
-                }else{
+                } else {
                     RelativeLayout relativeLayout = new RelativeLayout(context);
                     TextView chipsTextView = new TextView(context);
                     chipsTextView.setTextSize(15);
@@ -384,7 +351,7 @@ public class GameThread extends Thread {
 
 
                     RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(100, 40);
-                    Position position = getChipsPostion(player);
+                    Position position = getChipsPosition(player);
                     layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
                     relativeLayout.setLayoutParams(layoutParams);
 
@@ -414,6 +381,20 @@ public class GameThread extends Thread {
             }
         });
         playersInRound.remove(player);
+    }
+
+    public void collectChips() {
+        for (Player player : playersInRound) {
+            if (null != player.getChipLayout()) {
+                int chipsShiftX = new Random().nextInt(100) - 50;
+                int chipsShiftY = new Random().nextInt(20) - 10;
+                TextView chipsText = (TextView) player.getChipLayout().getChildAt(0);
+                chipsText.setText("");
+                player.getChipLayout().animate().x(screenWidth / 2 + chipsShiftX).y(screenHeight / 7 + chipsShiftY);
+            }
+            player.setChipLayout(null);
+            player.setBetAmount(null);
+        }
     }
 
     public void showActionButtons(final boolean show) {
@@ -478,6 +459,10 @@ public class GameThread extends Thread {
                     dealRiver();
                 }
             });
+            makeMoves();
+            while (makeMovesAgain()) {
+                makeMoves();
+            }
 
 
         } catch (InterruptedException e) {
@@ -486,7 +471,7 @@ public class GameThread extends Thread {
 
     }
 
-    public Position getChipsPostion(Player player) {
+    public Position getChipsPosition(Player player) {
         switch (player.getOrder()) {
             case 1:
                 return new Position(player.getTextView().getLeft() - 70, player.getTextView().getTop() + 20);
@@ -508,15 +493,16 @@ public class GameThread extends Thread {
 
     public List<ActionType> getAvailableActions() {
         List<ActionType> availableActions = new ArrayList<>();
-        if (null == previousAction || previousAction.equals(ActionType.CHECK) || previousAction.equals(ActionType.FOLD)) {
+        if (null == previousAction || previousAction.equals(ActionType.CHECK)) {
             availableActions.add(ActionType.CHECK);
             availableActions.add(ActionType.BET);
             availableActions.add(ActionType.FOLD);
         }
         if (null != previousAction) {
-            if (previousAction.equals(ActionType.BET) || previousAction.equals(ActionType.CALL) || previousAction.equals(ActionType.RAISE)) {
+            if (previousAction.equals(ActionType.BET) || previousAction.equals(ActionType.CALL)
+                    || previousAction.equals(ActionType.RAISE) || previousAction.equals(ActionType.FOLD)) {
                 availableActions.add(ActionType.CALL);
-                availableActions.add(ActionType.RAISE);
+//                availableActions.add(ActionType.RAISE);
                 availableActions.add(ActionType.FOLD);
             }
         }
