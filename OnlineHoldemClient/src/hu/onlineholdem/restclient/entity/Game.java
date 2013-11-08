@@ -15,6 +15,8 @@ public class Game implements Serializable {
 
 	private List<Player> players;
 
+    private List<Card> board;
+
 	public Game() {
 	}
 
@@ -50,4 +52,11 @@ public class Game implements Serializable {
 		this.players = players;
 	}
 
+    public List<Card> getBoard() {
+        return board;
+    }
+
+    public void setBoard(List<Card> board) {
+        this.board = board;
+    }
 }

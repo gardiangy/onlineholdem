@@ -21,6 +21,8 @@ public class Player implements Serializable {
     private RelativeLayout chipLayout;
     private ActionType actionType;
     private Integer betAmount;
+    private Card cardOne;
+    private Card cardTwo;
 
 	public Player() {
 	}
@@ -103,5 +105,21 @@ public class Player implements Serializable {
 
     public void setChipLayout(RelativeLayout chipLayout) {
         this.chipLayout = chipLayout;
+    }
+
+    public Card getCardOne() {
+        return cardOne;
+    }
+
+    public void setCardOne(Card cardOne) {
+        this.cardOne = cardOne;
+    }
+
+    public Card getCardTwo() {
+        return cardTwo;
+    }
+
+    public void setCardTwo(Card cardTwo) {
+        this.cardTwo = cardTwo;
     }
 }

@@ -31,4 +31,24 @@ public class Card implements Serializable {
     public String toString() {
         return suit.getName() + value;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Card card = (Card) o;
+
+        if (suit != card.suit) return false;
+        if (value != null ? !value.equals(card.value) : card.value != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = suit != null ? suit.hashCode() : 0;
+        result = 31 * result + (value != null ? value.hashCode() : 0);
+        return result;
+    }
 }

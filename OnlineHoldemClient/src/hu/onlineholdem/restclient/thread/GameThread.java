@@ -2,6 +2,7 @@ package hu.onlineholdem.restclient.thread;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
@@ -23,9 +24,13 @@ import hu.onlineholdem.restclient.entity.Game;
 import hu.onlineholdem.restclient.entity.Player;
 import hu.onlineholdem.restclient.enums.ActionType;
 import hu.onlineholdem.restclient.enums.Suit;
+import hu.onlineholdem.restclient.util.EvaluatedHand;
+import hu.onlineholdem.restclient.util.HandEvaluator;
 import hu.onlineholdem.restclient.util.Position;
 
 public class GameThread extends Thread {
+
+    private static final String TAG = "GameThread";
 
     private List<Card> deck = new ArrayList<>();
     private int screenWidth;
@@ -96,6 +101,7 @@ public class GameThread extends Thread {
         game = new Game();
         game.setPlayers(players);
         game.setPotSize(0);
+        game.setBoard(new ArrayList<Card>());
 
         playersInRound = new ArrayList<>();
         playersInRound.addAll(players);
@@ -108,8 +114,11 @@ public class GameThread extends Thread {
         previousAction = null;
 
         int resId = resources.getIdentifier(deck.get(0).toString(), "drawable", packageName);
+        game.getBoard().add(deck.get(0));
         int res2Id = resources.getIdentifier(deck.get(1).toString(), "drawable", packageName);
+        game.getBoard().add(deck.get(1));
         int res3Id = resources.getIdentifier(deck.get(2).toString(), "drawable", packageName);
+        game.getBoard().add(deck.get(2));
 
         Animation flop1Anim = createAnimation(screenWidth / 2, screenWidth / 2 - 300, 0, screenHeight / 4, true);
         flop1.setAnimation(flop1Anim);
@@ -137,6 +146,7 @@ public class GameThread extends Thread {
         previousAction = null;
 
         int resId = resources.getIdentifier(deck.get(0).toString(), "drawable", packageName);
+        game.getBoard().add(deck.get(0));
 
         Animation turnAnim = createAnimation(screenWidth / 2, screenWidth / 2, 0, screenHeight / 4, true);
         turn.setAnimation(turnAnim);
@@ -152,6 +162,7 @@ public class GameThread extends Thread {
         previousAction = null;
 
         int resId = resources.getIdentifier(deck.get(0).toString(), "drawable", packageName);
+        game.getBoard().add(deck.get(0));
 
         Animation riverAnim = createAnimation(screenWidth / 2, screenWidth / 2 + 100, 0, screenHeight / 4, true);
         river.setAnimation(riverAnim);
@@ -168,7 +179,7 @@ public class GameThread extends Thread {
             final int resId = player.isUser() ? resources.getIdentifier(deck.get(deck.size() - 1).toString(), "drawable", packageName)
                     : resources.getIdentifier("back", "drawable", packageName);
 
-
+            player.setCardOne(deck.get(deck.size() - 1));
             TextView textView = player.getTextView();
             Animation card1Anim = createAnimation(screenWidth / 2, textView.getRight() - 150, 0, textView.getTop() - 40, true);
             ImageView card1 = new ImageView(context);
@@ -182,6 +193,7 @@ public class GameThread extends Thread {
             final int res2Id = player.isUser() ? resources.getIdentifier(deck.get(deck.size() - 1).toString(), "drawable", packageName)
                     : resources.getIdentifier("back", "drawable", packageName);
 
+            player.setCardTwo(deck.get(deck.size() - 1));
             Animation card2Anim = createAnimation(screenWidth / 2, textView.getRight() - 110, 0, textView.getTop() - 40, true);
             ImageView card2 = new ImageView(context);
             board.addView(card2);
@@ -268,6 +280,12 @@ public class GameThread extends Thread {
                 }
             } else {
                 isPlayerTurn = true;
+                if(null != game.getBoard() && game.getBoard().size() > 0){
+                    EvaluatedHand handStrength = HandEvaluator.evaluateHand(game.getBoard(), player.getCardOne(), player.getCardTwo());
+                    Log.i(TAG, handStrength.getHandStrength().name());
+                    Log.i(TAG, handStrength.getHighCard().toString());
+                }
+
                 activity.runOnUiThread(new Runnable() {
                     public void run() {
                         if (availableActions.contains(ActionType.CALL)) {
@@ -309,7 +327,10 @@ public class GameThread extends Thread {
                             showActionButtons(false);
                             playerAction = null;
                         }
-                        Thread.sleep(500);
+                        else{
+                            Thread.sleep(500);
+                        }
+
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
