@@ -11,6 +11,14 @@ public class Card implements Serializable {
 	private Suit suit;
 	private Integer value;
 
+    public Card() {
+    }
+
+    public Card(Suit suit, Integer value) {
+        this.suit = suit;
+        this.value = value;
+    }
+
     public Suit getSuit() {
         return suit;
     }

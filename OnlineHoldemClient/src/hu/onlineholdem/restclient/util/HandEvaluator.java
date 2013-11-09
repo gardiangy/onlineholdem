@@ -11,7 +11,7 @@ import hu.onlineholdem.restclient.enums.HandStrength;
 
 public class HandEvaluator {
 
-    public static EvaluatedHand evaluateHand(List<Card> board, Card playerCardOne, Card playerCardTwo){
+    public static EvaluatedHand evaluateHand(List<Card> board, Card playerCardOne, Card playerCardTwo) {
 
         List<Card> cardList = new ArrayList<>();
         cardList.addAll(board);
@@ -21,24 +21,24 @@ public class HandEvaluator {
         List<Card> highCards = new ArrayList<>();
         EvaluatedHand evaluatedHand = new EvaluatedHand();
 
-        if(null != hasRoyalFlush(cardList)){
+        if (null != hasRoyalFlush(cardList)) {
             evaluatedHand.setHandStrength(HandStrength.ROYAL_FLUSH);
             return evaluatedHand;
         }
         List<Card> straightFlushValues = hasStraightFlush(cardList);
-        if(null != straightFlushValues){
+        if (null != straightFlushValues) {
             Collections.sort(straightFlushValues, new CardComperator());
-            highCards.add(straightFlushValues.get(4));
+            highCards.add(straightFlushValues.get(straightFlushValues.size() - 1));
             evaluatedHand.setHandStrength(HandStrength.STRAIGHT_FLUSH);
             evaluatedHand.setHighCard(highCards);
             return evaluatedHand;
         }
         Card fourOfAKindValue = hasFourOfAKind(cardList);
-        if(null != fourOfAKindValue){
+        if (null != fourOfAKindValue) {
             Collections.sort(cardList, new CardComperator());
             Collections.reverse(cardList);
-            for (Card card : cardList){
-                if(!card.equals(fourOfAKindValue)){
+            for (Card card : cardList) {
+                if (!card.equals(fourOfAKindValue)) {
                     highCards.add(card);
                     break;
                 }
@@ -47,13 +47,13 @@ public class HandEvaluator {
             evaluatedHand.setHighCard(highCards);
             return evaluatedHand;
         }
-        if(null != hasFullHouse(cardList)){
+        if (null != hasFullHouse(cardList)) {
             evaluatedHand.setHandStrength(HandStrength.FULL_HOUSE);
             return evaluatedHand;
         }
         List<Card> flushValues = hasFlush(cardList);
-        if(null != flushValues){
-            Collections.sort(flushValues,new CardComperator());
+        if (null != flushValues) {
+            Collections.sort(flushValues, new CardComperator());
             highCards.add(flushValues.get(4));
 
             evaluatedHand.setHandStrength(HandStrength.FLUSH);
@@ -63,9 +63,18 @@ public class HandEvaluator {
         }
 
         List<Card> straightValues = hasStraight(cardList);
-        if(null != straightValues){
-            Collections.sort(straightValues,new CardComperator());
-            highCards.add(straightValues.get(4));
+        if (null != straightValues) {
+            Collections.sort(straightValues, new CardComperator());
+            boolean hasAce = false;
+            for(Card highCard : straightValues){
+                if(highCard.getValue() == 1){
+                    highCards.add(highCard);
+                    hasAce = true;
+                }
+            }
+            if(!hasAce){
+                highCards.add(straightValues.get(straightValues.size() - 1));
+            }
 
             evaluatedHand.setHandStrength(HandStrength.STRAIGHT);
             evaluatedHand.setHighCard(highCards);
@@ -73,26 +82,27 @@ public class HandEvaluator {
         }
 
         Card threeOfAKindValue = hasThreeOfAKind(cardList);
-        if(null != threeOfAKindValue){
-            Collections.sort(cardList,new CardComperator());
+        if (null != threeOfAKindValue) {
+            Collections.sort(cardList, new CardComperator());
             Collections.reverse(cardList);
-            for(Card card : cardList){
-                if(!card.equals(threeOfAKindValue) && highCards.size() < 2){
+            for (Card card : cardList) {
+                if (!card.getValue().equals(threeOfAKindValue.getValue()) && highCards.size() < 2) {
                     highCards.add(card);
                 }
             }
 
             evaluatedHand.setHandStrength(HandStrength.THREE_OF_A_KIND);
+            Collections.sort(highCards, new CardComperator());
             evaluatedHand.setHighCard(highCards);
             return evaluatedHand;
         }
 
         List<Card> twoPairValues = hasTwoPair(cardList);
-        if(null != twoPairValues){
-            Collections.sort(cardList,new CardComperator());
+        if (null != twoPairValues) {
+            Collections.sort(cardList, new CardComperator());
             Collections.reverse(cardList);
-            for(Card card : cardList){
-                if(!twoPairValues.contains(card) && highCards.size() < 1){
+            for (Card card : cardList) {
+                if (!twoPairValues.contains(card) && highCards.size() < 1) {
                     highCards.add(card);
                 }
             }
@@ -102,16 +112,17 @@ public class HandEvaluator {
         }
 
         Card onePairValue = hasOnePair(cardList);
-        if(null != onePairValue){
-            Collections.sort(cardList,new CardComperator());
+        if (null != onePairValue) {
+            Collections.sort(cardList, new CardComperator());
             Collections.reverse(cardList);
-            for(Card card : cardList){
-                if(!card.equals(onePairValue) && highCards.size() < 3){
+            for (Card card : cardList) {
+                if (!card.getValue().equals(onePairValue.getValue()) && highCards.size() < 3) {
                     highCards.add(card);
                 }
             }
 
             evaluatedHand.setHandStrength(HandStrength.ONE_PAIR);
+            Collections.sort(highCards, new CardComperator());
             evaluatedHand.setHighCard(highCards);
             return evaluatedHand;
         }
@@ -121,36 +132,45 @@ public class HandEvaluator {
         evaluatedHand.setHandStrength(HandStrength.HIGH_CARD);
         evaluatedHand.setHighCard(cardList);
         return evaluatedHand;
-}
+    }
 
-    public static Card hasOnePair(List<Card> cards){
+    public static Card hasOnePair(List<Card> cards) {
         Set<Integer> valuesWithOutDuplicates = new HashSet<>();
-        Card pair = null;
-        for(Card card : cards){
-            if(!valuesWithOutDuplicates.add(card.getValue())){
-                pair = card;
+        for (Card card : cards) {
+            if (!valuesWithOutDuplicates.add(card.getValue())) {
+                int count = 0;
+                for(Card otherCard : cards){
+                    if(otherCard.equals(card)){
+                        continue;
+                    }
+                    if(card.getValue().equals(otherCard.getValue())){
+                        count++;
+                    }
+                }
+                if(count == 1){
+                    return card;
+                }
             }
+
         }
-        if(null != pair && valuesWithOutDuplicates.size() == cards.size() - 1){
-            return pair;
-        }
+
 
         return null;
     }
 
-    public static List<Card> hasTwoPair(List<Card> cards){
+    public static List<Card> hasTwoPair(List<Card> cards) {
         List<Card> pairs = new ArrayList<>();
-        for(Card card : cards){
+        for (Card card : cards) {
             int sameCardValue = 0;
-            for(Card otherCard : cards){
-                if(card.equals(otherCard)){
+            for (Card otherCard : cards) {
+                if (card.equals(otherCard)) {
                     continue;
                 }
-                if(card.getValue().equals(otherCard.getValue())){
+                if (card.getValue().equals(otherCard.getValue()) && !pairs.contains(otherCard)) {
                     sameCardValue++;
                 }
             }
-            if(sameCardValue > 0 ){
+            if (sameCardValue > 0) {
                 pairs.add(card);
             }
         }
@@ -158,18 +178,18 @@ public class HandEvaluator {
         return pairs.size() > 1 ? pairs : null;
     }
 
-    public static Card hasThreeOfAKind(List<Card> cards){
-        for(Card card : cards){
+    public static Card hasThreeOfAKind(List<Card> cards) {
+        for (Card card : cards) {
             int sameCardValue = 0;
-            for(Card otherCard : cards){
-                if(card.equals(otherCard)){
+            for (Card otherCard : cards) {
+                if (card.equals(otherCard)) {
                     continue;
                 }
-                if(card.getValue().equals(otherCard.getValue())){
+                if (card.getValue().equals(otherCard.getValue())) {
                     sameCardValue++;
                 }
             }
-            if(sameCardValue == 3 ){
+            if (sameCardValue == 2) {
                 return card;
             }
         }
@@ -177,37 +197,51 @@ public class HandEvaluator {
         return null;
     }
 
-    public static List<Card> hasStraight(List<Card> cards){
+    public static List<Card> hasStraight(List<Card> cards) {
 
         List<Card> straight = new ArrayList<>();
-        Collections.sort(cards,new CardComperator());
+        Collections.sort(cards, new CardComperator());
 
         Integer previousValue = cards.get(0).getValue();
-        for(Card card : cards){
-            if(card.getValue() == previousValue + 1 || (previousValue == 13 && card.getValue() == 1)){
+        straight.add(cards.get(0));
+        for (Card card : cards) {
+            if (card.getValue() == previousValue + 1) {
+                straight.add(card);
+            } else if (!previousValue.equals(card.getValue()) && straight.size() < 4) {
+                straight.clear();
                 straight.add(card);
             }
+            previousValue = card.getValue();
         }
-        if(straight.size() == 5){
+        if (straight.size() >= 4 ) {
+            Card lastCardInStraight = straight.get(straight.size() - 1);
+            Card firstCard = cards.get(0);
+            if(lastCardInStraight.getValue() == 13 && firstCard.getValue() == 1){
+                straight.add(firstCard);
+            }
+        }
+        if (straight.size() >= 5) {
             return straight;
         }
 
         return null;
     }
 
-    public static List<Card> hasFlush(List<Card> cards){
+    public static List<Card> hasFlush(List<Card> cards) {
 
-        List<Card> flush = new ArrayList<>();
-        for(Card card : cards){
-            for(Card otherCard : cards){
-                if(card.equals(otherCard)){
+
+        for (Card card : cards) {
+            List<Card> flush = new ArrayList<>();
+            for (Card otherCard : cards) {
+                if (card.equals(otherCard)) {
                     continue;
                 }
-                if(card.getSuit().equals(otherCard.getSuit())){
-                    flush.add(card);
+                if (card.getSuit().equals(otherCard.getSuit())) {
+                    flush.add(otherCard);
                 }
             }
-            if(flush.size() == 5 ){
+            if (flush.size() >= 4) {
+                flush.add(card);
                 return flush;
             }
         }
@@ -215,18 +249,18 @@ public class HandEvaluator {
         return null;
     }
 
-    public static Card hasFourOfAKind(List<Card> cards){
-        for(Card card : cards){
+    public static Card hasFourOfAKind(List<Card> cards) {
+        for (Card card : cards) {
             int sameCardValue = 0;
-            for(Card otherCard : cards){
-                if(card.equals(otherCard)){
+            for (Card otherCard : cards) {
+                if (card.equals(otherCard)) {
                     continue;
                 }
-                if(card.getValue().equals(otherCard.getValue())){
+                if (card.getValue().equals(otherCard.getValue())) {
                     sameCardValue++;
                 }
             }
-            if(sameCardValue == 4 ){
+            if (sameCardValue == 3) {
                 return card;
             }
         }
@@ -234,12 +268,12 @@ public class HandEvaluator {
         return null;
     }
 
-    public static List<Card> hasFullHouse(List<Card> cards){
+    public static List<Card> hasFullHouse(List<Card> cards) {
         List<Card> fullHouse = new ArrayList<>();
         Card onePair = hasOnePair(cards);
         Card threeOfAKind = hasThreeOfAKind(cards);
 
-        if(null != onePair && null != threeOfAKind){
+        if (null != onePair && null != threeOfAKind) {
             fullHouse.add(onePair);
             fullHouse.add(threeOfAKind);
             return fullHouse;
@@ -249,11 +283,11 @@ public class HandEvaluator {
         return null;
     }
 
-    public static List<Card> hasStraightFlush(List<Card> cards){
+    public static List<Card> hasStraightFlush(List<Card> cards) {
         List<Card> straight = hasStraight(cards);
         List<Card> flush = hasFlush(cards);
 
-        if(null != straight && null != flush){
+        if (null != straight && null != flush) {
             return straight;
         }
 
@@ -261,18 +295,16 @@ public class HandEvaluator {
         return null;
     }
 
-    public static List<Card> hasRoyalFlush(List<Card> cards){
+    public static List<Card> hasRoyalFlush(List<Card> cards) {
         List<Card> straightFlush = hasStraightFlush(cards);
 
-        if(null != straightFlush){
+        if (null != straightFlush) {
             Collections.sort(straightFlush, new CardComperator());
 
-            if(straightFlush.get(0).getValue() == 1 && straightFlush.get(4).getValue() == 13){
+            if (straightFlush.get(0).getValue() == 1 && straightFlush.get(straightFlush.size() - 1).getValue() == 13) {
                 return straightFlush;
             }
         }
-
-
 
 
         return null;
