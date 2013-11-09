@@ -59,6 +59,7 @@ public class GameThread extends Thread {
     private ActionType previousAction;
     private int playerBetAmount;
     private int previousBetAmount;
+    private boolean roundOver = false;
     private boolean flopDealt = false;
     private boolean turnDealt = false;
     private boolean riverDealt = false;
@@ -109,9 +110,7 @@ public class GameThread extends Thread {
 
     public void dealFlop() {
 
-        collectChips();
-        previousBetAmount = 0;
-        previousAction = null;
+        endRound();
 
         int resId = resources.getIdentifier(deck.get(0).toString(), "drawable", packageName);
         game.getBoard().add(deck.get(0));
@@ -141,9 +140,7 @@ public class GameThread extends Thread {
     }
 
     public void dealTurn() {
-        collectChips();
-        previousBetAmount = 0;
-        previousAction = null;
+        endRound();
 
         int resId = resources.getIdentifier(deck.get(0).toString(), "drawable", packageName);
         game.getBoard().add(deck.get(0));
@@ -157,9 +154,7 @@ public class GameThread extends Thread {
     }
 
     public void dealRiver() {
-        collectChips();
-        previousBetAmount = 0;
-        previousAction = null;
+        endRound();
 
         int resId = resources.getIdentifier(deck.get(0).toString(), "drawable", packageName);
         game.getBoard().add(deck.get(0));
@@ -218,6 +213,10 @@ public class GameThread extends Thread {
     }
 
     public void makeMoves() {
+        if(playersInRound.size() == 1){
+            roundOver = true;
+            return;
+        }
         List<Player> playerList = new ArrayList<>();
         playerList.addAll(playersInRound);
         for (final Player player : playerList) {
@@ -259,9 +258,8 @@ public class GameThread extends Thread {
                 if (randomAction.equals(ActionType.CALL)) {
                     previousAction = ActionType.CALL;
                     player.setActionType(ActionType.CALL);
-                    int amount = player.getBetAmount() == null ? previousBetAmount : player.getBetAmount() + previousBetAmount;
-                    player.setBetAmount(amount);
-                    moveBet(amount, player);
+                    player.setBetAmount(previousBetAmount);
+                    moveBet(previousBetAmount, player);
                 }
                 if (randomAction.equals(ActionType.RAISE)) {
                     previousAction = ActionType.RAISE;
@@ -283,7 +281,12 @@ public class GameThread extends Thread {
                 if(null != game.getBoard() && game.getBoard().size() > 0){
                     EvaluatedHand handStrength = HandEvaluator.evaluateHand(game.getBoard(), player.getCardOne(), player.getCardTwo());
                     Log.i(TAG, handStrength.getHandStrength().name());
-                    Log.i(TAG, handStrength.getHighCard().toString());
+                    if(null != handStrength.getValue()){
+                        Log.i(TAG, handStrength.getValue().toString());
+                    }
+                    if(null != handStrength.getHighCards()){
+                        Log.i(TAG, handStrength.getHighCards().toString());
+                    }
                 }
 
                 activity.runOnUiThread(new Runnable() {
@@ -358,8 +361,7 @@ public class GameThread extends Thread {
                 potsize.setText(game.getPotSize().toString());
                 if (null != player.getChipLayout()) {
                     TextView existingChipsTextViw = (TextView) player.getChipLayout().getChildAt(0);
-                    int previousBetAmount = Integer.parseInt(existingChipsTextViw.getText().toString());
-                    existingChipsTextViw.setText(player.getBetAmount() + previousBetAmount + "");
+                    existingChipsTextViw.setText(player.getBetAmount() + "");
                 } else {
                     RelativeLayout relativeLayout = new RelativeLayout(context);
                     TextView chipsTextView = new TextView(context);
@@ -405,6 +407,7 @@ public class GameThread extends Thread {
     }
 
     public void collectChips() {
+        game.setPotChips(new ArrayList<RelativeLayout>());
         for (Player player : playersInRound) {
             if (null != player.getChipLayout()) {
                 int chipsShiftX = new Random().nextInt(100) - 50;
@@ -412,6 +415,7 @@ public class GameThread extends Thread {
                 TextView chipsText = (TextView) player.getChipLayout().getChildAt(0);
                 chipsText.setText("");
                 player.getChipLayout().animate().x(screenWidth / 2 + chipsShiftX).y(screenHeight / 7 + chipsShiftY);
+                game.getPotChips().add(player.getChipLayout());
             }
             player.setChipLayout(null);
             player.setBetAmount(null);
@@ -455,39 +459,112 @@ public class GameThread extends Thread {
             while (makeMovesAgain()) {
                 makeMoves();
             }
-            activity.runOnUiThread(new Runnable() {
-                public void run() {
-                    dealFlop();
+            while(!roundOver){
+                Thread.sleep(2000);
+                if(!flopDealt){
+                    activity.runOnUiThread(new Runnable() {
+                        public void run() {
+                            dealFlop();
+                        }
+                    });
+                    flopDealt = true;
+                } else if (!turnDealt) {
+                    activity.runOnUiThread(new Runnable() {
+                        public void run() {
+                            dealTurn();
+                        }
+                    });
+                    turnDealt = true;
+                } else if (!riverDealt){
+                    activity.runOnUiThread(new Runnable() {
+                        public void run() {
+                            dealRiver();
+                        }
+                    });
+                    riverDealt = true;
+                    roundOver = true;
                 }
-            });
-            makeMoves();
-            while (makeMovesAgain()) {
+                Thread.sleep(2000);
                 makeMoves();
+                while (makeMovesAgain()) {
+                    makeMoves();
+                }
+                if(roundOver){
+                    activity.runOnUiThread(new Runnable() {
+                        public void run() {
+                            collectChips();
+                        }
+                    });
+
+                }
+            }
+            for(final Player player : playersInRound){
+                final EvaluatedHand evaluatedHand = HandEvaluator.evaluateHand(game.getBoard(), player.getCardOne(), player.getCardTwo());
+                player.setEvaluatedHand(evaluatedHand);
+                if(!player.isUser()){
+                    final int resId = resources.getIdentifier(player.getCardOne().toString(), "drawable", packageName);
+                    final int res2Id = resources.getIdentifier(player.getCardTwo().toString(), "drawable", packageName);
+                    activity.runOnUiThread(new Runnable() {
+                        public void run() {
+                            player.getCard1View().setImageResource(resId);
+                            player.getCard2View().setImageResource(res2Id);
+                            player.getTextView().setText(evaluatedHand.getHandStrength().name());
+                        }
+                    });
+                }
             }
             Thread.sleep(2000);
+            EvaluatedHand bestHand = playersInRound.get(0).getEvaluatedHand();
+            Player winner = playersInRound.get(0);
+            for(Player player : playersInRound){
+                if(player.equals(winner)){
+                    continue;
+                }
+                if(player.getEvaluatedHand().getHandStrength().getStrength() > bestHand.getHandStrength().getStrength()){
+                    bestHand = player.getEvaluatedHand();
+                    winner = player;
+                }
+                if(player.getEvaluatedHand().getHandStrength().getStrength().equals(bestHand.getHandStrength().getStrength())){
+                    Collections.reverse(player.getEvaluatedHand().getHighCards());
+                    Collections.reverse(winner.getEvaluatedHand().getHighCards());
+                    for(int i=0;i<player.getEvaluatedHand().getHighCards().size();i++){
+                        Card playerHighCard = player.getEvaluatedHand().getHighCards().get(i);
+                        Card winnerHighCard = winner.getEvaluatedHand().getHighCards().get(i);
+                        if(playerHighCard.getValue() > winnerHighCard.getValue()){
+                            bestHand = player.getEvaluatedHand();
+                            winner = player;
+                            break;
+                        }
+                        if(playerHighCard.getValue() < winnerHighCard.getValue()){
+                            break;
+                        }
+                    }
+
+                }
+            }
+
+            for(final RelativeLayout chips : game.getPotChips()){
+                final Animation animation = createAnimation(chips.getLeft(), winner.getTextView().getLeft(), chips.getTop(), winner.getTextView().getTop(), false);
+                chips.setAnimation(animation);
+                activity.runOnUiThread(new Runnable() {
+                    public void run() {
+                        chips.startAnimation(animation);
+                    }
+                });
+            }
+            winner.setStackSize(winner.getStackSize() + game.getPotSize());
+            game.setPotSize(0);
+            final Player playerToWin = winner;
             activity.runOnUiThread(new Runnable() {
                 public void run() {
-                    dealTurn();
+                    playerToWin.getTextView().setText(playerToWin.getStackSize().toString());
                 }
             });
-            makeMoves();
-            while (makeMovesAgain()) {
-                makeMoves();
-            }
             Thread.sleep(2000);
-            activity.runOnUiThread(new Runnable() {
-                public void run() {
-                    dealRiver();
-                }
-            });
-            makeMoves();
-            while (makeMovesAgain()) {
-                makeMoves();
-            }
 
 
         } catch (InterruptedException e) {
-            e.printStackTrace();
+           Log.e(TAG,e.getMessage());
         }
 
     }
@@ -515,16 +592,16 @@ public class GameThread extends Thread {
     public List<ActionType> getAvailableActions() {
         List<ActionType> availableActions = new ArrayList<>();
         if (null == previousAction || previousAction.equals(ActionType.CHECK)) {
-            availableActions.add(ActionType.CHECK);
+//            availableActions.add(ActionType.CHECK);
             availableActions.add(ActionType.BET);
-            availableActions.add(ActionType.FOLD);
+//            availableActions.add(ActionType.FOLD);
         }
         if (null != previousAction) {
             if (previousAction.equals(ActionType.BET) || previousAction.equals(ActionType.CALL)
                     || previousAction.equals(ActionType.RAISE) || previousAction.equals(ActionType.FOLD)) {
                 availableActions.add(ActionType.CALL);
 //                availableActions.add(ActionType.RAISE);
-                availableActions.add(ActionType.FOLD);
+//                availableActions.add(ActionType.FOLD);
             }
         }
 
@@ -533,11 +610,22 @@ public class GameThread extends Thread {
 
     public boolean makeMovesAgain() {
         for (Player player : playersInRound) {
-            if (null != player.getBetAmount() && player.getBetAmount() != previousBetAmount && player.getStackSize() > 0) {
+            if ((null != player.getBetAmount() && player.getBetAmount() != previousBetAmount && player.getStackSize() > 0)
+                    || (null == player.getBetAmount() &&  previousBetAmount != 0)) {
                 return true;
             }
         }
         return false;
+    }
+
+    public void endRound(){
+        collectChips();
+        previousBetAmount = 0;
+        previousAction = null;
+        for(Player player : playersInRound){
+            player.setActionType(null);
+            player.setBetAmount(null);
+        }
     }
 
     public boolean isPlayerTurn() {

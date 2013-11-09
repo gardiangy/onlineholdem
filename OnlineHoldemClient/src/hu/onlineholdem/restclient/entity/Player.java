@@ -7,6 +7,7 @@ import android.widget.TextView;
 import java.io.Serializable;
 
 import hu.onlineholdem.restclient.enums.ActionType;
+import hu.onlineholdem.restclient.util.EvaluatedHand;
 
 public class Player implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -23,6 +24,7 @@ public class Player implements Serializable {
     private Integer betAmount;
     private Card cardOne;
     private Card cardTwo;
+    private EvaluatedHand evaluatedHand;
 
 	public Player() {
 	}
@@ -121,5 +123,13 @@ public class Player implements Serializable {
 
     public void setCardTwo(Card cardTwo) {
         this.cardTwo = cardTwo;
+    }
+
+    public EvaluatedHand getEvaluatedHand() {
+        return evaluatedHand;
+    }
+
+    public void setEvaluatedHand(EvaluatedHand evaluatedHand) {
+        this.evaluatedHand = evaluatedHand;
     }
 }

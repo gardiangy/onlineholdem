@@ -28,9 +28,8 @@ public class HandEvaluator {
         List<Card> straightFlushValues = hasStraightFlush(cardList);
         if (null != straightFlushValues) {
             Collections.sort(straightFlushValues, new CardComperator());
-            highCards.add(straightFlushValues.get(straightFlushValues.size() - 1));
             evaluatedHand.setHandStrength(HandStrength.STRAIGHT_FLUSH);
-            evaluatedHand.setHighCard(highCards);
+            evaluatedHand.setValue(straightFlushValues.get(straightFlushValues.size() - 1).getValue());
             return evaluatedHand;
         }
         Card fourOfAKindValue = hasFourOfAKind(cardList);
@@ -44,7 +43,8 @@ public class HandEvaluator {
                 }
             }
             evaluatedHand.setHandStrength(HandStrength.FOUR_OF_A_KIND);
-            evaluatedHand.setHighCard(highCards);
+            evaluatedHand.setValue(fourOfAKindValue.getValue());
+            evaluatedHand.setHighCards(highCards);
             return evaluatedHand;
         }
         if (null != hasFullHouse(cardList)) {
@@ -54,10 +54,8 @@ public class HandEvaluator {
         List<Card> flushValues = hasFlush(cardList);
         if (null != flushValues) {
             Collections.sort(flushValues, new CardComperator());
-            highCards.add(flushValues.get(4));
-
             evaluatedHand.setHandStrength(HandStrength.FLUSH);
-            evaluatedHand.setHighCard(highCards);
+            evaluatedHand.setValue(flushValues.get(4).getValue());
             return evaluatedHand;
 
         }
@@ -65,19 +63,24 @@ public class HandEvaluator {
         List<Card> straightValues = hasStraight(cardList);
         if (null != straightValues) {
             Collections.sort(straightValues, new CardComperator());
-            boolean hasAce = false;
-            for(Card highCard : straightValues){
-                if(highCard.getValue() == 1){
-                    highCards.add(highCard);
-                    hasAce = true;
+            if(straightValues.get(straightValues.size() - 1).getValue() == 13){
+                boolean hasAce = false;
+                for(Card highCard : straightValues){
+                    if(highCard.getValue() == 1 ){
+                        evaluatedHand.setValue(highCard.getValue());
+                        hasAce = true;
+                    }
                 }
-            }
-            if(!hasAce){
-                highCards.add(straightValues.get(straightValues.size() - 1));
+                if(!hasAce){
+                    evaluatedHand.setValue(straightValues.get(straightValues.size() - 1).getValue());
+                }
+            } else {
+                evaluatedHand.setValue(straightValues.get(straightValues.size() - 1).getValue());
             }
 
+
             evaluatedHand.setHandStrength(HandStrength.STRAIGHT);
-            evaluatedHand.setHighCard(highCards);
+
             return evaluatedHand;
         }
 
@@ -93,7 +96,8 @@ public class HandEvaluator {
 
             evaluatedHand.setHandStrength(HandStrength.THREE_OF_A_KIND);
             Collections.sort(highCards, new CardComperator());
-            evaluatedHand.setHighCard(highCards);
+            evaluatedHand.setHighCards(highCards);
+            evaluatedHand.setValue(threeOfAKindValue.getValue());
             return evaluatedHand;
         }
 
@@ -107,7 +111,9 @@ public class HandEvaluator {
                 }
             }
             evaluatedHand.setHandStrength(HandStrength.TWO_PAIR);
-            evaluatedHand.setHighCard(highCards);
+            evaluatedHand.setHighCards(highCards);
+            Collections.sort(twoPairValues, new CardComperator());
+            evaluatedHand.setValue(twoPairValues.get(twoPairValues.size() - 1).getValue());
             return evaluatedHand;
         }
 
@@ -123,14 +129,15 @@ public class HandEvaluator {
 
             evaluatedHand.setHandStrength(HandStrength.ONE_PAIR);
             Collections.sort(highCards, new CardComperator());
-            evaluatedHand.setHighCard(highCards);
+            evaluatedHand.setHighCards(highCards);
+            evaluatedHand.setValue(onePairValue.getValue());
             return evaluatedHand;
         }
 
         Collections.sort(cardList, new CardComperator());
 
         evaluatedHand.setHandStrength(HandStrength.HIGH_CARD);
-        evaluatedHand.setHighCard(cardList);
+        evaluatedHand.setHighCards(cardList);
         return evaluatedHand;
     }
 
@@ -207,11 +214,13 @@ public class HandEvaluator {
         for (Card card : cards) {
             if (card.getValue() == previousValue + 1) {
                 straight.add(card);
+                previousValue = card.getValue();
             } else if (!previousValue.equals(card.getValue()) && straight.size() < 4) {
                 straight.clear();
                 straight.add(card);
+                previousValue = card.getValue();
             }
-            previousValue = card.getValue();
+
         }
         if (straight.size() >= 4 ) {
             Card lastCardInStraight = straight.get(straight.size() - 1);

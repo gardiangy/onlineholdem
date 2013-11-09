@@ -9,7 +9,9 @@ public class EvaluatedHand {
 
     private HandStrength handStrength;
 
-    private List<Card> highCard;
+    private List<Card> highCards;
+
+    private Integer value;
 
     public HandStrength getHandStrength() {
         return handStrength;
@@ -19,11 +21,19 @@ public class EvaluatedHand {
         this.handStrength = handStrength;
     }
 
-    public List<Card> getHighCard() {
-        return highCard;
+    public List<Card> getHighCards() {
+        return highCards;
     }
 
-    public void setHighCard(List<Card> highCard) {
-        this.highCard = highCard;
+    public void setHighCards(List<Card> highCards) {
+        this.highCards = highCards;
+    }
+
+    public Integer getValue() {
+        return value;
+    }
+
+    public void setValue(Integer value) {
+        this.value = value;
     }
 }

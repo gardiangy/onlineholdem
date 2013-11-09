@@ -10,4 +10,12 @@ public enum HandStrength {
     HandStrength(Integer strength) {
         this.strength = strength;
     }
+
+    public Integer getStrength() {
+        return strength;
+    }
+
+    public void setStrength(Integer strength) {
+        this.strength = strength;
+    }
 }

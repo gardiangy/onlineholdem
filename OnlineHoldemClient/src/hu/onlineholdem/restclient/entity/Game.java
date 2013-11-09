@@ -1,5 +1,7 @@
 package hu.onlineholdem.restclient.entity;
 
+import android.widget.RelativeLayout;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -16,6 +18,8 @@ public class Game implements Serializable {
 	private List<Player> players;
 
     private List<Card> board;
+
+    private List<RelativeLayout> potChips;
 
 	public Game() {
 	}
@@ -58,5 +62,13 @@ public class Game implements Serializable {
 
     public void setBoard(List<Card> board) {
         this.board = board;
+    }
+
+    public List<RelativeLayout> getPotChips() {
+        return potChips;
+    }
+
+    public void setPotChips(List<RelativeLayout> potChips) {
+        this.potChips = potChips;
     }
 }
