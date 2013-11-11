@@ -165,6 +165,10 @@ public class SinglePlayerActivity extends Activity {
         gameThread.setPlayerAction(ActionType.FOLD);
     }
 
+    public void removeSeat(TextView textView){
+        seats.removeView(textView);
+    }
+
     public int getPreviousBetAmount() {
         return previousBetAmount;
     }
