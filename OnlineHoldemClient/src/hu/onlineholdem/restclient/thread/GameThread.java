@@ -115,6 +115,7 @@ public class GameThread extends Thread {
     }
 
     public void startRound() throws InterruptedException {
+        roundOver = false;
         activity.runOnUiThread(new Runnable() {
             public void run() {
                 deal();
@@ -226,16 +227,15 @@ public class GameThread extends Thread {
             @Override
             public void run() {
                 board.invalidate();
+                for (final RelativeLayout chips : game.getPotChips()) {
+                    chips.animate().setDuration(500).x(winner.getTextView().getLeft()).y(winner.getTextView().getTop());
+                }
             }
         });
 
     }
 
     public void endRound() {
-
-        for (final RelativeLayout chips : game.getPotChips()) {
-            chips.animate().setDuration(500).x(winner.getTextView().getLeft()).y(winner.getTextView().getTop());
-        }
 
         winner.setStackSize(winner.getStackSize() + game.getPotSize());
 
@@ -280,20 +280,29 @@ public class GameThread extends Thread {
         game.getBoard().add(deck.get(2));
 
         Animation flop1Anim = createAnimation(screenWidth / 2, screenWidth / 2 - 300, 0, screenHeight / 4, true);
+        flop1 = new ImageView(context);
+        board.addView(flop1);
         flop1.setAnimation(flop1Anim);
         flop1.setImageResource(resId);
+        flop1.setVisibility(View.VISIBLE);
         flop1.startAnimation(flop1Anim);
         deck.remove(0);
 
         Animation flop2Anim = createAnimation(screenWidth / 2, screenWidth / 2 - 200, 0, screenHeight / 4, true);
+        flop2 = new ImageView(context);
+        board.addView(flop2);
         flop2.setAnimation(flop2Anim);
         flop2.setImageResource(res2Id);
+        flop2.setVisibility(View.VISIBLE);
         flop2.startAnimation(flop2Anim);
         deck.remove(0);
 
         Animation flop3Anim = createAnimation(screenWidth / 2, screenWidth / 2 - 100, 0, screenHeight / 4, true);
+        flop3 = new ImageView(context);
+        board.addView(flop3);
         flop3.setAnimation(flop3Anim);
         flop3.setImageResource(res3Id);
+        flop3.setVisibility(View.VISIBLE);
         flop3.startAnimation(flop3Anim);
         deck.remove(0);
 
@@ -306,8 +315,11 @@ public class GameThread extends Thread {
         game.getBoard().add(deck.get(0));
 
         Animation turnAnim = createAnimation(screenWidth / 2, screenWidth / 2, 0, screenHeight / 4, true);
+        turn = new ImageView(context);
+        board.addView(turn);
         turn.setAnimation(turnAnim);
         turn.setImageResource(resId);
+        turn.setVisibility(View.VISIBLE);
         turn.startAnimation(turnAnim);
         deck.remove(0);
 
@@ -320,8 +332,11 @@ public class GameThread extends Thread {
         game.getBoard().add(deck.get(0));
 
         Animation riverAnim = createAnimation(screenWidth / 2, screenWidth / 2 + 100, 0, screenHeight / 4, true);
+        river = new ImageView(context);
+        board.addView(river);
         river.setAnimation(riverAnim);
         river.setImageResource(resId);
+        turn.setVisibility(View.VISIBLE);
         river.startAnimation(riverAnim);
         deck.remove(0);
 
@@ -610,13 +625,13 @@ public class GameThread extends Thread {
         createGame();
 
         try {
-//            while(players.size() > 1 ){
+            while(players.size() > 1 ){
             shuffle();
             startRound();
             Thread.sleep(1000);
             evaluateRound();
             showCards();
-            Thread.sleep(3000);
+            Thread.sleep(4000);
             activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -624,7 +639,7 @@ public class GameThread extends Thread {
                 }
             });
 
-//            }
+            }
 
 
         } catch (InterruptedException e) {
