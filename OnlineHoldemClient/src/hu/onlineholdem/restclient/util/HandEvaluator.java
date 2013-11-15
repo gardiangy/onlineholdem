@@ -36,26 +36,45 @@ public class HandEvaluator {
         if (null != fourOfAKindValue) {
             Collections.sort(cardList, new CardComperator());
             Collections.reverse(cardList);
-            for (Card card : cardList) {
-                if (!card.equals(fourOfAKindValue)) {
-                    highCards.add(card);
-                    break;
+            Card lastHighCard = cardList.get(cardList.size() - 1);
+            if (lastHighCard.getValue() == 1 && !lastHighCard.equals(fourOfAKindValue)) {
+                highCards.add(lastHighCard);
+            } else {
+                for (Card card : cardList) {
+                    if (!card.equals(fourOfAKindValue)) {
+                        highCards.add(card);
+                        break;
+                    }
                 }
             }
+
             evaluatedHand.setHandStrength(HandStrength.FOUR_OF_A_KIND);
             evaluatedHand.setValue(fourOfAKindValue.getValue());
             evaluatedHand.setHighCards(highCards);
             return evaluatedHand;
         }
-        if (null != hasFullHouse(cardList)) {
+        List<Card> fullHouseValues = hasFullHouse(cardList);
+        if (null != fullHouseValues) {
             evaluatedHand.setHandStrength(HandStrength.FULL_HOUSE);
+            evaluatedHand.setValue(fullHouseValues.get(fullHouseValues.size() - 1).getValue());
+            highCards.add(fullHouseValues.get(0));
+            evaluatedHand.setHighCards(highCards);
             return evaluatedHand;
         }
         List<Card> flushValues = hasFlush(cardList);
         if (null != flushValues) {
             Collections.sort(flushValues, new CardComperator());
+            Collections.reverse(flushValues);
             evaluatedHand.setHandStrength(HandStrength.FLUSH);
-            evaluatedHand.setValue(flushValues.get(4).getValue());
+            highCards.addAll(flushValues);
+            if (flushValues.get(flushValues.size() - 1).getValue() == 1) {
+                evaluatedHand.setValue(flushValues.get(flushValues.size() - 1).getValue());
+                highCards.remove(flushValues.get(flushValues.size() - 1));
+            } else {
+                evaluatedHand.setValue(flushValues.get(0).getValue());
+                highCards.remove(flushValues.get(0));
+            }
+            evaluatedHand.setHighCards(highCards);
             return evaluatedHand;
 
         }
@@ -63,15 +82,15 @@ public class HandEvaluator {
         List<Card> straightValues = hasStraight(cardList);
         if (null != straightValues) {
             Collections.sort(straightValues, new CardComperator());
-            if(straightValues.get(straightValues.size() - 1).getValue() == 13){
+            if (straightValues.get(straightValues.size() - 1).getValue() == 13) {
                 boolean hasAce = false;
-                for(Card highCard : straightValues){
-                    if(highCard.getValue() == 1 ){
+                for (Card highCard : straightValues) {
+                    if (highCard.getValue() == 1) {
                         evaluatedHand.setValue(highCard.getValue());
                         hasAce = true;
                     }
                 }
-                if(!hasAce){
+                if (!hasAce) {
                     evaluatedHand.setValue(straightValues.get(straightValues.size() - 1).getValue());
                 }
             } else {
@@ -88,14 +107,18 @@ public class HandEvaluator {
         if (null != threeOfAKindValue) {
             Collections.sort(cardList, new CardComperator());
             Collections.reverse(cardList);
+            if (cardList.get(cardList.size() - 1).getValue() == 1) {
+                highCards.add(cardList.get(cardList.size() - 1));
+            }
+
             for (Card card : cardList) {
                 if (!card.getValue().equals(threeOfAKindValue.getValue()) && highCards.size() < 2) {
                     highCards.add(card);
                 }
             }
 
+
             evaluatedHand.setHandStrength(HandStrength.THREE_OF_A_KIND);
-            Collections.sort(highCards, new CardComperator());
             evaluatedHand.setHighCards(highCards);
             evaluatedHand.setValue(threeOfAKindValue.getValue());
             return evaluatedHand;
@@ -105,15 +128,28 @@ public class HandEvaluator {
         if (null != twoPairValues) {
             Collections.sort(cardList, new CardComperator());
             Collections.reverse(cardList);
-            for (Card card : cardList) {
-                if (!twoPairValues.contains(card) && highCards.size() < 1) {
-                    highCards.add(card);
+
+            evaluatedHand.setHandStrength(HandStrength.TWO_PAIR);
+            Collections.sort(twoPairValues, new CardComperator());
+            if (twoPairValues.get(0).getValue() == 1) {
+                evaluatedHand.setValue(1);
+                highCards.add(twoPairValues.get(twoPairValues.size() - 1));
+            } else {
+                evaluatedHand.setValue(twoPairValues.get(twoPairValues.size() - 1).getValue());
+                highCards.add(twoPairValues.get(0));
+            }
+            if (cardList.get(0).getValue() == 1) {
+                highCards.add(cardList.get(0));
+            } else {
+                for (Card card : cardList) {
+                    if (!twoPairValues.contains(card)) {
+                        highCards.add(card);
+                        break;
+                    }
                 }
             }
-            evaluatedHand.setHandStrength(HandStrength.TWO_PAIR);
             evaluatedHand.setHighCards(highCards);
-            Collections.sort(twoPairValues, new CardComperator());
-            evaluatedHand.setValue(twoPairValues.get(twoPairValues.size() - 1).getValue());
+
             return evaluatedHand;
         }
 
@@ -121,14 +157,18 @@ public class HandEvaluator {
         if (null != onePairValue) {
             Collections.sort(cardList, new CardComperator());
             Collections.reverse(cardList);
+            if (cardList.get(cardList.size() - 1).getValue() == 1) {
+                highCards.add(cardList.get(cardList.size() - 1));
+            }
+
             for (Card card : cardList) {
                 if (!card.getValue().equals(onePairValue.getValue()) && highCards.size() < 3) {
                     highCards.add(card);
                 }
             }
 
+
             evaluatedHand.setHandStrength(HandStrength.ONE_PAIR);
-            Collections.sort(highCards, new CardComperator());
             evaluatedHand.setHighCards(highCards);
             evaluatedHand.setValue(onePairValue.getValue());
             return evaluatedHand;
@@ -137,6 +177,14 @@ public class HandEvaluator {
         Collections.sort(cardList, new CardComperator());
 
         evaluatedHand.setHandStrength(HandStrength.HIGH_CARD);
+        if(cardList.get(0).getValue() == 1){
+            evaluatedHand.setValue(1);
+            cardList.remove(cardList.get(0));
+        } else {
+            evaluatedHand.setValue(cardList.get(cardList.size() - 1).getValue());
+            cardList.remove(cardList.get(cardList.size() - 1));
+        }
+        Collections.reverse(cardList);
         evaluatedHand.setHighCards(cardList);
         return evaluatedHand;
     }
@@ -146,15 +194,15 @@ public class HandEvaluator {
         for (Card card : cards) {
             if (!valuesWithOutDuplicates.add(card.getValue())) {
                 int count = 0;
-                for(Card otherCard : cards){
-                    if(otherCard.equals(card)){
+                for (Card otherCard : cards) {
+                    if (otherCard.equals(card)) {
                         continue;
                     }
-                    if(card.getValue().equals(otherCard.getValue())){
+                    if (card.getValue().equals(otherCard.getValue())) {
                         count++;
                     }
                 }
-                if(count == 1){
+                if (count == 1) {
                     return card;
                 }
             }
@@ -222,10 +270,10 @@ public class HandEvaluator {
             }
 
         }
-        if (straight.size() >= 4 ) {
+        if (straight.size() >= 4) {
             Card lastCardInStraight = straight.get(straight.size() - 1);
             Card firstCard = cards.get(0);
-            if(lastCardInStraight.getValue() == 13 && firstCard.getValue() == 1){
+            if (lastCardInStraight.getValue() == 13 && firstCard.getValue() == 1) {
                 straight.add(firstCard);
             }
         }
