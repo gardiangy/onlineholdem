@@ -33,6 +33,7 @@ public class SinglePlayerActivity extends Activity {
     private List<Player> players = new ArrayList<>();
     private int betAmount;
     private int previousBetAmount;
+    private SeekBar betBar;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -52,7 +53,7 @@ public class SinglePlayerActivity extends Activity {
         display.getSize(size);
         screenWidth = size.x;
         screenHeight = size.y;
-        SeekBar betBar = (SeekBar) findViewById(R.id.betBar);
+        betBar = (SeekBar) findViewById(R.id.betBar);
         Button btnCheck = (Button) findViewById(R.id.btnCheck);
         Button btnBet = (Button) findViewById(R.id.btnBet);
         Button btnFold = (Button) findViewById(R.id.btnFold);
@@ -175,5 +176,13 @@ public class SinglePlayerActivity extends Activity {
 
     public void setPreviousBetAmount(int previousBetAmount) {
         this.previousBetAmount = previousBetAmount;
+    }
+
+    public SeekBar getBetBar() {
+        return betBar;
+    }
+
+    public void setBetBar(SeekBar betBar) {
+        this.betBar = betBar;
     }
 }

@@ -6,7 +6,8 @@ public enum ActionType {
     BET("BET"),
     CALL("CALL"),
     RAISE("RAISE"),
-    FOLD("FOLD");
+    FOLD("FOLD"),
+    ALL_IN("ALL_IN");
 
     private String name;
 

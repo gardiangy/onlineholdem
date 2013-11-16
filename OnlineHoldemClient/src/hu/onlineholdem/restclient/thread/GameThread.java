@@ -159,7 +159,7 @@ public class GameThread extends Thread {
             if (roundOver) {
                 activity.runOnUiThread(new Runnable() {
                     public void run() {
-                        collectChips();
+                        endBettingRound();
                     }
                 });
 
@@ -252,7 +252,7 @@ public class GameThread extends Thread {
             player.setCard1View(null);
             player.setCard2View(null);
         }
-        for(RelativeLayout chip : game.getPotChips()){
+        for (RelativeLayout chip : game.getPotChips()) {
             board.removeView(chip);
         }
         board.removeView(flop1);
@@ -419,22 +419,22 @@ public class GameThread extends Thread {
                     player.setActionType(ActionType.CHECK);
                 }
                 if (randomAction.equals(ActionType.BET)) {
+                    int amount = 50;
                     player.setActionType(ActionType.BET);
-                    player.setBetAmount(50);
-                    previousBetAmount = player.getBetAmount();
+                    previousBetAmount = amount;
                     activity.setPreviousBetAmount(previousBetAmount);
                     previousAction = ActionType.BET;
-                    moveBet(player.getBetAmount(), player);
+                    moveBet(amount, player);
                 }
                 if (randomAction.equals(ActionType.FOLD)) {
                     player.setActionType(ActionType.FOLD);
                     moveFold(player);
                 }
                 if (randomAction.equals(ActionType.CALL)) {
+                    int amount = previousBetAmount;
                     previousAction = ActionType.CALL;
                     player.setActionType(ActionType.CALL);
-                    player.setBetAmount(previousBetAmount);
-                    moveBet(previousBetAmount, player);
+                    moveBet(amount, player);
                 }
                 if (randomAction.equals(ActionType.RAISE)) {
                     previousAction = ActionType.RAISE;
@@ -463,7 +463,10 @@ public class GameThread extends Thread {
                         Log.i(TAG, handStrength.getHighCards().toString());
                     }
                 }
+                activity.getBetBar().setMax(player.getStackSize());
+                activity.getBetBar().setProgress(0);
 
+                showActionButtons(true);
                 activity.runOnUiThread(new Runnable() {
                     public void run() {
                         if (availableActions.contains(ActionType.CALL)) {
@@ -476,10 +479,13 @@ public class GameThread extends Thread {
                         } else {
                             btnBet.setText("BET");
                         }
+                        if (previousBetAmount > player.getStackSize()) {
+                            btnCheck.setText("ALL IN");
+                            btnBet.setVisibility(View.INVISIBLE);
+                        }
                     }
                 });
 
-                showActionButtons(true);
 
                 while (isPlayerTurn) {
                     try {
@@ -490,7 +496,11 @@ public class GameThread extends Thread {
                                 previousBetAmount = playerBetAmount;
                             }
                             if (playerAction.equals(ActionType.CALL)) {
-                                moveBet(previousBetAmount, player);
+                                int amount = previousBetAmount;
+                                if (amount > player.getStackSize()) {
+                                    amount = player.getStackSize();
+                                }
+                                moveBet(amount, player);
                                 previousAction = ActionType.CALL;
                             }
                             if (playerAction.equals(ActionType.RAISE)) {
@@ -523,13 +533,30 @@ public class GameThread extends Thread {
         }
     }
 
-    public void moveBet(int amount, final Player player) {
-        if (amount > player.getStackSize()) {
-            amount = player.getStackSize();
-        }
+    public void moveBet(final int amount, final Player player) {
         game.setPotSize(game.getPotSize() + amount);
-        player.setBetAmount(amount);
-        player.setStackSize(player.getStackSize() - amount);
+        int betAmount = amount;
+        if (amount > player.getStackSize()) {
+            betAmount = player.getStackSize();
+            if(null != player.getBetAmount()){
+                betAmount = player.getBetAmount() + amount;
+            }
+
+        }
+        player.setBetAmount(betAmount);
+        if (null != player.getChipLayout()) {
+            TextView existingChipsTextViw = (TextView) player.getChipLayout().getChildAt(0);
+            int prevBet = Integer.parseInt(existingChipsTextViw.getText().toString());
+            if(player.getStackSize() <= player.getBetAmount()){
+                player.setStackSize(0);
+            } else {
+                player.setStackSize(player.getStackSize() - (amount - prevBet));
+            }
+        } else {
+            player.setStackSize(player.getStackSize() - betAmount);
+        }
+
+
         activity.runOnUiThread(new Runnable() {
             public void run() {
                 potsize.setText(game.getPotSize().toString());
@@ -625,19 +652,19 @@ public class GameThread extends Thread {
         createGame();
 
         try {
-            while(players.size() > 1 ){
-            shuffle();
-            startRound();
-            Thread.sleep(1000);
-            evaluateRound();
-            showCards();
-            Thread.sleep(4000);
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    endRound();
-                }
-            });
+            while (players.size() > 1) {
+                shuffle();
+                startRound();
+                Thread.sleep(1000);
+                evaluateRound();
+                showCards();
+                Thread.sleep(4000);
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        endRound();
+                    }
+                });
 
             }
 
@@ -690,7 +717,7 @@ public class GameThread extends Thread {
     public boolean makeMovesAgain() {
         for (Player player : playersInRound) {
             if ((null != player.getBetAmount() && player.getBetAmount() != previousBetAmount && player.getStackSize() > 0)
-                    || (null == player.getBetAmount() && previousBetAmount != 0)) {
+                    || (null == player.getBetAmount() && previousBetAmount != 0 && player.getStackSize() > 0)) {
                 return true;
             }
         }
