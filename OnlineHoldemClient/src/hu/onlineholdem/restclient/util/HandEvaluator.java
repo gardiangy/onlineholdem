@@ -107,7 +107,8 @@ public class HandEvaluator {
         if (null != threeOfAKindValue) {
             Collections.sort(cardList, new CardComperator());
             Collections.reverse(cardList);
-            if (cardList.get(cardList.size() - 1).getValue() == 1) {
+            if (cardList.get(cardList.size() - 1).getValue() == 1
+                    && cardList.get(cardList.size() - 1).getValue() != threeOfAKindValue.getValue() ) {
                 highCards.add(cardList.get(cardList.size() - 1));
             }
 
@@ -142,7 +143,8 @@ public class HandEvaluator {
                 highCards.add(cardList.get(0));
             } else {
                 for (Card card : cardList) {
-                    if (!twoPairValues.contains(card)) {
+                    if (!twoPairValues.get(0).getValue().equals(card.getValue())
+                            && !twoPairValues.get(1).getValue().equals(card.getValue())) {
                         highCards.add(card);
                         break;
                     }
@@ -157,7 +159,8 @@ public class HandEvaluator {
         if (null != onePairValue) {
             Collections.sort(cardList, new CardComperator());
             Collections.reverse(cardList);
-            if (cardList.get(cardList.size() - 1).getValue() == 1) {
+            if (cardList.get(cardList.size() - 1).getValue() == 1
+                    && cardList.get(cardList.size() - 1).getValue() != onePairValue.getValue()) {
                 highCards.add(cardList.get(cardList.size() - 1));
             }
 
@@ -202,7 +205,7 @@ public class HandEvaluator {
                         count++;
                     }
                 }
-                if (count == 1) {
+                if (count >= 1) {
                     return card;
                 }
             }
@@ -227,6 +230,13 @@ public class HandEvaluator {
             }
             if (sameCardValue > 0) {
                 pairs.add(card);
+            }
+        }
+        if(pairs.size() > 2){
+            if(pairs.get(0).getValue() == 1){
+                pairs.remove(1);
+            } else {
+                pairs.remove(0);
             }
         }
 

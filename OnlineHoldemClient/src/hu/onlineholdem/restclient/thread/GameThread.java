@@ -65,7 +65,7 @@ public class GameThread extends Thread {
     private boolean flopDealt = false;
     private boolean turnDealt = false;
     private boolean riverDealt = false;
-    private Player winner;
+    private boolean splitPot = false;
 
     public GameThread(int screenWidth, int screenHeight, ImageView flop1, ImageView flop2, ImageView flop3, ImageView turn, ImageView river,
                       RelativeLayout board, List<Player> players, TextView potsize, Button btnCheck, Button btnBet, Button btnFold,
@@ -167,7 +167,7 @@ public class GameThread extends Thread {
         }
     }
 
-    public void evaluateRound() {
+    public List<Player> evaluateRound() {
 
         for (final Player player : playersInRound) {
             final EvaluatedHand evaluatedHand = HandEvaluator.evaluateHand(game.getBoard(), player.getCardOne(), player.getCardTwo());
@@ -176,18 +176,27 @@ public class GameThread extends Thread {
 
         EvaluatedHand bestHand = playersInRound.get(0).getEvaluatedHand();
         Player winner = playersInRound.get(0);
+        List<Player> winners = new ArrayList<>();
         for (Player player : playersInRound) {
             if (player.equals(winner)) {
                 continue;
             }
-            if (player.getEvaluatedHand().getHandStrength().getStrength() > bestHand.getHandStrength().getStrength()) {
+            if (player.getEvaluatedHand().getHandStrength().getStrength() > bestHand.getHandStrength().getStrength()
+                    || (player.getEvaluatedHand().getHandStrength().getStrength().equals(bestHand.getHandStrength().getStrength()))
+                    && player.getEvaluatedHand().getValue() > bestHand.getValue()) {
                 bestHand = player.getEvaluatedHand();
                 winner = player;
+                splitPot = false;
             }
-            if (player.getEvaluatedHand().getHandStrength().getStrength().equals(bestHand.getHandStrength().getStrength())) {
+        }
+        for (Player player : playersInRound) {
+            if (player.equals(winner)) {
+                continue;
+            }
+            if (player.getEvaluatedHand().getHandStrength().getStrength().equals(bestHand.getHandStrength().getStrength())
+                    && player.getEvaluatedHand().getValue().equals(player.getEvaluatedHand().getValue())) {
                 if (null != player.getEvaluatedHand().getHighCards() && null != winner.getEvaluatedHand().getHighCards()) {
-                    Collections.reverse(player.getEvaluatedHand().getHighCards());
-                    Collections.reverse(winner.getEvaluatedHand().getHighCards());
+                    int equalCardNum = 0;
                     for (int i = 0; i < player.getEvaluatedHand().getHighCards().size(); i++) {
                         Card playerHighCard = player.getEvaluatedHand().getHighCards().get(i);
                         Card winnerHighCard = winner.getEvaluatedHand().getHighCards().get(i);
@@ -199,11 +208,20 @@ public class GameThread extends Thread {
                         if (playerHighCard.getValue() < winnerHighCard.getValue()) {
                             break;
                         }
+                        if (playerHighCard.getValue().equals(winnerHighCard.getValue())) {
+                            equalCardNum++;
+                            break;
+                        }
+                    }
+                    if (equalCardNum == player.getEvaluatedHand().getHighCards().size() - 1) {
+                        splitPot = true;
+                        winners.add(player);
                     }
                 }
             }
         }
-        this.winner = winner;
+        winners.add(winner);
+        return winners;
 
     }
 
@@ -223,26 +241,96 @@ public class GameThread extends Thread {
 
             }
         }
+        final List<Player> winners = evaluateRound();
+        for (Player playerOne : players) {
+            int amountToWin = 0;
+            for (Player playerTwo : players) {
+                if (playerOne.equals(playerTwo)) {
+                    continue;
+                }
+                if (playerTwo.getAmountInPot() >= playerOne.getAmountInPot()) {
+                    amountToWin += playerOne.getAmountInPot();
+                }
+                if (playerTwo.getAmountInPot() < playerOne.getAmountInPot()) {
+                    amountToWin += playerTwo.getAmountInPot();
+                }
+            }
+            playerOne.setAmountToWin(amountToWin);
+
+        }
         handler.post(new Runnable() {
             @Override
             public void run() {
                 board.invalidate();
-                for (final RelativeLayout chips : game.getPotChips()) {
-                    chips.animate().setDuration(500).x(winner.getTextView().getLeft()).y(winner.getTextView().getTop());
-                }
+                assignChips(winners);
             }
         });
 
     }
 
+    public void assignChips(List<Player> winners){
+        if (splitPot) {
+            List<List<RelativeLayout>> chipsList = splitChips(game.getPotChips(), winners.size());
+
+            int splitPotAmount = game.getPotSize() / winners.size();
+
+            List<Player> winnerList = new ArrayList<>();
+            winnerList.addAll(winners);
+
+            for (Player winner : winnerList) {
+                if(winner.getAmountToWin() <= splitPotAmount){
+                    game.setPotSize(game.getPotSize() - winner.getAmountToWin());
+                    List<List<RelativeLayout>> layoutList = new ArrayList<>();
+                    layoutList.addAll(chipsList);
+                    for (List<RelativeLayout> relativeLayouts : layoutList) {
+                        for (RelativeLayout chips : relativeLayouts) {
+                            chips.animate().setDuration(500).x(winner.getTextView().getLeft()).y(winner.getTextView().getTop());
+                        }
+                        chipsList.remove(relativeLayouts);
+                    }
+                    winner.setStackSize(winner.getStackSize() + winner.getAmountToWin());
+                    winners.remove(winner);
+                }
+            }
+            for (Player winner : winners) {
+                List<List<RelativeLayout>> layoutList = new ArrayList<>();
+                layoutList.addAll(chipsList);
+                for (List<RelativeLayout> relativeLayouts : layoutList) {
+                    for (RelativeLayout chips : relativeLayouts) {
+                        chips.animate().setDuration(500).x(winner.getTextView().getLeft()).y(winner.getTextView().getTop());
+                    }
+                    chipsList.remove(relativeLayouts);
+                }
+                winner.setStackSize(winner.getStackSize() + game.getPotSize() / winners.size());
+            }
+        } else {
+            if(winners.get(0).getAmountToWin() >= game.getPotSize()){
+                for (final RelativeLayout chips : game.getPotChips()) {
+                    chips.animate().setDuration(500).x(winners.get(0).getTextView().getLeft()).y(winners.get(0).getTextView().getTop());
+                }
+                winners.get(0).setStackSize(winners.get(0).getStackSize() + game.getPotSize());
+            } else {
+                winners.get(0).setStackSize(winners.get(0).getStackSize() + winners.get(0).getAmountToWin());
+                game.setPotSize(game.getPotSize() - winners.get(0).getAmountToWin());
+                playersInRound.remove(winners.get(0));
+                List<Player> remainingPotWinners = evaluateRound();
+                assignChips(remainingPotWinners);
+            }
+
+        }
+    }
+
+
     public void endRound() {
 
-        winner.setStackSize(winner.getStackSize() + game.getPotSize());
+        for(Player player : players){
+            player.getTextView().setText(player.getStackSize().toString());
+        }
 
-        winner.getTextView().setText(winner.getStackSize().toString());
         List<Player> playerList = new ArrayList<>();
         playerList.addAll(players);
         for (Player player : playerList) {
+            Log.i(TAG, player.getOrder() + ": " + player.getAmountInPot());
             if (player.getStackSize() == 0) {
                 activity.removeSeat(player.getTextView());
                 players.remove(player);
@@ -251,6 +339,7 @@ public class GameThread extends Thread {
             board.removeView(player.getCard2View());
             player.setCard1View(null);
             player.setCard2View(null);
+            player.setAmountInPot(0);
         }
         for (RelativeLayout chip : game.getPotChips()) {
             board.removeView(chip);
@@ -538,16 +627,21 @@ public class GameThread extends Thread {
         int betAmount = amount;
         if (amount > player.getStackSize()) {
             betAmount = player.getStackSize();
-            if(null != player.getBetAmount()){
+            if (null != player.getBetAmount()) {
                 betAmount = player.getBetAmount() + amount;
             }
 
         }
         player.setBetAmount(betAmount);
+        if (null == player.getAmountInPot()) {
+            player.setAmountInPot(betAmount);
+        } else {
+            player.setAmountInPot(player.getAmountInPot() + betAmount);
+        }
         if (null != player.getChipLayout()) {
             TextView existingChipsTextViw = (TextView) player.getChipLayout().getChildAt(0);
             int prevBet = Integer.parseInt(existingChipsTextViw.getText().toString());
-            if(player.getStackSize() <= player.getBetAmount()){
+            if (player.getStackSize() <= player.getBetAmount()) {
                 player.setStackSize(0);
             } else {
                 player.setStackSize(player.getStackSize() - (amount - prevBet));
@@ -655,8 +749,6 @@ public class GameThread extends Thread {
             while (players.size() > 1) {
                 shuffle();
                 startRound();
-                Thread.sleep(1000);
-                evaluateRound();
                 showCards();
                 Thread.sleep(4000);
                 activity.runOnUiThread(new Runnable() {
@@ -732,6 +824,24 @@ public class GameThread extends Thread {
             player.setActionType(null);
             player.setBetAmount(null);
         }
+    }
+
+    public static List<List<RelativeLayout>> splitChips(List<RelativeLayout> list, int numberOfLists) {
+
+        int sizeOfSubList = list.size() / numberOfLists + 1;
+        int remainder = list.size() % numberOfLists;
+
+        List<List<RelativeLayout>> subLists = new ArrayList<>(numberOfLists);
+
+        for (int i = 0; i < numberOfLists - remainder; i++) {
+            subLists.add(list.subList(i * sizeOfSubList, (i + 1) * sizeOfSubList));
+        }
+        sizeOfSubList--;
+        for (int i = numberOfLists - remainder; i < numberOfLists; i++) {
+            subLists.add(list.subList(i * sizeOfSubList, (i + 1) * sizeOfSubList));
+        }
+
+        return subLists;
     }
 
     public boolean isPlayerTurn() {
