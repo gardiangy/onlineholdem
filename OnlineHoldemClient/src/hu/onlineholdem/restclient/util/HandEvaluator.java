@@ -340,7 +340,7 @@ public class HandEvaluator {
         Card onePair = hasOnePair(cards);
         Card threeOfAKind = hasThreeOfAKind(cards);
 
-        if (null != onePair && null != threeOfAKind) {
+        if (null != onePair && null != threeOfAKind && !onePair.getValue().equals(threeOfAKind.getValue())) {
             fullHouse.add(onePair);
             fullHouse.add(threeOfAKind);
             return fullHouse;

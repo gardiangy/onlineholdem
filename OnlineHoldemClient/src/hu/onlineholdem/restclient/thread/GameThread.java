@@ -210,10 +210,9 @@ public class GameThread extends Thread {
                         }
                         if (playerHighCard.getValue().equals(winnerHighCard.getValue())) {
                             equalCardNum++;
-                            break;
                         }
                     }
-                    if (equalCardNum == player.getEvaluatedHand().getHighCards().size() - 1) {
+                    if (equalCardNum == player.getEvaluatedHand().getHighCards().size()) {
                         splitPot = true;
                         winners.add(player);
                     }
@@ -245,9 +244,9 @@ public class GameThread extends Thread {
         for (Player playerOne : players) {
             int amountToWin = 0;
             for (Player playerTwo : players) {
-                if (playerOne.equals(playerTwo)) {
-                    continue;
-                }
+//                if (playerOne.equals(playerTwo)) {
+//                    continue;
+//                }
                 if (playerTwo.getAmountInPot() >= playerOne.getAmountInPot()) {
                     amountToWin += playerOne.getAmountInPot();
                 }
@@ -311,6 +310,8 @@ public class GameThread extends Thread {
                 winners.get(0).setStackSize(winners.get(0).getStackSize() + game.getPotSize());
             } else {
                 winners.get(0).setStackSize(winners.get(0).getStackSize() + winners.get(0).getAmountToWin());
+                game.getPotChips().get(0).animate().setDuration(500).x(winners.get(0).getTextView().getLeft()).y(winners.get(0).getTextView().getTop());
+                game.getPotChips().remove(0);
                 game.setPotSize(game.getPotSize() - winners.get(0).getAmountToWin());
                 playersInRound.remove(winners.get(0));
                 List<Player> remainingPotWinners = evaluateRound();
@@ -828,19 +829,25 @@ public class GameThread extends Thread {
 
     public static List<List<RelativeLayout>> splitChips(List<RelativeLayout> list, int numberOfLists) {
 
-        int sizeOfSubList = list.size() / numberOfLists + 1;
-        int remainder = list.size() % numberOfLists;
-
+        int sizeOfSubList = list.size() / numberOfLists;
         List<List<RelativeLayout>> subLists = new ArrayList<>(numberOfLists);
 
-        for (int i = 0; i < numberOfLists - remainder; i++) {
-            subLists.add(list.subList(i * sizeOfSubList, (i + 1) * sizeOfSubList));
-        }
-        sizeOfSubList--;
-        for (int i = numberOfLists - remainder; i < numberOfLists; i++) {
-            subLists.add(list.subList(i * sizeOfSubList, (i + 1) * sizeOfSubList));
-        }
+        List<RelativeLayout> subList = new ArrayList<>();
+        for (RelativeLayout relativeLayout : list) {
+            if(subLists.size() == numberOfLists - 1){
+                subList = list.subList(list.indexOf(relativeLayout) - 1, list.size()-1);
+                subLists.add(subList);
+                break;
+            }
+            if (subList.size() < sizeOfSubList) {
+                subList.add(relativeLayout);
+            }
+            if (subList.size() == sizeOfSubList || list.indexOf(relativeLayout) == list.size() - 1) {
+                subLists.add(subList);
+                subList = new ArrayList<>();
+            }
 
+        }
         return subLists;
     }
 

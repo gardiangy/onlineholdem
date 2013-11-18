@@ -16,7 +16,7 @@
         android:debuggable="true"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".activity.SinglePlayerActivity"
+            android:name=".activity.SinglePlayerSettingsActivity"
             android:label="@string/app_name"
             android:screenOrientation="landscape">
             <intent-filter>
@@ -32,6 +32,11 @@
         <activity
             android:label="Login Activity"
             android:name=".activity.LoginActivity">
+        </activity>
+
+        <activity
+            android:label="SinglePlayer Activity"
+            android:name=".activity.SinglePlayerActivity">
         </activity>
 
     </application>

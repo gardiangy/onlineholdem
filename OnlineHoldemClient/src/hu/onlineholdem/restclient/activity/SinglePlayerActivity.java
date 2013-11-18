@@ -61,7 +61,10 @@ public class SinglePlayerActivity extends Activity {
 
         gameThread = new GameThread(screenWidth, screenHeight, flop1, flop2, flop3, turn, river, board, players,
                 potSize,btnCheck,btnBet,btnFold,betBar,betValue, this, getResources(), this.getPackageName());
-        createPlayers(7);
+
+        Bundle bundle = getIntent().getExtras();
+        int numOfPlayers = bundle.getInt("numOfPlayers");
+        createPlayers(numOfPlayers);
 
 
         betBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -92,7 +95,7 @@ public class SinglePlayerActivity extends Activity {
             Player player = new Player();
             player.setStackSize(1500);
             player.setOrder(i);
-            if (i == 4) {
+            if (i == numberOfPlayers / 2) {
                 player.setUser(true);
             }
 
