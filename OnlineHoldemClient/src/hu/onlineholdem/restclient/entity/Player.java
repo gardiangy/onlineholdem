@@ -27,6 +27,7 @@ public class Player implements Serializable {
     private EvaluatedHand evaluatedHand;
     private Integer amountInPot;
     private Integer amountToWin;
+    private String playerName;
 
 	public Player() {
 	}
@@ -149,5 +150,13 @@ public class Player implements Serializable {
 
     public void setAmountToWin(Integer amountToWin) {
         this.amountToWin = amountToWin;
+    }
+
+    public String getPlayerName() {
+        return playerName;
+    }
+
+    public void setPlayerName(String playerName) {
+        this.playerName = playerName;
     }
 }

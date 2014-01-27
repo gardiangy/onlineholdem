@@ -11,7 +11,11 @@ public class Game implements Serializable {
 
 	private Long gameId;
 
-	private Integer playerNumber;
+    private String gameName;
+
+	private Integer maxPlayerNumber;
+
+    private Integer startingStackSize;
 
 	private Integer potSize;
 
@@ -32,15 +36,31 @@ public class Game implements Serializable {
 		this.gameId = gameId;
 	}
 
-	public Integer getPlayerNumber() {
-		return this.playerNumber;
-	}
+    public String getGameName() {
+        return gameName;
+    }
 
-	public void setPlayerNumber(Integer playerNumber) {
-		this.playerNumber = playerNumber;
-	}
+    public void setGameName(String gameName) {
+        this.gameName = gameName;
+    }
 
-	public Integer getPotSize() {
+    public Integer getMaxPlayerNumber() {
+        return maxPlayerNumber;
+    }
+
+    public Integer getStartingStackSize() {
+        return startingStackSize;
+    }
+
+    public void setStartingStackSize(Integer startingStackSize) {
+        this.startingStackSize = startingStackSize;
+    }
+
+    public void setMaxPlayerNumber(Integer maxPlayerNumber) {
+        this.maxPlayerNumber = maxPlayerNumber;
+    }
+
+    public Integer getPotSize() {
 		return this.potSize;
 	}
 
