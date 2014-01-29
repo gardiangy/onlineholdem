@@ -6,12 +6,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
+import android.widget.Button;
 import android.widget.TextView;
 
 import java.util.List;
 import java.util.Map;
 
 import hu.onlineholdem.restclient.R;
+import hu.onlineholdem.restclient.activity.MultiPlayerActivity;
 import hu.onlineholdem.restclient.entity.Game;
 import hu.onlineholdem.restclient.entity.Player;
 
@@ -20,6 +22,7 @@ public class GameListAdapter extends BaseExpandableListAdapter {
     private Context context;
     private List<Game> games;
     private Map<Game, List<Player>> players;
+    private long joinedGameId = -1;
 
     public GameListAdapter(Context context, List<Game> games, Map<Game, List<Player>> players) {
         this.context = context;
@@ -63,21 +66,58 @@ public class GameListAdapter extends BaseExpandableListAdapter {
     }
 
     @Override
-    public View getGroupView(int groupPosition, boolean b, View view, ViewGroup viewGroup) {
+    public View getGroupView(final int groupPosition, boolean b, View view, ViewGroup viewGroup) {
         Game game = (Game) getGroup(groupPosition);
         String header = game.getGameName();
+        final ViewHolder viewHolder;
         if (view == null) {
             LayoutInflater infalInflater = (LayoutInflater) this.context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             view = infalInflater.inflate(R.layout.list_group, null);
+            viewHolder = new ViewHolder();
+            viewHolder.playerNum = (TextView) view.findViewById(R.id.listHeaderPlayerNum);
+            viewHolder.header = (TextView) view.findViewById(R.id.listHeader);
+            viewHolder.header.setTypeface(null, Typeface.BOLD);
+            viewHolder.id = (TextView) view.findViewById(R.id.rowId);
+            viewHolder.joinBtn = (Button) view.findViewById(R.id.joinBtn);
+            viewHolder.leaveBtn = (Button) view.findViewById(R.id.leaveBtn);
+            view.setTag(viewHolder);
+        } else {
+            viewHolder = (ViewHolder) view.getTag();
         }
-        TextView lblListHeader = (TextView) view.findViewById(R.id.listHeader);
-        lblListHeader.setTypeface(null, Typeface.BOLD);
-        lblListHeader.setText(header);
 
-        TextView headerPlayerNum = (TextView) view
-                .findViewById(R.id.listHeaderPlayerNum);
-        headerPlayerNum.setText(game.getPlayers().size() + " / " + game.getMaxPlayerNumber());
+        viewHolder.header.setText(header);
+        viewHolder.id.setText(game.getGameId().toString());
+        viewHolder.playerNum.setText(game.getPlayers().size() + " / " + game.getMaxPlayerNumber());
+
+        viewHolder.joinBtn.setFocusable(false);
+        viewHolder.joinBtn.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                ((MultiPlayerActivity)context).joinGame(viewHolder.id.getText().toString());
+                joinedGameId = Long.valueOf(viewHolder.id.getText().toString());
+                ((MultiPlayerActivity)context).expandGroup(groupPosition);
+            }
+        });
+
+        viewHolder.leaveBtn.setFocusable(false);
+        viewHolder.leaveBtn.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                ((MultiPlayerActivity)context).leaveGame(viewHolder.id.getText().toString());
+                joinedGameId = -1;
+                ((MultiPlayerActivity)context).collapseGroup(groupPosition);
+            }
+        });
+
+        if(joinedGameId != -1){
+            viewHolder.joinBtn.setVisibility(View.GONE);
+            if(Long.valueOf(viewHolder.id.getText().toString()) == joinedGameId){
+                viewHolder.leaveBtn.setVisibility(View.VISIBLE);
+            }
+        } else {
+            viewHolder.joinBtn.setVisibility(View.VISIBLE);
+            viewHolder.leaveBtn.setVisibility(View.GONE);
+        }
+
 
         return view;
     }
@@ -87,15 +127,20 @@ public class GameListAdapter extends BaseExpandableListAdapter {
 
         final Player child = (Player) getChild(groupPosition, childPosition);
         String childText = child.getPlayerName();
+        ViewHolder viewHolder;
         if (view == null) {
             LayoutInflater infalInflater = (LayoutInflater) this.context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             view = infalInflater.inflate(R.layout.list_item, null);
+            viewHolder = new ViewHolder();
+            viewHolder.header = (TextView) view.findViewById(R.id.listItem);
+            view.setTag(viewHolder);
         }
-        TextView txtListChild = (TextView) view
-                .findViewById(R.id.listItem);
+        else {
+            viewHolder = (ViewHolder) view.getTag();
+        }
 
-        txtListChild.setText(childText);
+        viewHolder.header.setText(childText);
         return view;
     }
 
@@ -107,5 +152,13 @@ public class GameListAdapter extends BaseExpandableListAdapter {
     public void refreshData(List<Game> games, Map<Game, List<Player>> players) {
         this.games = games;
         this.players = players;
+    }
+
+    public static class ViewHolder {
+        public TextView playerNum;
+        public TextView header;
+        public TextView id;
+        public Button joinBtn;
+        public Button leaveBtn;
     }
 }

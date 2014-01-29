@@ -30,7 +30,7 @@ public abstract class RefreshTask extends AsyncTask<String, Response, Response> 
     private static final int CONN_TIMEOUT = 3000;
 
     // socket timeout, in milliseconds (waiting for data)
-    private static final int SOCKET_TIMEOUT = 5000;
+    private static final int SOCKET_TIMEOUT = 10000;
 
     private boolean run = true;
 
@@ -68,6 +68,10 @@ public abstract class RefreshTask extends AsyncTask<String, Response, Response> 
     @Override
     protected void onPostExecute(Response response) {
         handleResponse(response);
+    }
+
+    public void stopTask(){
+        run = false;
     }
 
     // Establish connection and socket (data retrieval) timeouts

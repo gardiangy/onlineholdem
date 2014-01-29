@@ -5,9 +5,15 @@
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
               android:background="#000000">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/rowId"
+        android:visibility="gone"
+        />
 
     <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
             android:id="@+id/listHeader"
             android:paddingLeft="?android:attr/expandableListPreferredItemPaddingLeft"
@@ -17,13 +23,34 @@
             android:textColor="#ff0b9048"
         />
     <TextView
-        android:layout_width="match_parent"
+        android:layout_width="50dp"
         android:layout_height="wrap_content"
         android:id="@+id/listHeaderPlayerNum"
         android:textSize="15sp"
         android:paddingTop="20dp"
         android:paddingBottom="20dp"
         android:textColor="#ff0b9048"
-        android:gravity="right"
+        android:gravity="center"
         />
+    <LinearLayout
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:gravity="right">
+        <Button
+            android:id="@+id/joinBtn"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="Join"
+            android:onClick="joinGame"
+            />
+        <Button
+            android:id="@+id/leaveBtn"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="Leave"
+            android:visibility="gone"
+            android:onClick="leaveGame"
+            />
+        </LinearLayout>
+
 </LinearLayout>

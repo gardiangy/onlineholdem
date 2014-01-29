@@ -20,7 +20,7 @@ import hu.onlineholdem.restclient.task.WebServiceTask;
 
 public class LoginActivity extends Activity{
 
-    private static final String SERVICE_URL = "http://192.168.1.101:8080/rest";
+    private static final String SERVICE_URL = "http://146.110.44.10:8080/rest";
 
     private EditText inputUserName;
     private EditText inputPassword;
@@ -54,9 +54,9 @@ public class LoginActivity extends Activity{
 
         if(response.getResponseType().equals(ResponseType.OK)){
 
-            Intent mainActivity = new Intent(getApplicationContext(), MainActivity.class);
-            mainActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(mainActivity);
+            Intent multiPlayerActivity = new Intent(getApplicationContext(), MultiPlayerActivity.class);
+            multiPlayerActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(multiPlayerActivity);
             finish();
         }
         else{

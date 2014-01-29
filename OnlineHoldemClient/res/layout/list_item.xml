@@ -14,5 +14,5 @@
             android:paddingTop="10dp"
             android:paddingBottom="10dp"
             android:paddingLeft="?android:attr/expandableListPreferredChildPaddingLeft"
-            android:textColor="#ff0b9048"/>
+            android:textColor="#000000"/>
 </LinearLayout>

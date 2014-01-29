@@ -47,7 +47,8 @@
 
         <activity
             android:label="MultiPlayer Activity"
-            android:name=".activity.MultiPlayerActivity">
+            android:name=".activity.MultiPlayerActivity"
+            android:configChanges="orientation|screenSize">
         </activity>
 
     </application>

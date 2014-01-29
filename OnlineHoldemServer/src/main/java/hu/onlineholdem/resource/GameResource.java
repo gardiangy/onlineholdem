@@ -3,6 +3,7 @@ package hu.onlineholdem.resource;
 
 import hu.onlineholdem.bo.ActionBO;
 import hu.onlineholdem.bo.CreateGameBO;
+import hu.onlineholdem.bo.JoinLeaveBO;
 import hu.onlineholdem.dao.GameDAO;
 import hu.onlineholdem.dao.PlayerDAO;
 import hu.onlineholdem.dao.UserDAO;
@@ -67,18 +68,18 @@ public class GameResource {
     }
 
     @POST
-    @Path("connect/{userId}")
+    @Path("join")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response connectToGame(@PathParam("userId") Long userId) {
+    public Response joinToGame(JoinLeaveBO joinLeaveBO) {
 
-        Game game = gameDAO.findOne(4l);
-        User user = userDAO.findOne(userId);
+        Game game = gameDAO.findOne(joinLeaveBO.getGameId());
+        User user = userDAO.findOne(joinLeaveBO.getUserId());
 
         Player player = new Player();
         player.setUser(user);
         player.setPlayerOrder(0);
         player.setPlayerTurn(false);
-        player.setStackSize(0);
+        player.setStackSize(game.getStartingStackSize());
         player.setGame(game);
 
         if(null == game.getPlayers()){
@@ -95,12 +96,12 @@ public class GameResource {
     }
 
     @POST
-    @Path("disconnect/{userId}")
+    @Path("leave")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response disconnectFromGame(@PathParam("userId") Long userId) {
+    public Response disconnectFromGame(JoinLeaveBO joinLeaveBO) {
 
-        Game game = gameDAO.findOne(4l);
-        User user = userDAO.findOne(userId);
+        Game game = gameDAO.findOne(joinLeaveBO.getGameId());
+        User user = userDAO.findOne(joinLeaveBO.getUserId());
 
         List<Player> players = new ArrayList<>();
         players.addAll(game.getPlayers());
@@ -150,6 +151,20 @@ public class GameResource {
 
         Response response = new Response();
         response.setResponseObject(game);
+        response.setResponseType(ResponseType.OK);
+
+        return response;
+    }
+
+    @GET
+    @Path("contains/{gameName}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getGamesContainingName(@PathParam("gameName") String gameName) {
+
+        List<Game> gameList = gameDAO.findByGameNameContaining(gameName);
+
+        Response response = new Response();
+        response.setResponseObject(gameList);
         response.setResponseType(ResponseType.OK);
 
         return response;

@@ -2,10 +2,14 @@ package hu.onlineholdem.restclient.activity;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
@@ -44,6 +48,8 @@ public class MultiPlayerActivity extends Activity {
     private NumberPicker playerNumPicker;
     private EditText startingStackSize;
     private EditText gameName;
+    private RefreshGamesTask refreshTask;
+    private static long joinedGameId = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +57,7 @@ public class MultiPlayerActivity extends Activity {
 
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.multi_player_layout);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
         games = new ArrayList<>();
         players = new HashMap<>();
 
@@ -67,8 +74,13 @@ public class MultiPlayerActivity extends Activity {
         list.setAdapter(listAdapter);
 
         String getURL = SERVICE_URL + "/game";
-        RefreshGamesTask refreshTask = new RefreshGamesTask();
+        refreshTask = new RefreshGamesTask();
         refreshTask.execute(new String[]{getURL});
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
     }
 
     public void showGameSettings(View view){
@@ -83,6 +95,22 @@ public class MultiPlayerActivity extends Activity {
     }
 
     public void createNewGame(View view){
+
+        if( gameName.getText().toString().length() == 0 ){
+            Toast.makeText(this, "Game Name is required!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if( startingStackSize.getText().toString().length() == 0 ){
+            Toast.makeText(this, "Starting Stack Size is required!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if( Integer.valueOf(startingStackSize.getText().toString()) < 1 ){
+            Toast.makeText(this, "Starting Stack Size must be greater than 1!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         String postURL = SERVICE_URL + "/game/create";
 
         WebServiceTask wst = new PostGameTask(WebServiceTask.POST_TASK, this,"Posting data...");
@@ -94,6 +122,59 @@ public class MultiPlayerActivity extends Activity {
 
         LinearLayout gameSettings = (LinearLayout) findViewById(R.id.gameSettings);
         gameSettings.setVisibility(View.GONE);
+        gameName.setText("");
+        startingStackSize.setText("");
+        playerNumPicker.setValue(2);
+    }
+
+    public void searchGames(View view){
+        refreshTask.stopTask();
+        refreshTask.cancel(true);
+        EditText searchField = (EditText) findViewById(R.id.searchField);
+        String searchString = searchField.getText() == null ? "" : searchField.getText().toString();
+
+        String getURL = "";
+        if("".equals(searchString)){
+            getURL = SERVICE_URL + "/game";
+        } else {
+            getURL = SERVICE_URL + "/game/contains/" + searchString;
+        }
+
+        refreshTask = new RefreshGamesTask();
+        refreshTask.execute(new String[]{getURL});
+
+    }
+
+    public void joinGame(String id){
+
+        String postURL = SERVICE_URL + "/game/join";
+
+        WebServiceTask wst = new PostGameTask(WebServiceTask.POST_TASK, this,"Posting data...");
+        wst.addNameValuePair("userId", "3");
+        wst.addNameValuePair("gameId", id);
+
+        wst.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,new String[]{postURL});
+
+    }
+
+    public void leaveGame(String id){
+
+        String postURL = SERVICE_URL + "/game/leave";
+
+        WebServiceTask wst = new PostGameTask(WebServiceTask.POST_TASK, this,"Posting data...");
+        wst.addNameValuePair("userId", "3");
+        wst.addNameValuePair("gameId", id);
+
+        wst.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,new String[]{postURL});
+
+    }
+
+    public void expandGroup(int groupPos){
+        list.expandGroup(groupPos);
+    }
+
+    public void collapseGroup(int groupPos){
+        list.collapseGroup(groupPos);
     }
 
     public void handleGameResponse(Response gameResponse) {
@@ -124,6 +205,7 @@ public class MultiPlayerActivity extends Activity {
                 Game game = new Game();
                 game.setPotSize(gameItem.getInt("potSize"));
                 game.setGameName(gameItem.getString("gameName"));
+                game.setGameId(gameItem.getLong("gameId"));
                 game.setMaxPlayerNumber(gameItem.getInt("maxPlayerNumber"));
                 game.setStartingStackSize(gameItem.getInt("startingStackSize"));
                 JSONArray playerArray = gameItem.getJSONArray("players");
