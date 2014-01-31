@@ -3,7 +3,10 @@ package hu.onlineholdem.restclient.entity;
 import android.widget.RelativeLayout;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
+
+import hu.onlineholdem.restclient.enums.GameState;
 
 
 public class Game implements Serializable {
@@ -19,11 +22,15 @@ public class Game implements Serializable {
 
 	private Integer potSize;
 
+    private Date startTime;
+
 	private List<Player> players;
 
     private List<Card> board;
 
     private List<RelativeLayout> potChips;
+
+    private GameState gameState;
 
 	public Game() {
 	}
@@ -90,5 +97,21 @@ public class Game implements Serializable {
 
     public void setPotChips(List<RelativeLayout> potChips) {
         this.potChips = potChips;
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
+
+    public GameState getGameState() {
+        return gameState;
+    }
+
+    public void setGameState(GameState gameState) {
+        this.gameState = gameState;
     }
 }

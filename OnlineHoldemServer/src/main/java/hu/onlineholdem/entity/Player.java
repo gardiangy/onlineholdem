@@ -32,6 +32,9 @@ public class Player implements Serializable {
     @Column(name="player_turn", nullable=false)
     private Boolean playerTurn;
 
+    @Column(name="player_in_turn", nullable=false)
+    private Boolean playerInTurn;
+
 	//bi-directional many-to-one association to User
 	@ManyToOne(fetch=FetchType.LAZY)
 	@JoinColumn(name="user_id", nullable=false)
@@ -106,5 +109,13 @@ public class Player implements Serializable {
 
     public void setActions(List<Action> actions) {
         this.actions = actions;
+    }
+
+    public Boolean getPlayerInTurn() {
+        return playerInTurn;
+    }
+
+    public void setPlayerInTurn(Boolean playerInTurn) {
+        this.playerInTurn = playerInTurn;
     }
 }

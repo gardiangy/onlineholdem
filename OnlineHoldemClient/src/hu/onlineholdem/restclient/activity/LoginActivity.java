@@ -54,9 +54,12 @@ public class LoginActivity extends Activity{
 
         if(response.getResponseType().equals(ResponseType.OK)){
 
-            Intent multiPlayerActivity = new Intent(getApplicationContext(), MultiPlayerActivity.class);
-            multiPlayerActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(multiPlayerActivity);
+            Intent gameBrowserActivity = new Intent(getApplicationContext(), GameBrowserActivity.class);
+            gameBrowserActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            Bundle bundle = new Bundle();
+            bundle.putLong("userId", ((User) response.getResponseObject()).getUserId());
+            gameBrowserActivity.putExtras(bundle);
+            startActivity(gameBrowserActivity);
             finish();
         }
         else{

@@ -28,6 +28,7 @@ public class Player implements Serializable {
     private Integer amountInPot;
     private Integer amountToWin;
     private String playerName;
+    private Long userId;
 
 	public Player() {
 	}
@@ -158,5 +159,13 @@ public class Player implements Serializable {
 
     public void setPlayerName(String playerName) {
         this.playerName = playerName;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 }

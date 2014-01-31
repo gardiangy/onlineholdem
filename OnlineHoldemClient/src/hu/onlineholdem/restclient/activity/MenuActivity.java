@@ -26,7 +26,7 @@ public class MenuActivity extends Activity {
     }
 
     public void startMultiPlayerGame(View view) {
-        Intent intent = new Intent(this, MultiPlayerActivity.class);
+        Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);
     }
 }

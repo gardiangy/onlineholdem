@@ -5,6 +5,7 @@ public class CreateGameBO {
     private String gameName;
     private Integer maxPlayerNumber;
     private Integer startingStackSize;
+    private String startTime;
 
     public String getGameName() {
         return gameName;
@@ -28,5 +29,13 @@ public class CreateGameBO {
 
     public void setStartingStackSize(Integer startingStackSize) {
         this.startingStackSize = startingStackSize;
+    }
+
+    public String getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(String startTime) {
+        this.startTime = startTime;
     }
 }

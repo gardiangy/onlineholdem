@@ -1,122 +1,143 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@drawable/table">
 
-    <LinearLayout
-        android:layout_height="wrap_content"
-        android:layout_width="200dp"
-        android:background="@drawable/search_field"
-        android:layout_gravity="center">
-
-        <EditText
-            android:id="@+id/searchField"
-            android:layout_width="170dp"
-            android:layout_height="wrap_content"
-            android:textCursorDrawable="@null"
-            android:background="@null"
-            android:layout_gravity="center"
-            />
-        <Button
-            android:layout_height="30dp"
-            android:layout_width="30dp"
-            android:background="@drawable/search_icon"
-            android:layout_gravity="center"
-            android:onClick="searchGames"/>
-        </LinearLayout>
-
-
-    <ExpandableListView
-        android:id="@+id/listView"
-        android:layout_height="0dp"
-        android:layout_weight="90"
-        android:layout_width="match_parent">
-
-    </ExpandableListView>
-
-    <Button
-        android:id="@+id/createButton"
-        android:layout_height="wrap_content"
+    <RelativeLayout
+        android:id="@+id/potLayout"
         android:layout_width="match_parent"
-        android:text="Create Game"
-        android:background="@android:color/transparent"
-        android:textColor="#0b84aa"
-        android:onClick="showGameSettings"/>
-
-    <LinearLayout
-        android:id="@+id/gameSettings"
         android:layout_height="wrap_content"
-        android:layout_width="match_parent"
         android:orientation="vertical"
-        android:visibility="gone">
-    <LinearLayout
-        android:layout_height="wrap_content"
-        android:layout_width="match_parent"
-        android:orientation="horizontal">
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_weight="50"
+        android:layout_alignParentTop="true">
+
+        <TextView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginTop="20dip"
-            android:layout_marginRight="20dip">
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:gravity="center"
+            android:text="Pot"
+            android:id="@+id/potText" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:gravity="center"
-                android:text="Game Name" />
-            <EditText
-                android:id="@+id/gameName"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_below="@id/potText"
+            android:id="@+id/potSize" />
+    </RelativeLayout>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:gravity="center"
-                android:layout_marginTop="12dp"
-                android:text="Staring Stack Size" />
+    <RelativeLayout
+        android:id="@+id/board"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:layout_below="@id/potLayout">
 
-            <EditText
-                android:id="@+id/staringStackSize"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="number" />
+        <ImageView
+            android:id="@+id/flop1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <ImageView
+            android:id="@+id/flop2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <ImageView
+            android:id="@+id/flop3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <ImageView
+            android:id="@+id/turn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <ImageView
+            android:id="@+id/river"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/seats"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:layout_below="@id/potLayout">
+    </RelativeLayout>
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="bottom"
+            android:gravity="left">
 
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/playerNumLayout"
-            android:layout_width="0dp"
-            android:layout_weight="50"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="20dip"
-            android:layout_marginRight="20dip">
+            android:layout_gravity="bottom"
+            android:gravity="right">
 
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:gravity="center"
-                android:text="Number of Players" />
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:id="@+id/betValue" />
 
-            <NumberPicker
-                android:id="@+id/playerNumPicker"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+            <SeekBar
+                android:layout_width="220dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/betBar"
+                android:visibility="invisible"
+                android:max="1500"/>
+
+            <LinearLayout
+                android:id="@+id/linearLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <Button
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/check"
+                    android:layout_marginRight="10dp"
+                    android:id="@+id/btnCheck"
+                    android:onClick="moveCheck"
+                    android:visibility="invisible"/>
+
+                <Button
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/bet"
+                    android:layout_marginRight="10dp"
+                    android:id="@+id/btnBet"
+                    android:onClick="moveBet"
+                    android:visibility="invisible"/>
+
+                <Button
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/fold"
+                    android:padding="10dp"
+                    android:id="@+id/btnFold"
+                    android:onClick="moveFold"
+                    android:visibility="invisible"/>
+            </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
-    <Button
-        android:id="@+id/createButton"
-        android:layout_height="wrap_content"
-        android:layout_width="match_parent"
-        android:text="Create"
-        android:onClick="createNewGame"/>
-    </LinearLayout>
-</LinearLayout>
+    </RelativeLayout>
+</RelativeLayout>

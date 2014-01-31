@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_height="wrap_content"
+        android:layout_width="200dp"
+        android:background="@drawable/search_field"
+        android:layout_gravity="center">
+
+        <EditText
+            android:id="@+id/searchField"
+            android:layout_width="170dp"
+            android:layout_height="wrap_content"
+            android:textCursorDrawable="@null"
+            android:background="@null"
+            android:layout_gravity="center"
+            />
+        <Button
+            android:layout_height="30dp"
+            android:layout_width="30dp"
+            android:background="@drawable/search_icon"
+            android:layout_gravity="center"
+            android:onClick="searchGames"/>
+        </LinearLayout>
+
+
+    <ExpandableListView
+        android:id="@+id/listView"
+        android:layout_height="0dp"
+        android:layout_weight="90"
+        android:layout_width="match_parent">
+
+    </ExpandableListView>
+
+    <Button
+        android:id="@+id/createButton"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:text="Create Game"
+        android:background="@android:color/transparent"
+        android:textColor="#0b84aa"
+        android:onClick="showGameSettings"/>
+
+    <LinearLayout
+        android:id="@+id/gameSettings"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+    <LinearLayout
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:orientation="horizontal">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="50"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="20dip"
+            android:layout_marginRight="20dip">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:gravity="center"
+                android:text="Game Name" />
+            <EditText
+                android:id="@+id/gameName"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:gravity="center"
+                android:layout_marginTop="5dp"
+                android:text="Stack Size" />
+
+            <EditText
+                android:id="@+id/staringStackSize"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:gravity="center"
+                android:layout_marginTop="5dp"
+                android:text="Start Time" />
+
+            <EditText
+                android:id="@+id/startTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/playerNumLayout"
+            android:layout_width="0dp"
+            android:layout_weight="50"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="20dip"
+            android:layout_marginRight="20dip">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:gravity="center"
+                android:text="Number of Players" />
+
+            <NumberPicker
+                android:id="@+id/playerNumPicker"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+    </LinearLayout>
+    <Button
+        android:id="@+id/createButton"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:text="Create"
+        android:onClick="createNewGame"/>
+    </LinearLayout>
+</LinearLayout>

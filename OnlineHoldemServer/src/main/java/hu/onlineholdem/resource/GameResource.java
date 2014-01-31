@@ -12,6 +12,7 @@ import hu.onlineholdem.entity.Game;
 import hu.onlineholdem.entity.Player;
 import hu.onlineholdem.entity.User;
 import hu.onlineholdem.enums.ActionType;
+import hu.onlineholdem.enums.GameState;
 import hu.onlineholdem.enums.ResponseType;
 import hu.onlineholdem.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,10 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Path("/game")
@@ -131,6 +135,13 @@ public class GameResource {
         game.setMaxPlayerNumber(createGameBO.getMaxPlayerNumber());
         game.setStartingStackSize(createGameBO.getStartingStackSize());
         game.setPotSize(0);
+        game.setGameState(GameState.REGISTERING);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        try {
+            game.setStartTime(sdf.parse(createGameBO.getStartTime()));
+        } catch (ParseException e) {
+            game.setStartTime(new Date());
+        }
 
         Game persistedGame = gameDAO.save(game);
 

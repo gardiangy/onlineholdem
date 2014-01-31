@@ -36,7 +36,8 @@
 
         <activity
             android:label="SinglePlayer Activity"
-            android:name=".activity.SinglePlayerActivity">
+            android:name=".activity.SinglePlayerActivity"
+            android:screenOrientation="landscape">
         </activity>
 
         <activity
@@ -46,9 +47,15 @@
         </activity>
 
         <activity
+            android:label="GameBrowser Activity"
+            android:name=".activity.GameBrowserActivity"
+            android:configChanges="orientation|screenSize">
+        </activity>
+
+        <activity
             android:label="MultiPlayer Activity"
             android:name=".activity.MultiPlayerActivity"
-            android:configChanges="orientation|screenSize">
+            android:screenOrientation="landscape">
         </activity>
 
     </application>

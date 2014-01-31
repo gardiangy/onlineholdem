@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import hu.onlineholdem.restclient.R;
+import hu.onlineholdem.restclient.activity.GameBrowserActivity;
 import hu.onlineholdem.restclient.activity.MultiPlayerActivity;
 import hu.onlineholdem.restclient.entity.Game;
 import hu.onlineholdem.restclient.entity.Player;
@@ -93,18 +94,18 @@ public class GameListAdapter extends BaseExpandableListAdapter {
         viewHolder.joinBtn.setFocusable(false);
         viewHolder.joinBtn.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                ((MultiPlayerActivity)context).joinGame(viewHolder.id.getText().toString());
-                joinedGameId = Long.valueOf(viewHolder.id.getText().toString());
-                ((MultiPlayerActivity)context).expandGroup(groupPosition);
+                ((GameBrowserActivity)context).joinGame(viewHolder.id.getText().toString());
+//                joinedGameId = Long.valueOf(viewHolder.id.getText().toString());
+                ((GameBrowserActivity)context).expandGroup(groupPosition);
             }
         });
 
         viewHolder.leaveBtn.setFocusable(false);
         viewHolder.leaveBtn.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                ((MultiPlayerActivity)context).leaveGame(viewHolder.id.getText().toString());
-                joinedGameId = -1;
-                ((MultiPlayerActivity)context).collapseGroup(groupPosition);
+                ((GameBrowserActivity)context).leaveGame(viewHolder.id.getText().toString());
+//                joinedGameId = -1;
+                ((GameBrowserActivity)context).collapseGroup(groupPosition);
             }
         });
 
@@ -160,5 +161,9 @@ public class GameListAdapter extends BaseExpandableListAdapter {
         public TextView id;
         public Button joinBtn;
         public Button leaveBtn;
+    }
+
+    public void setJoinedGameId(long joinedGameId) {
+        this.joinedGameId = joinedGameId;
     }
 }

@@ -1,12 +1,11 @@
 package hu.onlineholdem.entity;
 
+import hu.onlineholdem.enums.GameState;
 import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
-import java.io.Serializable;
 import javax.persistence.*;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
+import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 
@@ -27,14 +26,22 @@ public class Game implements Serializable {
     @Column(name="game_name")
     private String gameName;
 
-    @Column(name="max_player_number")
+    @Column(name="game_max_player_number")
     private Integer maxPlayerNumber;
 
-    @Column(name="starting_stack_size")
+    @Column(name="game_starting_stack_size")
     private Integer startingStackSize;
 
-	@Column(name="pot_size")
+	@Column(name="game_pot_size")
 	private Integer potSize;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name="game_start_time")
+    private Date startTime;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name="game_state")
+    private GameState gameState;
 
 	//bi-directional many-to-one association to Action
     @JsonIgnore
@@ -102,5 +109,21 @@ public class Game implements Serializable {
 
     public void setStartingStackSize(Integer startingStackSize) {
         this.startingStackSize = startingStackSize;
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
+
+    public GameState getGameState() {
+        return gameState;
+    }
+
+    public void setGameState(GameState gameState) {
+        this.gameState = gameState;
     }
 }
