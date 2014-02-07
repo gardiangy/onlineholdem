@@ -96,7 +96,7 @@ public class SinglePlayerActivity extends Activity {
             player.setStackSize(1500);
             player.setOrder(i);
             if (i == numberOfPlayers / 2) {
-                player.setUser(true);
+                player.setIsUser(true);
             }
 
             TextView textView = new TextView(this);

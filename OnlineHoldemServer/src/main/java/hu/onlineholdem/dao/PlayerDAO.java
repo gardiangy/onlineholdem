@@ -5,10 +5,10 @@ import hu.onlineholdem.entity.Player;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
+import java.util.List;
 
 @Repository
 public interface PlayerDAO extends JpaRepository<Player,Long>{
+
+    public List<Player> findByGameOrderByPlayerOrderDesc(Game game);
 }

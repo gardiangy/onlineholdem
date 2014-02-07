@@ -14,8 +14,8 @@ public class Player implements Serializable {
 
 	private Long playerId;
 	private Integer stackSize;
-    private boolean isUser;
-    private int order;
+    private Boolean isUser;
+    private Integer order;
     private TextView textView;
     private ImageView card1View;
     private ImageView card2View;
@@ -29,6 +29,8 @@ public class Player implements Serializable {
     private Integer amountToWin;
     private String playerName;
     private Long userId;
+    private Boolean playerTurn;
+    private Boolean playerInTurn;
 
 	public Player() {
 	}
@@ -49,19 +51,19 @@ public class Player implements Serializable {
 		this.stackSize = stackSize;
 	}
 
-    public boolean isUser() {
+    public Boolean isUser() {
         return isUser;
     }
 
-    public void setUser(boolean isUser) {
+    public void setIsUser(Boolean isUser) {
         this.isUser = isUser;
     }
 
-    public int getOrder() {
+    public Integer getOrder() {
         return order;
     }
 
-    public void setOrder(int order) {
+    public void setOrder(Integer order) {
         this.order = order;
     }
 
@@ -167,5 +169,21 @@ public class Player implements Serializable {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public Boolean isPlayerTurn() {
+        return playerTurn;
+    }
+
+    public void setPlayerTurn(Boolean playerTurn) {
+        this.playerTurn = playerTurn;
+    }
+
+    public Boolean getPlayerInTurn() {
+        return playerInTurn;
+    }
+
+    public void setPlayerInTurn(Boolean playerInTurn) {
+        this.playerInTurn = playerInTurn;
     }
 }

@@ -33,6 +33,7 @@ import java.util.Map;
 import hu.onlineholdem.restclient.R;
 import hu.onlineholdem.restclient.entity.Game;
 import hu.onlineholdem.restclient.entity.Player;
+import hu.onlineholdem.restclient.entity.User;
 import hu.onlineholdem.restclient.enums.GameState;
 import hu.onlineholdem.restclient.response.Response;
 import hu.onlineholdem.restclient.task.RefreshTask;
@@ -226,6 +227,10 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
                         refreshTask.stopTask();
                         startedMultiPlayerActivity = true;
                         Intent intent = new Intent(this, MultiPlayerActivity.class);
+                        Bundle bundle = new Bundle();
+                        bundle.putLong("userId", userId);
+                        bundle.putLong("gameId", game.getGameId());
+                        intent.putExtras(bundle);
                         startActivity(intent);
                         finish();
                     }

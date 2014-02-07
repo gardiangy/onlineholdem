@@ -32,6 +32,8 @@ public class Game implements Serializable {
 
     private GameState gameState;
 
+    private List<Action> actions;
+
 	public Game() {
 	}
 
@@ -113,5 +115,13 @@ public class Game implements Serializable {
 
     public void setGameState(GameState gameState) {
         this.gameState = gameState;
+    }
+
+    public List<Action> getActions() {
+        return actions;
+    }
+
+    public void setActions(List<Action> actions) {
+        this.actions = actions;
     }
 }

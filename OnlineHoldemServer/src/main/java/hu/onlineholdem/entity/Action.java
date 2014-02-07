@@ -1,6 +1,7 @@
 package hu.onlineholdem.entity;
 
 import hu.onlineholdem.enums.ActionType;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.io.Serializable;
 import javax.persistence.*;
@@ -66,6 +67,7 @@ public class Action implements Serializable {
 		this.betValue = betValue;
 	}
 
+    @JsonIgnore
 	public Game getGame() {
 		return this.game;
 	}

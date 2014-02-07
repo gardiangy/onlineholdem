@@ -35,6 +35,12 @@ public class Player implements Serializable {
     @Column(name="player_in_turn", nullable=false)
     private Boolean playerInTurn;
 
+    @Column(name="player_amount_in_pot")
+    private Integer playerAmountInPot;
+
+    @Column(name="player_bet_amount")
+    private Integer playerBetAmount;
+
 	//bi-directional many-to-one association to User
 	@ManyToOne(fetch=FetchType.LAZY)
 	@JoinColumn(name="user_id", nullable=false)
@@ -49,6 +55,14 @@ public class Player implements Serializable {
 
     @OneToMany(mappedBy="player", cascade={CascadeType.ALL})
     private List<Action> actions;
+
+    @ManyToOne
+    @JoinColumn(name="player_card_one", nullable=false)
+    private Card cardOne;
+
+    @ManyToOne
+    @JoinColumn(name="player_card_two", nullable=false)
+    private Card cardTwo;
 
 	public Player() {
 	}
@@ -117,5 +131,37 @@ public class Player implements Serializable {
 
     public void setPlayerInTurn(Boolean playerInTurn) {
         this.playerInTurn = playerInTurn;
+    }
+
+    public Card getCardOne() {
+        return cardOne;
+    }
+
+    public void setCardOne(Card cardOne) {
+        this.cardOne = cardOne;
+    }
+
+    public Card getCardTwo() {
+        return cardTwo;
+    }
+
+    public void setCardTwo(Card cardTwo) {
+        this.cardTwo = cardTwo;
+    }
+
+    public Integer getPlayerAmountInPot() {
+        return playerAmountInPot;
+    }
+
+    public void setPlayerAmountInPot(Integer playerAmountInPot) {
+        this.playerAmountInPot = playerAmountInPot;
+    }
+
+    public Integer getPlayerBetAmount() {
+        return playerBetAmount;
+    }
+
+    public void setPlayerBetAmount(Integer playerBetAmount) {
+        this.playerBetAmount = playerBetAmount;
     }
 }

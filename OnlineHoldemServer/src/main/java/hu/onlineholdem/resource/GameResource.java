@@ -37,39 +37,7 @@ public class GameResource {
     @Autowired
     private PlayerDAO playerDAO;
 
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response postAction(ActionBO actionBO) {
 
-        Player player = playerDAO.findOne(actionBO.getPlayerId());
-
-        ActionType actionType = ActionType.valueOf(actionBO.getActionType());
-
-        Action action = new Action();
-        action.setActionType(actionType);
-        action.setBetValue(Integer.parseInt(actionBO.getBetValue()));
-
-        int newStackSize = player.getStackSize() - action.getBetValue();
-        player.setStackSize(newStackSize);
-
-        action.setPlayer(player);
-
-        Game game = gameDAO.findOne(actionBO.getGameId());
-        action.setGame(game);
-        game.getActions().add(action);
-
-        int newPotSize = game.getPotSize() + action.getBetValue();
-        game.setPotSize(newPotSize);
-        Game persistedGame = gameDAO.save(game);
-
-        Response response = new Response();
-        response.setResponseObject(persistedGame);
-        response.setResponseType(ResponseType.OK);
-
-
-        return response;
-    }
 
     @POST
     @Path("join")
@@ -81,14 +49,22 @@ public class GameResource {
 
         Player player = new Player();
         player.setUser(user);
-        player.setPlayerOrder(0);
+        List<Player> players = game.getPlayers();
         player.setPlayerTurn(false);
         player.setStackSize(game.getStartingStackSize());
+        player.setPlayerInTurn(false);
         player.setGame(game);
 
         if(null == game.getPlayers()){
             game.setPlayers(new ArrayList<Player>());
         }
+        if(game.getPlayers().size() == 0){
+            player.setPlayerOrder(0); 
+        } else {
+            List<Player> playersHighestOrder = playerDAO.findByGameOrderByPlayerOrderDesc(game);
+            player.setPlayerOrder(playersHighestOrder.get(0).getPlayerOrder() + 1);
+        }
+
         game.getPlayers().add(player);
         Game updatedGame = gameDAO.save(game);
 
@@ -134,7 +110,7 @@ public class GameResource {
         game.setGameName(createGameBO.getGameName());
         game.setMaxPlayerNumber(createGameBO.getMaxPlayerNumber());
         game.setStartingStackSize(createGameBO.getStartingStackSize());
-        game.setPotSize(0);
+        game.setPotSize(1);
         game.setGameState(GameState.REGISTERING);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         try {

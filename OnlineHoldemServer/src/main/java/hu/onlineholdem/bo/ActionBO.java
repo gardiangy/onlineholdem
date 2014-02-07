@@ -1,9 +1,5 @@
 package hu.onlineholdem.bo;
 
-import com.sun.jersey.core.impl.provider.entity.XMLRootElementProvider;
-
-import javax.xml.bind.annotation.XmlRootElement;
-
 public class ActionBO {
 
     private String actionType;
