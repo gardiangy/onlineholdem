@@ -1,12 +1,15 @@
 package hu.onlineholdem.restclient.task;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.SystemClock;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
@@ -16,6 +19,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 
 import hu.onlineholdem.restclient.response.Response;
 
@@ -32,7 +36,15 @@ public abstract class RefreshTask extends AsyncTask<String, Response, Response> 
     // socket timeout, in milliseconds (waiting for data)
     private static final int SOCKET_TIMEOUT = 10000;
 
+    private boolean serverNotResponding = false;
+
+    private Context context;
+
     private boolean run = true;
+
+    protected RefreshTask(Context context) {
+        this.context = context;
+    }
 
     protected Response doInBackground(String... urls) {
 
@@ -67,7 +79,11 @@ public abstract class RefreshTask extends AsyncTask<String, Response, Response> 
 
     @Override
     protected void onPostExecute(Response response) {
-        handleResponse(response);
+        if(serverNotResponding){
+            Toast.makeText(context, "Server not responding", Toast.LENGTH_SHORT).show();
+        } else {
+            handleResponse(response);
+        }
     }
 
     public void stopTask(){
@@ -95,6 +111,9 @@ public abstract class RefreshTask extends AsyncTask<String, Response, Response> 
             HttpGet httpget = new HttpGet(url);
             response = httpclient.execute(httpget);
 
+        } catch (SocketTimeoutException | ConnectTimeoutException e) {
+            serverNotResponding = true;
+            Log.e(TAG, e.getLocalizedMessage(), e);
         } catch (Exception e) {
             Log.e(TAG, e.getLocalizedMessage(), e);
         }

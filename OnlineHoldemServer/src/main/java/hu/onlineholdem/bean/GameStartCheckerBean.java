@@ -28,7 +28,8 @@ public class GameStartCheckerBean implements Runnable{
             try {
                 Thread.sleep(1000);
                 for(Game game : gameDAO.findAll()){
-                    if(game.getStartTime().before(new Date()) && game.getGameState().equals(GameState.REGISTERING)){
+                    if(game.getStartTime().before(new Date()) && game.getGameState().equals(GameState.REGISTERING)
+                            && game.getPlayers().size() > 1){
                         game.setGameState(GameState.STARTED);
 
                         List<Card> deck = cardDAO.findAll();

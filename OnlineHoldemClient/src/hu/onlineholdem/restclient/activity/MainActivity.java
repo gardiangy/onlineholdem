@@ -39,7 +39,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         String getURL = SERVICE_URL + "/game";
-        RefreshTask refreshTask = new RefreshGameTask();
+        RefreshTask refreshTask = new RefreshGameTask(this);
         refreshTask.execute(new String[]{getURL});
 
         SeekBar betBar = (SeekBar) findViewById(R.id.betBar);
@@ -83,7 +83,7 @@ public class MainActivity extends Activity {
         if (btnId == R.id.btnFold)
             actionType = ActionType.FOLD;
 
-        wst.addNameValuePair("actionType", actionType.getName());
+        wst.addNameValuePair("actionType", actionType.name());
         wst.addNameValuePair("betValue", betValue.getText().toString().equals("") ? "0" : betValue.getText().toString());
         wst.addNameValuePair("playerId", "1");
         wst.addNameValuePair("gameId", "1");
@@ -127,6 +127,10 @@ public class MainActivity extends Activity {
     }
 
     private class RefreshGameTask extends RefreshTask{
+
+        private RefreshGameTask(Context context) {
+            super(context);
+        }
 
         @Override
         public void handleResponse(Response response) {

@@ -2,20 +2,134 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<link rel="stylesheet" href="css/jquery-ui-1.10.3.custom.css" />
-<script type="text/javascript" src="js/jquery-1.9.1.js"></script>
-<script type="text/javascript" src="js/jquery-ui-1.10.3.custom.min.js"></script>
-<script type="text/javascript" src="js/main.js"></script>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<title>Insert title here</title>
+    <title>Title</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="description" content="Overlay-like Effect with jQuery"/>
+    <meta name="keywords" content="overlay, jquery, effect, fade out, change color, animate"/>
+    <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon"/>
+    <link rel="stylesheet" type="text/css" href="css/style.css"/>
+    <link rel="stylesheet" type="text/css" href="css/animate.css"/>
+    <script src="js/jquery-1.9.1.js"></script>
 </head>
 <body>
+<div id="container" class="container">
+    <ul id="menu" class="menu animated">
+        <li><a id="menu1" href="#" class="activeMenu">menu1</a></li>
+        <li><a id="menu2" href="#">menu2</a></li>
+        <li><a id="menu3" href="#">menu3</a></li>
+        <li><a id="menu4" href="#">menu4</a></li>
+        <li><a id="menu5" href="#">menu5</a></li>
+    </ul>
+    <header class="header">
+        <h1>HEADER</h1>
+    </header>
+    <div id="menu1content" class="content animated">
+        <!--<h1>TITLE</h1>-->
 
-    <div id="newMessageDiv" style="padding:5px">
-        <input id="newInput" type="text" />
-        <button id="newBtn" >Send Message</button>
+        <!--<h2>Custom effects with jQuery</h2>-->
+
+        <!--<p>A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I-->
+            <!--enjoy with my whole heart. I am alone, and feel the charm of existence in this spot, which was created for-->
+            <!--the bliss of souls like mine.</p>-->
+
+        <!--<p>I am so happy, my dear friend, so absorbed in the exquisite sense of mere tranquil existence, that I neglect-->
+            <!--my talents. I should be incapable of drawing a single stroke at the present moment; and yet I feel that I-->
+            <!--never was a greater artist than now.</p>-->
     </div>
-	
+    <div id="menu2content" class="content animated" style="display: none">
+        <!--<h1>TITLE-2</h1>-->
 
+        <!--<h2>Custom effects with jQuery</h2>-->
+
+        <!--<table class="form">-->
+            <!--<tr>-->
+                <!--<td><label>input1</label></td>-->
+                <!--<td><input type="text"/></td>-->
+            <!--</tr>-->
+            <!--<tr>-->
+                <!--<td><label>input3</label></td>-->
+                <!--<td><input type="text"/></td>-->
+            <!--</tr>-->
+            <!--<tr>-->
+                <!--<td><label>input3</label></td>-->
+                <!--<td><input type="text"/></td>-->
+            <!--</tr>-->
+        <!--</table>-->
+    </div>
+
+    <div id="menu3content" class="content animated" style="display: none">
+        <h1>TITLE-3</h1>
+
+        <h2>Custom effects with jQuery</h2>
+
+        <p>A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I
+            enjoy with my whole heart.</p>
+
+        <p>A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I
+            enjoy with my whole heart.</p>
+    </div>
+
+    <div id="menu4content" class="content animated" style="display: none">
+        <h1>TITLE-4</h1>
+
+        <h2>Custom effects with jQuery</h2>
+
+        <p>A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I
+            enjoy with my whole heart.</p>
+
+        <p>A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I
+            enjoy with my whole heart.</p>
+    </div>
+
+    <div id="menu5content" class="content animated" style="display: none">
+        <h1>TITLE-5</h1>
+
+        <h2>Custom effects with jQuery</h2>
+
+        <p>A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I
+            enjoy with my whole heart.</p>
+
+        <p>A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I
+            enjoy with my whole heart.</p>
+    </div>
+
+
+</div>
+<script>
+    $(function () {
+        $("#menu1content").load("pageone.html");
+        $("#menu2content").load("pagetwo.html");
+        var $menu = $("#menu");
+        $("#menu a").click(function () {
+            var $clickedMenu = $(this);
+            var $contentToLoad = $('#' + $clickedMenu.attr("id") + 'content');
+            var $activeContent = $('.content:visible');
+
+            $activeContent.removeClass("slideInRight");
+            $activeContent.addClass("slideOutRight");
+            $activeContent.one("animationend webkitAnimationEnd oAnimationEnd MSAnimationEnd", function () {
+                $activeContent.css("display", "none");
+                $contentToLoad.css("display", "");
+                $contentToLoad.removeClass("slideOutRight");
+                $contentToLoad.addClass("slideInRight");
+            });
+//            animateMenu();
+            $("#menu").find(".activeMenu").removeClass("activeMenu");
+            $clickedMenu.addClass("activeMenu");
+            return false;
+
+        });
+
+        function animateMenu() {
+            $menu.removeClass("slideInLeft");
+            $menu.addClass("slideOutLeft");
+            $menu.one("animationend webkitAnimationEnd oAnimationEnd MSAnimationEnd", function () {
+                $menu.removeClass("slideOutLeft");
+                $menu.addClass("slideInLeft");
+            });
+        }
+
+    });
+</script>
 </body>
 </html>

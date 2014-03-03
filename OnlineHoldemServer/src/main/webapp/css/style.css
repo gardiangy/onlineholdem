@@ -1,0 +1,151 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+@font-face {
+    font-family: "Poetsen";
+    src: url("font/poetsen.otf");
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    font-family: Poetsen, Verdana, Arial, Helvetica, sans-serif;
+    font-size: 18px;
+    letter-spacing: 1px;
+    background: #333;
+    color: #fff;
+}
+
+.container {
+    position: relative; /* needed for footer positioning*/
+    margin: 0 auto; /* center, not in IE5 */
+    width: 100%;
+    height: auto !important; /* real browsers */
+    height: 100%; /* IE6: treaded as min-height*/
+    min-height: 100%; /* real browsers */
+}
+
+.left {
+    float: left;
+    margin-left: 10px;
+}
+
+.back {
+    position: absolute;
+    right: 10px;
+    top: 0px;
+}
+
+h1, h3 {
+    font-size: 56px;
+    color: #137235;
+    font-weight: normal;
+}
+
+header h1 {
+    font-size: 56px;
+    color: #060607;
+    font-weight: normal;
+}
+
+h3 {
+    font-size: 20px;
+    padding: 10px;
+}
+
+h2 {
+    font-size: 26px;
+    font-weight: normal;
+    color: #aaa;
+    padding: 10px;
+}
+
+a {
+    color: #000;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+p {
+    padding: 10px;
+    color: #ccc;
+    text-shadow: none;
+    font-size: 18px;
+    letter-spacing: 1px;
+    text-align: justify;
+}
+
+input {
+    padding: 5px;
+    font-size: 18px;
+}
+
+.form {
+    margin: auto;
+    margin-top: 20px;
+}
+
+.form td {
+    padding: 20px;
+}
+
+.content {
+    padding: 40px 40px 80px 40px;
+    width: 70%;
+    background: #222;
+    margin-left: 200px;
+    position: relative;
+}
+
+.header {
+    padding: 20px 40px 20px 40px;
+    width: 70%;
+    background: #137235;
+    margin-left: 200px;
+    position: relative;
+}
+
+ul.menu {
+    list-style: none;
+    position: fixed;
+    height: 270px;
+    width: 54px;
+    left: 50px;
+    top: 150px;
+}
+
+ul.menu li {
+    display: block;
+}
+
+ul.menu li a {
+    background: #137235;
+    display: block;
+    padding: 10px;
+    width: 130px;
+    height: 30px;
+    line-height: 30px;
+    outline: none;
+    border: 2px solid #333;
+    text-align: center;
+}
+
+ul.menu li a:hover {
+    background: #1C9949
+}
+
+ul.menu li a img {
+    border: none;
+}
+
+.activeMenu {
+    background: #1C9949 !important;
+    pointer-events: none;
+}

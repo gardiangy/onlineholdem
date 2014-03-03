@@ -44,7 +44,7 @@ import hu.onlineholdem.restclient.util.GameListAdapter;
 public class GameBrowserActivity extends Activity implements DateTimeDialog.DateTimeDialogListener {
 
     private static final String TAG = "GameBrowserActivity";
-    private static final String SERVICE_URL = "http://146.110.44.10:8080/rest";
+    private static final String SERVICE_URL = "http://192.168.1.103:8080/rest";
 
     private ExpandableListView list;
     private GameListAdapter listAdapter;
@@ -97,7 +97,7 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
         list.setAdapter(listAdapter);
 
         String getURL = SERVICE_URL + "/game";
-        refreshTask = new RefreshGamesTask();
+        refreshTask = new RefreshGamesTask(this);
         refreshTask.execute(new String[]{getURL});
     }
 
@@ -176,7 +176,7 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
             getURL = SERVICE_URL + "/game/contains/" + searchString;
         }
 
-        refreshTask = new RefreshGamesTask();
+        refreshTask = new RefreshGamesTask(this);
         refreshTask.execute(new String[]{getURL});
 
     }
@@ -215,40 +215,44 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
 
     public void handleGameResponse(Response gameResponse) {
 
-        List<Game> gameList = (List<Game>) gameResponse.getResponseObject();
+        if(null != gameResponse){
 
-        games = gameList;
-        players = new HashMap<>();
-        for (Game game : gameList) {
-            players.put(game, game.getPlayers());
-            if (game.getGameState().equals(GameState.STARTED)) {
-                for (Player player : game.getPlayers()) {
-                    if (player.getUserId().equals(userId) && ! startedMultiPlayerActivity && game.getPlayers().size() > 1) {
-                        refreshTask.stopTask();
-                        startedMultiPlayerActivity = true;
-                        Intent intent = new Intent(this, MultiPlayerActivity.class);
-                        Bundle bundle = new Bundle();
-                        bundle.putLong("userId", userId);
-                        bundle.putLong("gameId", game.getGameId());
-                        intent.putExtras(bundle);
-                        startActivity(intent);
-                        finish();
+            List<Game> gameList = (List<Game>) gameResponse.getResponseObject();
+
+            games = gameList;
+            players = new HashMap<>();
+            for (Game game : gameList) {
+                players.put(game, game.getPlayers());
+                if (game.getGameState().equals(GameState.STARTED)) {
+                    for (Player player : game.getPlayers()) {
+                        if (player.getUserId().equals(userId) && ! startedMultiPlayerActivity && game.getPlayers().size() > 1) {
+                            refreshTask.stopTask();
+                            startedMultiPlayerActivity = true;
+                            Intent intent = new Intent(this, MultiPlayerActivity.class);
+                            Bundle bundle = new Bundle();
+                            bundle.putLong("userId", userId);
+                            bundle.putLong("gameId", game.getGameId());
+                            intent.putExtras(bundle);
+                            startActivity(intent);
+                            finish();
+                        }
                     }
                 }
             }
-        }
 
-        listAdapter.setJoinedGameId(-1);
-        for(Game game : games){
-            for(Player player : game.getPlayers()){
-                if(player.getUserId().equals(userId)){
-                    listAdapter.setJoinedGameId(game.getGameId());
+            listAdapter.setJoinedGameId(-1);
+            for(Game game : games){
+                for(Player player : game.getPlayers()){
+                    if(player.getUserId().equals(userId)){
+                        listAdapter.setJoinedGameId(game.getGameId());
+                    }
                 }
             }
+
+            listAdapter.refreshData(games, players);
+            listAdapter.notifyDataSetChanged();
         }
 
-        listAdapter.refreshData(games, players);
-        listAdapter.notifyDataSetChanged();
 
 
 
@@ -310,6 +314,10 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
 
     private class RefreshGamesTask extends RefreshTask {
 
+        private RefreshGamesTask(Context context) {
+            super(context);
+        }
+
         @Override
         public void handleResponse(Response response) {
             handleGameResponse(response);
@@ -334,7 +342,7 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
 
         @Override
         public void handleResponse(Response response) {
-//            handleGameResponse(response);
+            handleGameResponse(response);
         }
 
         @Override

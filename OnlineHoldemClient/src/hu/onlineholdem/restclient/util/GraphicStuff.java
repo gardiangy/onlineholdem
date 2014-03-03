@@ -17,10 +17,13 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import hu.onlineholdem.restclient.R;
+import hu.onlineholdem.restclient.entity.Action;
 import hu.onlineholdem.restclient.entity.Game;
 import hu.onlineholdem.restclient.entity.Player;
+import hu.onlineholdem.restclient.enums.ActionType;
 
 public class GraphicStuff {
 
@@ -186,6 +189,7 @@ public class GraphicStuff {
                 player.getTextView().setBackgroundResource(R.drawable.seatactive);
                 if (player.isUser()) {
                     showActionButtons(true);
+                    showAvailableActionButtons();
                 } else {
                     showActionButtons(false);
                 }
@@ -196,16 +200,18 @@ public class GraphicStuff {
     }
 
     public void moveBet(int amount, long playerId) {
-        Player player = null;
-        for (Player pl : players) {
-            if (pl.getPlayerId().equals(playerId)) {
-                player = pl;
+
+        Player actionPlayer = null;
+        for(Player player : players){
+            if(player.getPlayerId() == playerId){
+                actionPlayer = player;
+                break;
             }
         }
 
-        if (null != player.getChipLayout()) {
-            TextView existingChipsTextViw = (TextView) player.getChipLayout().getChildAt(0);
-            existingChipsTextViw.setText(player.getBetAmount() + amount + "");
+        if (null != actionPlayer.getChipLayout()) {
+            TextView existingChipsTextViw = (TextView) actionPlayer.getChipLayout().getChildAt(0);
+            existingChipsTextViw.setText(actionPlayer.getBetAmount() + amount + "");
         } else {
             RelativeLayout relativeLayout = new RelativeLayout(context);
             TextView chipsTextView = new TextView(context);
@@ -218,37 +224,57 @@ public class GraphicStuff {
 
 
             RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 12, screenHeight / 18);
-            Position position = getChipsPosition(player);
+            Position position = getChipsPosition(actionPlayer);
             layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
             relativeLayout.setLayoutParams(layoutParams);
 
             board.addView(relativeLayout);
-            player.setChipLayout(relativeLayout);
+            actionPlayer.setChipLayout(relativeLayout);
         }
 
-        player.getTextView().setText(player.getPlayerName() + "\n" + player.getStackSize().toString());
+        actionPlayer.getTextView().setText(actionPlayer.getPlayerName() + "\n" + actionPlayer.getStackSize().toString());
 
 
     }
 
     public void moveFold(long playerId) {
-        Player player = null;
-        for (Player pl : players) {
-            if (pl.getPlayerId().equals(playerId)) {
-                player = pl;
+
+        Player actionPlayer = null;
+        for(Player player : players){
+            if(player.getPlayerId() == playerId){
+                actionPlayer = player;
+                break;
             }
         }
-        Animation card1Anim = createAnimation(player.getTextView().getLeft() + screenWidth / 20, screenWidth / 2, player.getTextView().getTop() - screenHeight / 20, 0, false);
-        player.getCard1View().setAnimation(card1Anim);
 
-        Animation card2Anim = createAnimation(player.getTextView().getLeft() + screenWidth / 13, screenWidth / 2, player.getTextView().getTop() - screenHeight / 20, 0, false);
-        player.getCard2View().setAnimation(card2Anim);
-        player.getCard1View().startAnimation(player.getCard1View().getAnimation());
-        board.removeView(player.getCard1View());
+        Animation card1Anim = createAnimation(actionPlayer.getTextView().getLeft() + screenWidth / 20, screenWidth / 2, actionPlayer.getTextView().getTop() - screenHeight / 20, 0, false);
+        actionPlayer.getCard1View().setAnimation(card1Anim);
 
-        player.getCard2View().startAnimation(player.getCard2View().getAnimation());
-        board.removeView(player.getCard2View());
+        Animation card2Anim = createAnimation(actionPlayer.getTextView().getLeft() + screenWidth / 13, screenWidth / 2, actionPlayer.getTextView().getTop() - screenHeight / 20, 0, false);
+        actionPlayer.getCard2View().setAnimation(card2Anim);
+        actionPlayer.getCard1View().startAnimation(actionPlayer.getCard1View().getAnimation());
+        board.removeView(actionPlayer.getCard1View());
 
+        actionPlayer.getCard2View().startAnimation(actionPlayer.getCard2View().getAnimation());
+        board.removeView(actionPlayer.getCard2View());
+
+    }
+
+    public void collectChips(List<Player> playersInRound) {
+
+
+        for (Player player : playersInRound) {
+            if (null != player.getChipLayout()) {
+                int chipsShiftX = new Random().nextInt(100) - 50;
+                int chipsShiftY = new Random().nextInt(20) - 10;
+                TextView chipsText = (TextView) player.getChipLayout().getChildAt(0);
+                chipsText.setText("");
+                player.getChipLayout().animate().x(screenWidth / 2 + chipsShiftX).y(screenHeight / 7 + chipsShiftY);
+                game.getPotChips().add(player.getChipLayout());
+            }
+            player.setChipLayout(null);
+            player.setBetAmount(null);
+        }
     }
 
     public Position getChipsPosition(Player player) {
@@ -317,6 +343,66 @@ public class GraphicStuff {
 
     }
 
+    public void showAvailableActionButtons() {
+        Action lastAction = game.getActions().get(game.getActions().size() - 1);
+        int thisRound = lastAction.getPlayer().getOrder() == game.getPlayers().size() ? lastAction.getActionRound() + 1 : lastAction.getActionRound();
+
+        List<Action> betActionsInThisRound = new ArrayList<>();
+        for(Action action : game.getActions()){
+            if(action.getActionRound() == thisRound && (action.getActionType().equals(ActionType.BET)
+                    || action.getActionType().equals(ActionType.RAISE) || action.getActionType().equals(ActionType.ALL_IN))){
+                betActionsInThisRound.add(action);
+            }
+        }
+        Action highestBetAction = betActionsInThisRound.size() > 0 ? betActionsInThisRound.get(0) : null;
+        for(Action action : betActionsInThisRound){
+            if(action.getBetValue() > highestBetAction.getBetValue()){
+                highestBetAction = action;
+            }
+        }
+
+        Boolean higherStackThanRaiser = highestBetAction == null ? null : game.getUser().getStackSize() > highestBetAction.getBetValue();
+
+        List<ActionType> availableActions = getAvailableActions(lastAction.getActionType(), highestBetAction == null ? null : highestBetAction.getActionType(),
+                higherStackThanRaiser);
+
+        btnCheck.setVisibility(View.VISIBLE);
+        if (availableActions.contains(ActionType.CALL)) {
+            btnCheck.setText("CALL");
+        } else {
+            btnCheck.setText("CHECK");
+        }
+        if (availableActions.contains(ActionType.RAISE)) {
+            btnBet.setText("RAISE");
+        } else {
+            btnBet.setText("BET");
+        }
+        if (availableActions.contains(ActionType.ALL_IN)) {
+            btnBet.setText("ALL IN");
+            btnCheck.setVisibility(View.GONE);
+        }
+
+
+
+    }
+
+    public void updateGame(Game game){
+
+//        this.game.setPotSize(game.getPotSize());
+        potSize.setText(game.getPotSize().toString());
+
+        for(Player player : players){
+            for(Player newPlayer : game.getPlayers()){
+                if(player.getPlayerId().equals(newPlayer.getPlayerId())){
+                    player.setPlayerTurn(newPlayer.isPlayerTurn());
+                    player.setPlayerInTurn(newPlayer.getPlayerInTurn());
+                    player.setStackSize(newPlayer.getStackSize());
+                }
+            }
+        }
+
+    }
+
     public void updatePlayers(List<Player> newPlayers){
         for(Player player : players){
             for(Player newPlayer : newPlayers){
@@ -327,6 +413,68 @@ public class GraphicStuff {
                 }
             }
         }
+    }
+
+
+    public static List<ActionType> getAvailableActions(ActionType previousAction,ActionType highestBetAction, Boolean stackBiggerThanRaiser) {
+        List<ActionType> availableActions = new ArrayList<>();
+        switch (previousAction){
+            case CHECK:
+                availableActions.add(ActionType.CHECK);
+                availableActions.add(ActionType.BET);
+                availableActions.add(ActionType.FOLD);
+                break;
+            case BET:
+                availableActions.add(ActionType.CALL);
+                availableActions.add(ActionType.RAISE);
+                availableActions.add(ActionType.FOLD);
+                break;
+            case RAISE:
+                if(stackBiggerThanRaiser){
+                    availableActions.add(ActionType.CALL);
+                    availableActions.add(ActionType.RAISE);
+                    availableActions.add(ActionType.FOLD);
+                } else {
+                    availableActions.add(ActionType.ALL_IN);
+                    availableActions.add(ActionType.FOLD);
+                }
+
+                break;
+            case CALL:
+                if(stackBiggerThanRaiser){
+                    availableActions.add(ActionType.CALL);
+                    availableActions.add(ActionType.RAISE);
+                    availableActions.add(ActionType.FOLD);
+                } else {
+                    availableActions.add(ActionType.ALL_IN);
+                    availableActions.add(ActionType.FOLD);
+                }
+                break;
+            case ALL_IN:
+                if(stackBiggerThanRaiser){
+                    availableActions.add(ActionType.CALL);
+                    availableActions.add(ActionType.RAISE);
+                    availableActions.add(ActionType.FOLD);
+                } else {
+                    availableActions.add(ActionType.ALL_IN);
+                    availableActions.add(ActionType.FOLD);
+                }
+
+
+                break;
+            case FOLD:
+                if(null == highestBetAction){
+                    availableActions.add(ActionType.CHECK);
+                    availableActions.add(ActionType.BET);
+                    availableActions.add(ActionType.FOLD);
+                } else {
+                    availableActions.addAll(getAvailableActions(highestBetAction,null,stackBiggerThanRaiser));
+                }
+
+                break;
+        }
+
+        return availableActions;
     }
 
     public Game getGame() {

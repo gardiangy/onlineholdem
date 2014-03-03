@@ -30,6 +30,10 @@ public class Action implements Serializable {
 	@Column(name="bet_value")
 	private Integer betValue;
 
+
+    @Column(name="action_round", nullable=false)
+    private Integer actionRound;
+
 	//bi-directional many-to-one association to Game
 	@ManyToOne(fetch=FetchType.LAZY)
 	@JoinColumn(name="game_id", nullable=false)
@@ -82,5 +86,13 @@ public class Action implements Serializable {
 
     public void setPlayer(Player player) {
         this.player = player;
+    }
+
+    public Integer getActionRound() {
+        return actionRound;
+    }
+
+    public void setActionRound(Integer actionRound) {
+        this.actionRound = actionRound;
     }
 }

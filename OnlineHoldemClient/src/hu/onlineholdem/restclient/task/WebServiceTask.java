@@ -4,12 +4,14 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
@@ -21,6 +23,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 
 import hu.onlineholdem.restclient.response.Response;
@@ -40,6 +43,8 @@ public abstract class WebServiceTask extends AsyncTask<String, Response, Respons
 
     // socket timeout, in milliseconds (waiting for data)
     private static final int SOCKET_TIMEOUT = 5000;
+
+    private boolean serverNotResponding = false;
 
     private int taskType = GET_TASK;
     private Context mContext = null;
@@ -109,7 +114,11 @@ public abstract class WebServiceTask extends AsyncTask<String, Response, Respons
     @Override
     protected void onPostExecute(Response response) {
 
-        handleResponse(response);
+        if(serverNotResponding){
+            Toast.makeText(mContext, "Server not responding", Toast.LENGTH_SHORT).show();
+        } else {
+            handleResponse(response);
+        }
 
     }
 
@@ -154,6 +163,9 @@ public abstract class WebServiceTask extends AsyncTask<String, Response, Respons
                     response = httpclient.execute(httpget);
                     break;
             }
+        } catch (SocketTimeoutException | ConnectTimeoutException e) {
+            serverNotResponding = true;
+            Log.e(TAG, e.getLocalizedMessage(), e);
         } catch (Exception e) {
 
             Log.e(TAG, e.getLocalizedMessage(), e);

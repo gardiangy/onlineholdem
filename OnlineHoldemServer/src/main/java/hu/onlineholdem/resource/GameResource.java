@@ -59,7 +59,7 @@ public class GameResource {
             game.setPlayers(new ArrayList<Player>());
         }
         if(game.getPlayers().size() == 0){
-            player.setPlayerOrder(0); 
+            player.setPlayerOrder(1);
         } else {
             List<Player> playersHighestOrder = playerDAO.findByGameOrderByPlayerOrderDesc(game);
             player.setPlayerOrder(playersHighestOrder.get(0).getPlayerOrder() + 1);
@@ -110,7 +110,7 @@ public class GameResource {
         game.setGameName(createGameBO.getGameName());
         game.setMaxPlayerNumber(createGameBO.getMaxPlayerNumber());
         game.setStartingStackSize(createGameBO.getStartingStackSize());
-        game.setPotSize(1);
+        game.setPotSize(0);
         game.setGameState(GameState.REGISTERING);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         try {

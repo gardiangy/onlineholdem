@@ -45,24 +45,38 @@ public class ActionResource {
 
         Game game = gameDAO.findOne(actionBO.getGameId());
         action.setGame(game);
+
+
+        if(game.getActions().size() == 0){
+            action.setActionRound(1);
+        } else {
+            Action lastAction = game.getActions().get(game.getActions().size() - 1);
+            if(lastAction.getPlayer().getPlayerOrder() == game.getPlayers().size()){
+                action.setActionRound(lastAction.getActionRound() + 1);
+            } else {
+                action.setActionRound(lastAction.getActionRound());
+            }
+
+        }
+
         game.getActions().add(action);
 
         for (Player pl : game.getPlayers()) {
             if (pl.getPlayerId().equals(player.getPlayerId())) {
-                if (actionType.equals(ActionType.FOLD)) {
-                    pl.setPlayerInTurn(false);
+                if (actionType.equals(ActionType.BET)) {
+                    int newStackSize = pl.getStackSize() - action.getBetValue();
+                    pl.setStackSize(newStackSize);
+                    pl.setPlayerBetAmount(action.getBetValue());
                 }
-                int newStackSize = pl.getStackSize() - action.getBetValue();
-                pl.setStackSize(newStackSize);
                 pl.setPlayerTurn(false);
-                pl.setPlayerBetAmount(action.getBetValue());
+
             } else {
-                if (pl.getPlayerOrder() == player.getPlayerOrder() + 1) {
+                if (pl.getPlayerOrder() == player.getPlayerOrder() + 1 ||
+                        (pl.getPlayerOrder() == 1 && player.getPlayerOrder() == game.getPlayers().size())) {
                     pl.setPlayerTurn(true);
+                } else {
+                    pl.setPlayerTurn(false);
                 }
-            }
-            if (game.getPlayers().size() == game.getPlayers().indexOf(pl) + 1) {
-                game.getPlayers().get(0).setPlayerTurn(true);
             }
 
 

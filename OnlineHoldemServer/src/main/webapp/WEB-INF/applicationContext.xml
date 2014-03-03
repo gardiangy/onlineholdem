@@ -29,6 +29,13 @@
         </property>
     </bean>
 
+
+    <bean id="gameChecker" class="hu.onlineholdem.bean.GameStartCheckerBean"  />
+
+    <bean id="gameCheckerThread" class="java.lang.Thread" init-method="start">
+        <constructor-arg ref="gameChecker"/>
+    </bean>
+
     <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
         <property name="entityManagerFactory" ref="entityManagerFactory"/>
     </bean>

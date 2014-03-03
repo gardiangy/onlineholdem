@@ -50,7 +50,7 @@ public class MultiPlayerActivity extends Activity {
     private long gameId;
     private long lastActionId = -1;
     private int actionSize = 0;
-    private static final String SERVICE_URL = "http://146.110.44.10:8080/rest";
+    private static final String SERVICE_URL = "http://192.168.1.103:8080/rest";
     private GraphicStuff graphics;
 
     @Override
@@ -67,7 +67,7 @@ public class MultiPlayerActivity extends Activity {
 
 
         String getURL = SERVICE_URL + "/game/" + gameId;
-        RefreshGameTask refreshTask = new RefreshGameTask();
+        RefreshGameTask refreshTask = new RefreshGameTask(this);
         refreshTask.execute(new String[]{getURL});
     }
 
@@ -90,23 +90,33 @@ public class MultiPlayerActivity extends Activity {
             graphics.deal();
             handDealt = true;
         }
-        graphics.updatePlayers(game.getPlayers());
+        graphics.updateGame(game);
         graphics.showCurrentPlayer();
         if(game.getActions().size() > actionSize){
             for(Action action : game.getActions()){
                 if(action.getActionId() > lastActionId || lastActionId == -1){
                     if(action.getActionType().equals(ActionType.BET)){
-                        graphics.moveBet(action.getBetValue(),action.getPlayerId());
+                        graphics.moveBet(action.getBetValue(),action.getPlayer().getPlayerId());
                     }
                     if(action.getActionType().equals(ActionType.FOLD)){
-                        graphics.moveFold(action.getPlayerId());
+                        graphics.moveFold(action.getPlayer().getPlayerId());
                     }
                 }
                 if(game.getActions().indexOf(action) == game.getActions().size() - 1){
                     lastActionId = action.getActionId();
                 }
+                if(action.getPlayer().getOrder() == game.getPlayers().size()){
+                    List<Player> playersInRound = new ArrayList<>();
+                    for(Player player : graphics.getGame().getPlayers()){
+                        if(player.getPlayerInTurn()){
+                            playersInRound.add(player);
+                        }
+                    }
+                    graphics.collectChips(playersInRound);
+                }
             }
             actionSize = game.getActions().size();
+
         }
 
 
@@ -131,7 +141,7 @@ public class MultiPlayerActivity extends Activity {
         if (btnId == R.id.btnFold)
             actionType = ActionType.FOLD;
 
-        wst.addNameValuePair("actionType", actionType.getName());
+        wst.addNameValuePair("actionType", actionType.name());
         wst.addNameValuePair("betValue", betValue.getText().toString().equals("") ? "0" : betValue.getText().toString());
         wst.addNameValuePair("playerId", String.valueOf(playerId));
         wst.addNameValuePair("gameId", String.valueOf(gameId));
@@ -159,6 +169,7 @@ public class MultiPlayerActivity extends Activity {
             game.setStartTime(new Date(gamesJSON.getLong("startTime")));
             GameState gameState = GameState.valueOf(gamesJSON.getString("gameState"));
             game.setGameState(gameState);
+            game.setPotChips(new ArrayList<RelativeLayout>());
 
             JSONArray playerArray = gamesJSON.getJSONArray("players");
             List<Player> playerList = new ArrayList<>();
@@ -236,9 +247,15 @@ public class MultiPlayerActivity extends Activity {
                 action.setActionId(actionItem.getLong("actionId"));
                 action.setActionType(ActionType.valueOf(actionItem.getString("actionType")));
                 action.setBetValue(actionItem.getInt("betValue"));
+                action.setActionRound(actionItem.getInt("actionRound"));
 
                 JSONObject playerItem = actionItem.getJSONObject("player");
-                action.setPlayerId(playerItem.getLong("playerId"));
+                for(Player player : game.getPlayers()){
+                    if(player.getPlayerId() == playerItem.getLong("playerId")){
+                        action.setPlayer(player);
+                    }
+                }
+
 
                 actionList.add(action);
             }
@@ -253,6 +270,10 @@ public class MultiPlayerActivity extends Activity {
 
 
     private class RefreshGameTask extends RefreshTask {
+
+        private RefreshGameTask(Context context) {
+            super(context);
+        }
 
         @Override
         public void handleResponse(Response response) {

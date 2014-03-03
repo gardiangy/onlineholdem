@@ -11,7 +11,8 @@ public class Action implements Serializable {
 	private Long actionId;
 	private ActionType actionType;
 	private Integer betValue;
-    private Long playerId;
+	private Integer actionRound;
+    private Player player;
 
     public Long getActionId() {
         return actionId;
@@ -37,15 +38,23 @@ public class Action implements Serializable {
         this.betValue = betValue;
     }
 
-    public Long getPlayerId() {
-        return playerId;
+    public Player getPlayer() {
+        return player;
     }
 
-    public void setPlayerId(Long playerId) {
-        this.playerId = playerId;
+    public void setPlayer(Player player) {
+        this.player = player;
     }
 
     public Action() {
 	}
 
+
+    public Integer getActionRound() {
+        return actionRound;
+    }
+
+    public void setActionRound(Integer actionRound) {
+        this.actionRound = actionRound;
+    }
 }
