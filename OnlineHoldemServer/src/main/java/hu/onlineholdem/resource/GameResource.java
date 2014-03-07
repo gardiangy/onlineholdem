@@ -136,6 +136,17 @@ public class GameResource {
 
         Game game = gameDAO.findOne(gameId);
 
+        if (null != game.getActions()){
+            int lastActionRound = game.getActions().get(game.getActions().size() - 1).getActionRound();
+            List<Action> actions = new ArrayList<>();
+            actions.addAll(game.getActions());
+            for(Action action : actions){
+                if(action.getActionRound() != lastActionRound){
+                    game.getActions().remove(action);
+                }
+            }
+        }
+
         Response response = new Response();
         response.setResponseObject(game);
         response.setResponseType(ResponseType.OK);
