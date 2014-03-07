@@ -49,6 +49,7 @@ public class GraphicStuff {
     private Activity activity;
     private List<Player> players;
     private int betAmount;
+    private int minBet = 30;
 
     public GraphicStuff(Context context) {
         this.context = context;
@@ -78,8 +79,8 @@ public class GraphicStuff {
         betBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                betValue.setText("" + i);
-                betAmount = i;
+                betValue.setText("" + i + minBet);
+                betAmount = i + minBet;
             }
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {}
@@ -117,6 +118,34 @@ public class GraphicStuff {
         flop3.setImageResource(res3Id);
         flop3.setVisibility(View.VISIBLE);
         flop3.startAnimation(flop3Anim);
+
+    }
+
+    public void dealTurn() {
+
+        int resId = resources.getIdentifier(game.getBoard().get(3).toString(), "drawable", packageName);
+
+        Animation turnAnim = createAnimation(screenWidth / 2, screenWidth / 2, 0, screenHeight / 4, true);
+        turn = new ImageView(context);
+        board.addView(turn);
+        turn.setAnimation(turnAnim);
+        turn.setImageResource(resId);
+        turn.setVisibility(View.VISIBLE);
+        turn.startAnimation(turnAnim);
+
+    }
+
+    public void dealRiver() {
+
+        int resId = resources.getIdentifier(game.getBoard().get(4).toString(), "drawable", packageName);
+
+        Animation riverAnim = createAnimation(screenWidth / 2, screenWidth / 2 + 100, 0, screenHeight / 4, true);
+        river = new ImageView(context);
+        board.addView(river);
+        river.setAnimation(riverAnim);
+        river.setImageResource(resId);
+        turn.setVisibility(View.VISIBLE);
+        river.startAnimation(riverAnim);
 
     }
 
@@ -344,45 +373,46 @@ public class GraphicStuff {
     }
 
     public void showAvailableActionButtons() {
-        Action lastAction = game.getActions().get(game.getActions().size() - 1);
-        int thisRound = lastAction.getPlayer().getOrder() == game.getPlayers().size() ? lastAction.getActionRound() + 1 : lastAction.getActionRound();
+        if(game.getActions().size() > 0){
+            Action lastAction = game.getActions().get(game.getActions().size() - 1);
+            int thisRound = lastAction.getPlayer().getOrder() == game.getPlayers().size() ? lastAction.getActionRound() + 1 : lastAction.getActionRound();
 
-        List<Action> betActionsInThisRound = new ArrayList<>();
-        for(Action action : game.getActions()){
-            if(action.getActionRound() == thisRound && (action.getActionType().equals(ActionType.BET)
-                    || action.getActionType().equals(ActionType.RAISE) || action.getActionType().equals(ActionType.ALL_IN))){
-                betActionsInThisRound.add(action);
+            List<Action> betActionsInThisRound = new ArrayList<>();
+            for(Action action : game.getActions()){
+                if(action.getActionRound() == thisRound && (action.getActionType().equals(ActionType.BET)
+                        || action.getActionType().equals(ActionType.RAISE) || action.getActionType().equals(ActionType.ALL_IN))){
+                    betActionsInThisRound.add(action);
+                }
+            }
+            Action highestBetAction = betActionsInThisRound.size() > 0 ? betActionsInThisRound.get(0) : null;
+            for(Action action : betActionsInThisRound){
+                if(action.getBetValue() > highestBetAction.getBetValue()){
+                    highestBetAction = action;
+                }
+            }
+
+            Boolean higherStackThanRaiser = highestBetAction == null ? null : game.getUser().getStackSize() > highestBetAction.getBetValue();
+
+            List<ActionType> availableActions = getAvailableActions(lastAction.getActionType(), highestBetAction == null ? null : highestBetAction.getActionType(),
+                    higherStackThanRaiser);
+
+            btnCheck.setVisibility(View.VISIBLE);
+            if (availableActions.contains(ActionType.CALL)) {
+                btnCheck.setText("CALL");
+            } else {
+                btnCheck.setText("CHECK");
+            }
+            if (availableActions.contains(ActionType.RAISE)) {
+                btnBet.setText("RAISE");
+                minBet = highestBetAction.getBetValue() * 2;
+            } else {
+                btnBet.setText("BET");
+            }
+            if (availableActions.contains(ActionType.ALL_IN)) {
+                btnBet.setText("ALL IN");
+                btnCheck.setVisibility(View.GONE);
             }
         }
-        Action highestBetAction = betActionsInThisRound.size() > 0 ? betActionsInThisRound.get(0) : null;
-        for(Action action : betActionsInThisRound){
-            if(action.getBetValue() > highestBetAction.getBetValue()){
-                highestBetAction = action;
-            }
-        }
-
-        Boolean higherStackThanRaiser = highestBetAction == null ? null : game.getUser().getStackSize() > highestBetAction.getBetValue();
-
-        List<ActionType> availableActions = getAvailableActions(lastAction.getActionType(), highestBetAction == null ? null : highestBetAction.getActionType(),
-                higherStackThanRaiser);
-
-        btnCheck.setVisibility(View.VISIBLE);
-        if (availableActions.contains(ActionType.CALL)) {
-            btnCheck.setText("CALL");
-        } else {
-            btnCheck.setText("CHECK");
-        }
-        if (availableActions.contains(ActionType.RAISE)) {
-            btnBet.setText("RAISE");
-        } else {
-            btnBet.setText("BET");
-        }
-        if (availableActions.contains(ActionType.ALL_IN)) {
-            btnBet.setText("ALL IN");
-            btnCheck.setVisibility(View.GONE);
-        }
-
-
 
     }
 
@@ -401,18 +431,6 @@ public class GraphicStuff {
             }
         }
 
-    }
-
-    public void updatePlayers(List<Player> newPlayers){
-        for(Player player : players){
-            for(Player newPlayer : newPlayers){
-                if(player.getPlayerId().equals(newPlayer.getPlayerId())){
-                    player.setPlayerTurn(newPlayer.isPlayerTurn());
-                    player.setPlayerInTurn(newPlayer.getPlayerInTurn());
-                    player.setStackSize(newPlayer.getStackSize());
-                }
-            }
-        }
     }
 
 

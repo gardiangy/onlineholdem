@@ -2,18 +2,11 @@ package hu.onlineholdem.restclient.activity;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
-import android.content.res.Resources;
-import android.graphics.Point;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.Display;
-import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
-import android.view.animation.Animation;
-import android.view.animation.TranslateAnimation;
-import android.widget.ImageView;
+import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -23,7 +16,6 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 import hu.onlineholdem.restclient.R;
@@ -38,18 +30,20 @@ import hu.onlineholdem.restclient.response.Response;
 import hu.onlineholdem.restclient.task.RefreshTask;
 import hu.onlineholdem.restclient.task.WebServiceTask;
 import hu.onlineholdem.restclient.util.GraphicStuff;
-import hu.onlineholdem.restclient.util.Position;
 
 public class MultiPlayerActivity extends Activity {
 
     private boolean init = false;
     private boolean flopDealt = false;
+    private boolean turnDealt = false;
+    private boolean riverDealt = false;
     private boolean handDealt = false;
     private long userId;
     private long playerId;
     private long gameId;
     private long lastActionId = -1;
     private int actionSize = 0;
+    private int highestBetAmount = 0;
     private static final String SERVICE_URL = "http://192.168.1.103:8080/rest";
     private GraphicStuff graphics;
 
@@ -80,11 +74,9 @@ public class MultiPlayerActivity extends Activity {
             graphics.createPlayers();
             init = true;
         }
-        if(null != game.getBoard() && game.getBoard().size() > 2){
-            if(!flopDealt){
-                graphics.dealFlop();
-                flopDealt = true;
-            }
+        if (!flopDealt && null != game.getBoard() && game.getBoard().size() == 3) {
+            graphics.dealFlop();
+            flopDealt = true;
         }
         if (!handDealt) {
             graphics.deal();
@@ -92,36 +84,55 @@ public class MultiPlayerActivity extends Activity {
         }
         graphics.updateGame(game);
         graphics.showCurrentPlayer();
-        if(game.getActions().size() > actionSize){
-            for(Action action : game.getActions()){
-                if(action.getActionId() > lastActionId || lastActionId == -1){
-                    if(action.getActionType().equals(ActionType.BET)){
-                        graphics.moveBet(action.getBetValue(),action.getPlayer().getPlayerId());
+        if (!turnDealt && null != game.getBoard() && game.getBoard().size() == 4) {
+            graphics.dealTurn();
+            turnDealt = true;
+        }
+        if (!riverDealt && null != game.getBoard() && game.getBoard().size() == 5) {
+            graphics.dealRiver();
+            riverDealt = true;
+        }
+        if (game.getActions().size() > actionSize) {
+            boolean roundOver = true;
+            for (Action action : game.getActions()) {
+
+                if (action.getBetValue() < highestBetAmount && action.getPlayer().getStackSize() > 0) {
+                    roundOver = false;
+                }
+
+                if (action.getActionId() > lastActionId || lastActionId == -1) {
+                    if (action.getActionType().equals(ActionType.BET)) {
+                        graphics.moveBet(action.getBetValue(), action.getPlayer().getPlayerId());
                     }
-                    if(action.getActionType().equals(ActionType.FOLD)){
+                    if (action.getActionType().equals(ActionType.FOLD)) {
                         graphics.moveFold(action.getPlayer().getPlayerId());
                     }
                 }
-                if(game.getActions().indexOf(action) == game.getActions().size() - 1){
+                if (game.getActions().indexOf(action) == game.getActions().size() - 1) {
                     lastActionId = action.getActionId();
                 }
-                if(action.getPlayer().getOrder() == game.getPlayers().size()){
-                    List<Player> playersInRound = new ArrayList<>();
-                    for(Player player : graphics.getGame().getPlayers()){
-                        if(player.getPlayerInTurn()){
-                            playersInRound.add(player);
-                        }
-                    }
-                    graphics.collectChips(playersInRound);
+
+                if (action.getBetValue() > highestBetAmount) {
+                    highestBetAmount = action.getBetValue();
                 }
+
+            }
+            if (roundOver) {
+                List<Player> playersInRound = new ArrayList<>();
+                for (Player player : graphics.getGame().getPlayers()) {
+                    if (player.getPlayerInTurn()) {
+                        playersInRound.add(player);
+                    }
+                }
+                graphics.collectChips(playersInRound);
             }
             actionSize = game.getActions().size();
+
 
         }
 
 
     }
-
 
 
     public void postAction(View vw) {
@@ -130,14 +141,23 @@ public class MultiPlayerActivity extends Activity {
 
         TextView betValue = (TextView) findViewById(R.id.betValue);
 
-        WebServiceTask wst = new PostGameTask(WebServiceTask.POST_TASK, this,"Posting data...");
+        WebServiceTask wst = new PostGameTask(WebServiceTask.POST_TASK, this, "Posting data...");
+
+        Button button = (Button) vw;
 
         ActionType actionType = null;
-        int btnId = vw.getId();
+        int btnId = button.getId();
         if (btnId == R.id.btnCheck)
-            actionType = ActionType.CHECK;
-        if (btnId == R.id.btnBet)
-            actionType = ActionType.BET;
+            actionType = button.getText().toString().equals("CHECK") ? ActionType.CHECK : ActionType.CALL;
+        if (btnId == R.id.btnBet) {
+            if (button.getText().toString().equals("BET")) {
+                actionType = ActionType.BET;
+            } else if (button.getText().toString().equals("RAISE")) {
+                actionType = ActionType.RAISE;
+            } else {
+                actionType = ActionType.ALL_IN;
+            }
+        }
         if (btnId == R.id.btnFold)
             actionType = ActionType.FOLD;
 
@@ -146,12 +166,10 @@ public class MultiPlayerActivity extends Activity {
         wst.addNameValuePair("playerId", String.valueOf(playerId));
         wst.addNameValuePair("gameId", String.valueOf(gameId));
 
-        wst.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,new String[]{postURL});
+        wst.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[]{postURL});
 
 
     }
-
-
 
 
     public Response parseGameJson(JSONObject item) throws JSONException {
@@ -184,7 +202,7 @@ public class MultiPlayerActivity extends Activity {
                 player.setOrder(playerItem.getInt("playerOrder"));
                 player.setPlayerTurn(playerItem.getBoolean("playerTurn"));
                 player.setPlayerInTurn(playerItem.getBoolean("playerInTurn"));
-                if(!playerItem.isNull("playerBetAmount")){
+                if (!playerItem.isNull("playerBetAmount")) {
                     player.setBetAmount(playerItem.getInt("playerBetAmount"));
                 }
                 Card cardOne = new Card();
@@ -198,7 +216,7 @@ public class MultiPlayerActivity extends Activity {
                 cardTwo.setValue(cardTwoItem.getInt("value"));
                 player.setCardTwo(cardTwo);
                 JSONObject userItem = playerItem.getJSONObject("user");
-                if(userItem.getLong("userId") == userId){
+                if (userItem.getLong("userId") == userId) {
                     player.setIsUser(true);
                     playerId = player.getPlayerId();
                 } else {
@@ -209,7 +227,7 @@ public class MultiPlayerActivity extends Activity {
             game.setPlayers(playerList);
 
 
-            if(!gamesJSON.isNull("flop")){
+            if (!gamesJSON.isNull("flop")) {
                 JSONArray flopArray = gamesJSON.getJSONArray("flop");
                 List<Card> flop = new ArrayList<>();
                 for (int counter = 0; counter < flopArray.length(); counter++) {
@@ -222,7 +240,7 @@ public class MultiPlayerActivity extends Activity {
                 }
                 game.setBoard(flop);
             }
-            if(!gamesJSON.isNull("turn")){
+            if (!gamesJSON.isNull("turn")) {
                 JSONObject turnJSON = gamesJSON.getJSONObject("turn");
                 Card turn = new Card();
                 turn.setSuit(Suit.valueOf(turnJSON.getString("suit")));
@@ -230,7 +248,7 @@ public class MultiPlayerActivity extends Activity {
                 game.getBoard().add(turn);
             }
 
-            if(!gamesJSON.isNull("river")){
+            if (!gamesJSON.isNull("river")) {
                 JSONObject riverJSON = gamesJSON.getJSONObject("river");
                 Card river = new Card();
                 river.setSuit(Suit.valueOf(riverJSON.getString("suit")));
@@ -250,8 +268,8 @@ public class MultiPlayerActivity extends Activity {
                 action.setActionRound(actionItem.getInt("actionRound"));
 
                 JSONObject playerItem = actionItem.getJSONObject("player");
-                for(Player player : game.getPlayers()){
-                    if(player.getPlayerId() == playerItem.getLong("playerId")){
+                for (Player player : game.getPlayers()) {
+                    if (player.getPlayerId() == playerItem.getLong("playerId")) {
                         action.setPlayer(player);
                     }
                 }
@@ -266,7 +284,6 @@ public class MultiPlayerActivity extends Activity {
         }
         return gameResponse;
     }
-
 
 
     private class RefreshGameTask extends RefreshTask {
@@ -291,7 +308,7 @@ public class MultiPlayerActivity extends Activity {
         }
     }
 
-    private class PostGameTask extends WebServiceTask{
+    private class PostGameTask extends WebServiceTask {
 
         public PostGameTask(int taskType, Context mContext, String processMessage) {
             super(taskType, mContext, processMessage);

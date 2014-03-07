@@ -37,6 +37,15 @@ public class Game implements Serializable {
 	public Game() {
 	}
 
+    public Player getUser(){
+        for(Player player : players){
+            if(player.isUser()){
+                return player;
+            }
+        }
+        return null;
+    }
+
 	public Long getGameId() {
 		return this.gameId;
 	}
