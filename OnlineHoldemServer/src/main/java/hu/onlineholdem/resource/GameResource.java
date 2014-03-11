@@ -136,7 +136,7 @@ public class GameResource {
 
         Game game = gameDAO.findOne(gameId);
 
-        if (null != game.getActions()){
+        if (null != game.getActions() && game.getActions().size() > 0){
             int lastActionRound = game.getActions().get(game.getActions().size() - 1).getActionRound();
             List<Action> actions = new ArrayList<>();
             actions.addAll(game.getActions());

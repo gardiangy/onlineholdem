@@ -59,14 +59,15 @@ public class ActionResource {
             action.setActionRound(1);
         } else {
             Action lastAction = game.getActions().get(game.getActions().size() - 1);
-            if(lastAction.getPlayer().getPlayerOrder() == game.getPlayers().size()){
-                List<Player> playersInRound = new ArrayList<>();
-                for(Player pl : game.getPlayers()){
-                    if(pl.getPlayerInTurn()){
-                        playersInRound.add(pl);
-                    }
+            highestBetAmount = getHighestBetAction(game.getActions(),lastAction.getActionRound()).getBetValue();
+            List<Player> playersInRound = new ArrayList<>();
+            for(Player pl : game.getPlayers()){
+                if(pl.getPlayerInTurn()){
+                    playersInRound.add(pl);
                 }
-                highestBetAmount = getHighestBetAction(game.getActions(),lastAction.getActionRound()).getBetValue();
+            }
+            if(player.equals(playersInRound.get(playersInRound.size() - 1))){
+
                 if(makeMovesAgain(playersInRound,highestBetAmount)){
                     action.setActionRound(lastAction.getActionRound());
                 } else {
@@ -94,18 +95,20 @@ public class ActionResource {
                     int newStackSize = pl.getStackSize() - action.getBetValue();
                     pl.setStackSize(newStackSize);
                     pl.setPlayerBetAmount(action.getBetValue());
-                    pl.setPlayerAmountInPot(pl.getPlayerAmountInPot() + pl.getPlayerBetAmount());
+                    pl.setPlayerAmountInPot(null == pl.getPlayerAmountInPot() ?  pl.getPlayerBetAmount() : pl.getPlayerAmountInPot() + pl.getPlayerBetAmount() );
                 }
                 if (actionType.equals(ActionType.CALL)) {
                     int newStackSize = highestBetAmount > pl.getStackSize() ? 0 : pl.getStackSize() - highestBetAmount;
                     pl.setStackSize(newStackSize);
                     pl.setPlayerBetAmount(highestBetAmount > pl.getStackSize() ? pl.getStackSize() : highestBetAmount);
-                    pl.setPlayerAmountInPot(pl.getPlayerAmountInPot() + pl.getPlayerBetAmount());
+                    action.setBetValue(pl.getPlayerBetAmount());
+                    pl.setPlayerAmountInPot(null == pl.getPlayerAmountInPot() ?  pl.getPlayerBetAmount() : pl.getPlayerAmountInPot() + pl.getPlayerBetAmount() );
                 }
                 if (actionType.equals(ActionType.ALL_IN)) {
                     pl.setPlayerBetAmount(pl.getStackSize());
                     pl.setStackSize(0);
-                    pl.setPlayerAmountInPot(pl.getPlayerAmountInPot() + pl.getPlayerBetAmount());
+                    action.setBetValue(pl.getPlayerBetAmount());
+                    pl.setPlayerAmountInPot(null == pl.getPlayerAmountInPot() ?  pl.getPlayerBetAmount() : pl.getPlayerAmountInPot() + pl.getPlayerBetAmount() );
                 }
                 pl.setPlayerTurn(false);
 
@@ -185,7 +188,7 @@ public class ActionResource {
     }
 
 
-    public boolean makeMovesAgain(List<Player> players, Integer highestBetAmount) {
+    public boolean makeMovesAgain(List<Player> players, int highestBetAmount) {
         for (Player player : players) {
             if ((null != player.getPlayerBetAmount() && player.getPlayerBetAmount() != highestBetAmount && player.getStackSize() > 0)) {
                 return true;
