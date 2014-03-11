@@ -186,4 +186,23 @@ public class Player implements Serializable {
     public void setPlayerInTurn(Boolean playerInTurn) {
         this.playerInTurn = playerInTurn;
     }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Player player = (Player) o;
+
+        if (playerId != null ? !playerId.equals(player.playerId) : player.playerId != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return playerId != null ? playerId.hashCode() : 0;
+    }
 }

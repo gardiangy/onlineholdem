@@ -22,8 +22,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -33,7 +31,6 @@ import java.util.Map;
 import hu.onlineholdem.restclient.R;
 import hu.onlineholdem.restclient.entity.Game;
 import hu.onlineholdem.restclient.entity.Player;
-import hu.onlineholdem.restclient.entity.User;
 import hu.onlineholdem.restclient.enums.GameState;
 import hu.onlineholdem.restclient.response.Response;
 import hu.onlineholdem.restclient.task.RefreshTask;
@@ -44,7 +41,7 @@ import hu.onlineholdem.restclient.util.GameListAdapter;
 public class GameBrowserActivity extends Activity implements DateTimeDialog.DateTimeDialogListener {
 
     private static final String TAG = "GameBrowserActivity";
-    private static final String SERVICE_URL = "http://192.168.1.103:8080/rest";
+    private static final String SERVICE_URL = "http://192.168.1.102:8080/rest";
 
     private ExpandableListView list;
     private GameListAdapter listAdapter;

@@ -40,12 +40,16 @@ public class MultiPlayerActivity extends Activity {
     private boolean handDealt = false;
     private long userId;
     private long playerId;
+
     private long gameId;
     private long lastActionId = -1;
     private int actionSize = 0;
     private int highestBetAmount = 0;
-    private static final String SERVICE_URL = "http://192.168.1.103:8080/rest";
+    private static final String SERVICE_URL = "http://192.168.1.102:8080/rest";
     private GraphicStuff graphics;
+    private Player currentPlayer;
+    private Action lastAction;
+    private Action highestBetAction;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,7 +87,6 @@ public class MultiPlayerActivity extends Activity {
             handDealt = true;
         }
         graphics.updateGame(game);
-        graphics.showCurrentPlayer();
         if (!turnDealt && null != game.getBoard() && game.getBoard().size() == 4) {
             graphics.dealTurn();
             turnDealt = true;
@@ -93,39 +96,57 @@ public class MultiPlayerActivity extends Activity {
             riverDealt = true;
         }
         if (game.getActions().size() > actionSize) {
-            boolean roundOver = true;
+            boolean newBettingRound = false;
+            boolean roundOver = false;
             for (Action action : game.getActions()) {
 
-                if (action.getBetValue() < highestBetAmount && action.getPlayer().getStackSize() > 0) {
-                    roundOver = false;
+                if (action.getBetValue() < highestBetAction.getBetValue() && action.getPlayer().getStackSize() > 0) {
+                    newBettingRound = true;
                 }
 
-                if (action.getActionId() > lastActionId || lastActionId == -1) {
+                if (action.getActionId() > lastAction.getActionId() || null == lastAction) {
                     if (action.getActionType().equals(ActionType.BET)) {
                         graphics.moveBet(action.getBetValue(), action.getPlayer().getPlayerId());
                     }
                     if (action.getActionType().equals(ActionType.FOLD)) {
                         graphics.moveFold(action.getPlayer().getPlayerId());
                     }
-                }
-                if (game.getActions().indexOf(action) == game.getActions().size() - 1) {
-                    lastActionId = action.getActionId();
-                }
-
-                if (action.getBetValue() > highestBetAmount) {
-                    highestBetAmount = action.getBetValue();
-                }
-
-            }
-            if (roundOver) {
-                List<Player> playersInRound = new ArrayList<>();
-                for (Player player : graphics.getGame().getPlayers()) {
-                    if (player.getPlayerInTurn()) {
-                        playersInRound.add(player);
+                    List<Player> playersInRound = new ArrayList<>();
+                    for (Player player : graphics.getGame().getPlayers()) {
+                        if (player.getPlayerInTurn()) {
+                            playersInRound.add(player);
+                        }
+                    }
+                    if (action.getPlayer().equals(playersInRound.get(playersInRound.size() - 1)) && !newBettingRound) {
+                        graphics.collectChips(playersInRound);
+                        roundOver = true;
                     }
                 }
-                graphics.collectChips(playersInRound);
+                if (game.getActions().indexOf(action) == game.getActions().size() - 1) {
+                    lastAction = action;
+                }
+
+                if (action.getBetValue() > highestBetAction.getBetValue()) {
+                    highestBetAction = action;
+                }
+
             }
+            for(Player player : graphics.getGame().getPlayers()){
+                if(player.isPlayerTurn()){
+                    if(!player.equals(currentPlayer)){
+                        graphics.showCurrentPlayer(player);
+                        graphics.showAvailableActionButtons(lastAction, highestBetAction,roundOver);
+                        currentPlayer = player;
+                    }
+
+                }
+            }
+            if(null != currentPlayer && currentPlayer.isUser()){
+                graphics.showActionButtons(true);
+            } else {
+                graphics.showActionButtons(false);
+            }
+
             actionSize = game.getActions().size();
 
 
