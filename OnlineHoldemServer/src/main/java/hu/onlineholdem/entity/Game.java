@@ -162,4 +162,16 @@ public class Game implements Serializable {
     public void setRiver(Card river) {
         this.river = river;
     }
+
+    @Override
+    public String toString() {
+        return "Game{" +
+                "potSize=" + potSize +
+                ", actions=" + actions +
+                ", players=" + players +
+                ", flop=" + flop +
+                ", turn=" + turn +
+                ", river=" + river +
+                '}';
+    }
 }

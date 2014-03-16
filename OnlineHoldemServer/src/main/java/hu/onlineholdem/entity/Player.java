@@ -32,6 +32,9 @@ public class Player implements Serializable {
     @Column(name="player_turn", nullable=false)
     private Boolean playerTurn;
 
+    @Column(name="player_raiser", nullable=false)
+    private Boolean playerRaiser;
+
     @Column(name="player_in_turn", nullable=false)
     private Boolean playerInTurn;
 
@@ -133,6 +136,14 @@ public class Player implements Serializable {
         this.playerInTurn = playerInTurn;
     }
 
+    public Boolean getPlayerRaiser() {
+        return playerRaiser;
+    }
+
+    public void setPlayerRaiser(Boolean playerRaiser) {
+        this.playerRaiser = playerRaiser;
+    }
+
     public Card getCardOne() {
         return cardOne;
     }
@@ -163,5 +174,35 @@ public class Player implements Serializable {
 
     public void setPlayerBetAmount(Integer playerBetAmount) {
         this.playerBetAmount = playerBetAmount;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Player player = (Player) o;
+
+        if (playerId != null ? !playerId.equals(player.playerId) : player.playerId != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return playerId != null ? playerId.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return "Player{" +
+                "playerId=" + playerId +
+                ", stackSize=" + stackSize +
+                ", playerOrder=" + playerOrder +
+                ", playerTurn=" + playerTurn +
+                ", playerInTurn=" + playerInTurn +
+                ", playerAmountInPot=" + playerAmountInPot +
+                ", playerBetAmount=" + playerBetAmount +
+                '}';
     }
 }

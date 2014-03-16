@@ -38,4 +38,14 @@ public class ActionBO {
     public void setGameId(Long gameId) {
         this.gameId = gameId;
     }
+
+    @Override
+    public String toString() {
+        return "ActionBO{" +
+                "actionType='" + actionType + '\'' +
+                ", betValue='" + betValue + '\'' +
+                ", playerId=" + playerId +
+                ", gameId=" + gameId +
+                '}';
+    }
 }

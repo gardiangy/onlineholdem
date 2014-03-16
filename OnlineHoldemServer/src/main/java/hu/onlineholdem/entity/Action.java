@@ -95,4 +95,15 @@ public class Action implements Serializable {
     public void setActionRound(Integer actionRound) {
         this.actionRound = actionRound;
     }
+
+    @Override
+    public String toString() {
+        return "Action{" +
+                "actionId=" + actionId +
+                ", actionType=" + actionType +
+                ", betValue=" + betValue +
+                ", actionRound=" + actionRound +
+                ", player=" + player.getPlayerId() +
+                '}';
+    }
 }
