@@ -133,4 +133,21 @@ public class Game implements Serializable {
     public void setActions(List<Action> actions) {
         this.actions = actions;
     }
+
+    @Override
+    public String toString() {
+        return "Game{" +
+                "gameId=" + gameId +
+                ", gameName='" + gameName + '\'' +
+                ", maxPlayerNumber=" + maxPlayerNumber +
+                ", startingStackSize=" + startingStackSize +
+                ", potSize=" + potSize +
+                ", startTime=" + startTime +
+                ", players=" + players +
+                ", board=" + board +
+                ", potChips=" + potChips +
+                ", gameState=" + gameState +
+                ", actions=" + actions +
+                '}';
+    }
 }

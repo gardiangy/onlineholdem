@@ -43,9 +43,10 @@ public class MultiPlayerActivity extends Activity {
 
     private long gameId;
     private long lastActionId = -1;
-    private int actionSize = 0;
+    private int actionSize = -1;
     private int highestBetAmount = 0;
-    private static final String SERVICE_URL = "http://192.168.1.102:8080/rest";
+    private static final String SERVICE_URL = "http://192.168.1.100:8080/rest";
+    private static final String TAG = "MultiplayerActivity";
     private GraphicStuff graphics;
     private Player currentPlayer;
     private Action lastAction;
@@ -78,7 +79,7 @@ public class MultiPlayerActivity extends Activity {
             graphics.createPlayers();
             init = true;
         }
-        if (!flopDealt && null != game.getBoard() && game.getBoard().size() == 3) {
+        if (!flopDealt && null != game.getBoard() && game.getBoard().size() >= 3) {
             graphics.dealFlop();
             flopDealt = true;
         }
@@ -86,26 +87,43 @@ public class MultiPlayerActivity extends Activity {
             graphics.deal();
             handDealt = true;
         }
+        if(flopDealt && !game.getBoard().get(0).equals(graphics.getGame().getBoard().get(0))){
+            graphics.showCards();
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            graphics.endRound();
+            flopDealt = false;
+            turnDealt = false;
+            riverDealt = false;
+            handDealt = false;
+        }
         graphics.updateGame(game);
-        if (!turnDealt && null != game.getBoard() && game.getBoard().size() == 4) {
+        if (!turnDealt && null != game.getBoard() && game.getBoard().size() >= 4) {
             graphics.dealTurn();
             turnDealt = true;
         }
-        if (!riverDealt && null != game.getBoard() && game.getBoard().size() == 5) {
+        if (!riverDealt && null != game.getBoard() && game.getBoard().size() >= 5) {
             graphics.dealRiver();
             riverDealt = true;
         }
+
         if (game.getActions().size() > actionSize) {
             boolean newBettingRound = false;
             boolean roundOver = false;
+            highestBetAction = null;
             for (Action action : game.getActions()) {
 
-                if (action.getBetValue() < highestBetAction.getBetValue() && action.getPlayer().getStackSize() > 0) {
+                if (null != highestBetAction && action.getBetValue() < highestBetAction.getBetValue()
+                        && action.getPlayer().getStackSize() > 0) {
                     newBettingRound = true;
                 }
 
-                if (action.getActionId() > lastAction.getActionId() || null == lastAction) {
-                    if (action.getActionType().equals(ActionType.BET)) {
+                if (null == lastAction || action.getActionId() > lastAction.getActionId()) {
+                    if (action.getActionType().equals(ActionType.BET) || action.getActionType().equals(ActionType.CALL)
+                            || action.getActionType().equals(ActionType.RAISE) || action.getActionType().equals(ActionType.ALL_IN)) {
                         graphics.moveBet(action.getBetValue(), action.getPlayer().getPlayerId());
                     }
                     if (action.getActionType().equals(ActionType.FOLD)) {
@@ -126,29 +144,28 @@ public class MultiPlayerActivity extends Activity {
                     lastAction = action;
                 }
 
-                if (action.getBetValue() > highestBetAction.getBetValue()) {
+                if (null == highestBetAction || action.getBetValue() > highestBetAction.getBetValue()) {
                     highestBetAction = action;
                 }
 
             }
-            for(Player player : graphics.getGame().getPlayers()){
-                if(player.isPlayerTurn()){
-                    if(!player.equals(currentPlayer)){
+            for (Player player : graphics.getGame().getPlayers()) {
+                if (player.isPlayerTurn()) {
+                    if (!player.equals(currentPlayer)) {
                         graphics.showCurrentPlayer(player);
-                        graphics.showAvailableActionButtons(lastAction, highestBetAction,roundOver);
+                        graphics.showAvailableActionButtons(lastAction, highestBetAction, roundOver);
                         currentPlayer = player;
                     }
 
                 }
             }
-            if(null != currentPlayer && currentPlayer.isUser()){
+            if (null != currentPlayer && currentPlayer.isUser()) {
                 graphics.showActionButtons(true);
             } else {
                 graphics.showActionButtons(false);
             }
 
             actionSize = game.getActions().size();
-
 
         }
 
@@ -183,7 +200,13 @@ public class MultiPlayerActivity extends Activity {
             actionType = ActionType.FOLD;
 
         wst.addNameValuePair("actionType", actionType.name());
-        wst.addNameValuePair("betValue", betValue.getText().toString().equals("") ? "0" : betValue.getText().toString());
+
+        if(actionType.equals(ActionType.BET) || actionType.equals(ActionType.RAISE)){
+            wst.addNameValuePair("betValue", betValue.getText().toString().equals("") ? "0" : betValue.getText().toString());
+        } else {
+            wst.addNameValuePair("betValue", "0");
+        }
+
         wst.addNameValuePair("playerId", String.valueOf(playerId));
         wst.addNameValuePair("gameId", String.valueOf(gameId));
 
@@ -223,6 +246,7 @@ public class MultiPlayerActivity extends Activity {
                 player.setOrder(playerItem.getInt("playerOrder"));
                 player.setPlayerTurn(playerItem.getBoolean("playerTurn"));
                 player.setPlayerInTurn(playerItem.getBoolean("playerInTurn"));
+                player.setPlayerRaiser(playerItem.getBoolean("playerRaiser"));
                 if (!playerItem.isNull("playerBetAmount")) {
                     player.setBetAmount(playerItem.getInt("playerBetAmount"));
                 }

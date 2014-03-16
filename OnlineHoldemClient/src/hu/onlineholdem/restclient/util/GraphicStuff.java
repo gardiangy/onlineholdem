@@ -21,6 +21,7 @@ import java.util.Random;
 
 import hu.onlineholdem.restclient.R;
 import hu.onlineholdem.restclient.entity.Action;
+import hu.onlineholdem.restclient.entity.Card;
 import hu.onlineholdem.restclient.entity.Game;
 import hu.onlineholdem.restclient.entity.Player;
 import hu.onlineholdem.restclient.enums.ActionType;
@@ -184,6 +185,49 @@ public class GraphicStuff {
 
     }
 
+    public void showCards(){
+        for(Player player : players){
+            if(!player.isUser()){
+                final int resId = resources.getIdentifier(player.getCardOne().toString(), "drawable", packageName);
+                final int res2Id = resources.getIdentifier(player.getCardTwo().toString(), "drawable", packageName);
+                player.getCard1View().setImageResource(resId);
+                player.getCard2View().setImageResource(res2Id);
+            }
+        }
+//        board.invalidate();
+    }
+
+    public void endRound() {
+
+        for(Player player : players){
+            player.getTextView().setText(player.getStackSize().toString());
+        }
+
+        List<Player> playerList = new ArrayList<>();
+        playerList.addAll(players);
+        for (Player player : playerList) {
+            if (player.getStackSize() == 0) {
+                seats.removeView(player.getTextView());
+                players.remove(player);
+            }
+            board.removeView(player.getCard1View());
+            board.removeView(player.getCard2View());
+            player.setCard1View(null);
+            player.setCard2View(null);
+            player.setAmountInPot(0);
+        }
+        for (RelativeLayout chip : game.getPotChips()) {
+            board.removeView(chip);
+        }
+        board.removeView(flop1);
+        board.removeView(flop2);
+        board.removeView(flop3);
+        board.removeView(turn);
+        board.removeView(river);
+
+
+    }
+
 
     public Animation createAnimation(int xFrom, int xTo, int yFrom, int yTo, boolean fillAfter) {
         TranslateAnimation translateAnimation = new TranslateAnimation(Animation.ABSOLUTE, xFrom, Animation.ABSOLUTE, xTo, Animation.ABSOLUTE, yFrom, Animation.ABSOLUTE, yTo);
@@ -225,6 +269,7 @@ public class GraphicStuff {
         }
         if (currentPlayer.isUser()) {
             betBar.setMax(currentPlayer.getStackSize() - minBet);
+            betBar.setProgress(0);
         }
     }
 
@@ -302,7 +347,7 @@ public class GraphicStuff {
                 game.getPotChips().add(player.getChipLayout());
             }
             player.setChipLayout(null);
-            player.setBetAmount(null);
+            player.setBetAmount(0);
         }
     }
 
@@ -379,10 +424,10 @@ public class GraphicStuff {
             availableActions.add(ActionType.BET);
             availableActions.add(ActionType.FOLD);
         } else {
-            Boolean higherStackThanRaiser = highestBetAction == null ? null : game.getUser().getStackSize() > highestBetAction.getBetValue();
+            Boolean higherStackThanBetAmount = highestBetAction == null ? null : game.getUser().getStackSize() > highestBetAction.getBetValue();
 
-            getAvailableActions(lastAction.getActionType(), highestBetAction == null ? null : highestBetAction.getActionType(),
-                    higherStackThanRaiser);
+            availableActions = getAvailableActions(lastAction.getActionType(), highestBetAction == null ? null : highestBetAction.getActionType(),
+                    higherStackThanBetAmount);
         }
 
 
@@ -397,6 +442,7 @@ public class GraphicStuff {
             minBet = highestBetAction.getBetValue() * 2;
         } else {
             btnBet.setText("BET");
+            minBet = 30;
         }
         if (availableActions.contains(ActionType.ALL_IN)) {
             btnBet.setText("ALL IN");
@@ -409,6 +455,13 @@ public class GraphicStuff {
 
 //        this.game.setPotSize(game.getPotSize());
         potSize.setText(game.getPotSize().toString());
+        if(game.getBoard().size() > this.game.getBoard().size()){
+            for(Card card : game.getBoard()){
+                if(game.getBoard().indexOf(card) > this.game.getBoard().size() - 1){
+                    this.game.getBoard().add(card);
+                }
+            }
+        }
 
         for (Player player : players) {
             for (Player newPlayer : game.getPlayers()) {

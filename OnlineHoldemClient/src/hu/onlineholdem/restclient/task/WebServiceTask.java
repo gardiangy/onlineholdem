@@ -98,12 +98,10 @@ public abstract class WebServiceTask extends AsyncTask<String, Response, Respons
             String data = EntityUtils.toString(httpResponse.getEntity());
             JSONObject item = new JSONObject(data);
             response = parseJson(item);
-        } catch (IllegalStateException e) {
+        } catch (SocketTimeoutException | NullPointerException e) {
+            serverNotResponding = true;
+        } catch (IllegalStateException | JSONException | IOException e) {
             Log.e(TAG, e.getLocalizedMessage(), e);
-        } catch (IOException e) {
-            Log.e(TAG, e.getLocalizedMessage(), e);
-        } catch (JSONException e) {
-            e.printStackTrace();
         }
 
         return response;
@@ -163,7 +161,7 @@ public abstract class WebServiceTask extends AsyncTask<String, Response, Respons
                     response = httpclient.execute(httpget);
                     break;
             }
-        } catch (SocketTimeoutException | ConnectTimeoutException e) {
+        } catch (SocketTimeoutException | ConnectTimeoutException | NullPointerException e) {
             serverNotResponding = true;
             Log.e(TAG, e.getLocalizedMessage(), e);
         } catch (Exception e) {

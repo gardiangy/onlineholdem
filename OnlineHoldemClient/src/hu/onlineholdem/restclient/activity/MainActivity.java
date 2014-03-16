@@ -25,7 +25,7 @@ import hu.onlineholdem.restclient.task.WebServiceTask;
 
 public class MainActivity extends Activity {
 
-    private static final String SERVICE_URL = "http://192.168.1.101:8080/rest";
+    private static final String SERVICE_URL = "http://192.168.1.100:8080/rest";
 
     private static final String TAG = "MainActivity";
 

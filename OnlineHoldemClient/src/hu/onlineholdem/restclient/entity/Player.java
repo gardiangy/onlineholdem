@@ -31,6 +31,7 @@ public class Player implements Serializable {
     private Long userId;
     private Boolean playerTurn;
     private Boolean playerInTurn;
+    private Boolean playerRaiser;
 
 	public Player() {
 	}
@@ -177,6 +178,14 @@ public class Player implements Serializable {
 
     public void setPlayerTurn(Boolean playerTurn) {
         this.playerTurn = playerTurn;
+    }
+
+    public Boolean isPlayerRaiser() {
+        return playerRaiser;
+    }
+
+    public void setPlayerRaiser(Boolean playerRaiser) {
+        this.playerRaiser = playerRaiser;
     }
 
     public Boolean getPlayerInTurn() {
