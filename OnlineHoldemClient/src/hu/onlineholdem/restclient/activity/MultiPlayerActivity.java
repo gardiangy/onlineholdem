@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -42,15 +43,14 @@ public class MultiPlayerActivity extends Activity {
     private long playerId;
 
     private long gameId;
-    private long lastActionId = -1;
-    private int actionSize = -1;
-    private int highestBetAmount = 0;
+    private int actionSize = 0;
     private static final String SERVICE_URL = "http://192.168.1.100:8080/rest";
     private static final String TAG = "MultiplayerActivity";
     private GraphicStuff graphics;
     private Player currentPlayer;
     private Action lastAction;
     private Action highestBetAction;
+    private RefreshGameTask refreshTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,7 +66,7 @@ public class MultiPlayerActivity extends Activity {
 
 
         String getURL = SERVICE_URL + "/game/" + gameId;
-        RefreshGameTask refreshTask = new RefreshGameTask(this);
+        refreshTask = new RefreshGameTask(this);
         refreshTask.execute(new String[]{getURL});
     }
 
@@ -82,6 +82,7 @@ public class MultiPlayerActivity extends Activity {
         if (!flopDealt && null != game.getBoard() && game.getBoard().size() >= 3) {
             graphics.dealFlop();
             flopDealt = true;
+            refreshTask.setWait(0);
         }
         if (!handDealt) {
             graphics.deal();
@@ -89,16 +90,15 @@ public class MultiPlayerActivity extends Activity {
         }
         if(flopDealt && !game.getBoard().get(0).equals(graphics.getGame().getBoard().get(0))){
             graphics.showCards();
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+//            refreshTask.setWait(3000);
+//
             graphics.endRound();
-            flopDealt = false;
-            turnDealt = false;
-            riverDealt = false;
-            handDealt = false;
+//            flopDealt = false;
+//            turnDealt = false;
+//            riverDealt = false;
+//            handDealt = false;
+
+
         }
         graphics.updateGame(game);
         if (!turnDealt && null != game.getBoard() && game.getBoard().size() >= 4) {
@@ -113,8 +113,16 @@ public class MultiPlayerActivity extends Activity {
         if (game.getActions().size() > actionSize) {
             boolean newBettingRound = false;
             boolean roundOver = false;
-            highestBetAction = null;
-            for (Action action : game.getActions()) {
+
+            List<Action> newActions = game.getActions().subList(actionSize,game.getActions().size());
+
+            for (Action action : newActions) {
+
+                if(null != lastAction && action.getActionRound() > lastAction.getActionRound()){
+                    highestBetAction = null;
+                    roundOver = false;
+                    newBettingRound = false;
+                }
 
                 if (null != highestBetAction && action.getBetValue() < highestBetAction.getBetValue()
                         && action.getPlayer().getStackSize() > 0) {
@@ -140,36 +148,22 @@ public class MultiPlayerActivity extends Activity {
                         roundOver = true;
                     }
                 }
-                if (game.getActions().indexOf(action) == game.getActions().size() - 1) {
-                    lastAction = action;
-                }
 
                 if (null == highestBetAction || action.getBetValue() > highestBetAction.getBetValue()) {
                     highestBetAction = action;
                 }
+                lastAction = action;
 
             }
-            for (Player player : graphics.getGame().getPlayers()) {
-                if (player.isPlayerTurn()) {
-                    if (!player.equals(currentPlayer)) {
-                        graphics.showCurrentPlayer(player);
-                        graphics.showAvailableActionButtons(lastAction, highestBetAction, roundOver);
-                        currentPlayer = player;
-                    }
 
-                }
-            }
-            if (null != currentPlayer && currentPlayer.isUser()) {
-                graphics.showActionButtons(true);
-            } else {
-                graphics.showActionButtons(false);
-            }
-
+            showCurrentPlayer(roundOver);
             actionSize = game.getActions().size();
 
+
         }
-
-
+        if(game.getActions().size() == 0){
+            showCurrentPlayer(false);
+        }
     }
 
 
@@ -328,6 +322,24 @@ public class MultiPlayerActivity extends Activity {
             gameResponse.setResponseObject(game);
         }
         return gameResponse;
+    }
+
+    public void showCurrentPlayer(boolean roundOver){
+        for (Player player : graphics.getGame().getPlayers()) {
+            if (player.isPlayerTurn()) {
+                if (!player.equals(currentPlayer)) {
+                    graphics.showCurrentPlayer(player);
+                    graphics.showAvailableActionButtons(lastAction, highestBetAction, roundOver);
+                    currentPlayer = player;
+                }
+
+            }
+        }
+        if (null != currentPlayer && currentPlayer.isUser()) {
+            graphics.showActionButtons(true);
+        } else {
+            graphics.showActionButtons(false);
+        }
     }
 
 

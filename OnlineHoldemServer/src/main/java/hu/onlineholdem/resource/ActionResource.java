@@ -12,6 +12,8 @@ import hu.onlineholdem.entity.Player;
 import hu.onlineholdem.enums.ActionType;
 import hu.onlineholdem.enums.ResponseType;
 import hu.onlineholdem.response.Response;
+import hu.onlineholdem.util.EvaluatedHand;
+import hu.onlineholdem.util.HandEvaluator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -56,23 +58,28 @@ public class ActionResource {
 
         action.setGame(game);
 
-
-        int highestBetAmount = 0;
-        Action lastAction = null;
-
-        if (game.getActions().size() > 0) {
-            lastAction = game.getActions().get(game.getActions().size() - 1);
-            highestBetAmount = getHighestBetAction(game.getActions(), lastAction.getActionRound()).getBetValue();
-            if (action.getBetValue() > highestBetAmount) {
-                highestBetAmount = action.getBetValue();
-            }
-        }
-
         List<Player> playersInRound = new ArrayList<>();
         for (Player pl : game.getPlayers()) {
             if (pl.getPlayerInTurn()) {
                 playersInRound.add(pl);
             }
+        }
+
+        int highestBetAmount = 0;
+        Action lastAction = null;
+
+        if (game.getActions().size() == 0) {
+            action.setActionRound(1);
+        } else{
+            lastAction = game.getActions().get(game.getActions().size() - 1);
+
+            if (player.getPlayerOrder() < lastAction.getPlayer().getPlayerOrder() && !makeMovesAgain(playersInRound)) {
+                action.setActionRound(lastAction.getActionRound() + 1);
+            } else {
+                action.setActionRound(lastAction.getActionRound());
+            }
+            Action highestBetAction = getHighestBetAction(game.getActions(), action.getActionRound());
+            highestBetAmount = highestBetAction == null ? action.getBetValue() : highestBetAction.getBetValue();
         }
 
         for (Player pl : game.getPlayers()) {
@@ -134,31 +141,21 @@ public class ActionResource {
 
         }
 
+        int newPotSize = game.getPotSize() + action.getBetValue();
+        game.setPotSize(newPotSize);
+
         if (game.getActions().size() == 0) {
             action.setActionRound(1);
         } else {
 
-            if(!makeMovesAgain(playersInRound, getLastRoundActions(game.getActions(), lastAction.getActionRound()), highestBetAmount)){
-                if (player.equals(playersInRound.get(0))){
-                    action.setActionRound(lastAction.getActionRound() + 1);
-                } else {
-                    action.setActionRound(lastAction.getActionRound());
-                }
+            if (isBettingRoundOver(playersInRound, player) && !makeMovesAgain(playersInRound)) {
+                endBettingRound(playersInRound,game);
 
-                if (isBettingRoundOver(playersInRound, player)) {
-                    endBettingRound(game);
-                }
-            } else {
-                action.setActionRound(lastAction.getActionRound());
             }
 
         }
 
         game.getActions().add(action);
-
-        int newPotSize = game.getPotSize() + action.getBetValue();
-        game.setPotSize(newPotSize);
-
 
         Game persistedGame = gameDAO.save(game);
 
@@ -221,16 +218,12 @@ public class ActionResource {
     }
 
 
-    public boolean makeMovesAgain(List<Player> players, List<Action> lastRoundActions, int highestBetAmount) {
+    public boolean makeMovesAgain(List<Player> players) {
+        int amount = players.get(0).getPlayerBetAmount();
         for (Player player : players) {
-            for (Action action : lastRoundActions) {
-                if (action.getPlayer().getPlayerId().equals(player.getPlayerId())) {
-                    if ((null != player.getPlayerBetAmount() && action.getBetValue() != highestBetAmount && player.getStackSize() > 0)) {
-                        return true;
-                    }
-                }
+            if ((null != player.getPlayerBetAmount() && player.getPlayerBetAmount() != amount && player.getStackSize() > 0)) {
+                return true;
             }
-
         }
         return false;
     }
@@ -246,13 +239,14 @@ public class ActionResource {
     }
 
 
-    public void endBettingRound(Game game) {
+    public void endBettingRound(List<Player> playersInRound, Game game) {
         if (null == game.getTurn()) {
             game.setTurn(getNextCard(game));
         } else {
             if (null == game.getRiver()) {
                 game.setRiver(getNextCard(game));
             } else {
+                evaluateRound(playersInRound,game);
                 startNewRound(game);
             }
         }
@@ -305,5 +299,61 @@ public class ActionResource {
         playerWithLowestOrder.setPlayerTurn(true);
 
         game.setPotSize(0);
+    }
+
+
+    public List<Player> evaluateRound(List<Player> playersInRound, Game game) {
+
+        for (final Player player : playersInRound) {
+            final EvaluatedHand evaluatedHand = HandEvaluator.evaluateHand(game.getFlop(), player.getCardOne(), player.getCardTwo());
+            player.setEvaluatedHand(evaluatedHand);
+        }
+
+        EvaluatedHand bestHand = playersInRound.get(0).getEvaluatedHand();
+        Player winner = playersInRound.get(0);
+        List<Player> winners = new ArrayList<>();
+        for (Player player : playersInRound) {
+            if (player.equals(winner)) {
+                continue;
+            }
+            if (player.getEvaluatedHand().getHandStrength().getStrength() > bestHand.getHandStrength().getStrength()
+                    || (player.getEvaluatedHand().getHandStrength().getStrength().equals(bestHand.getHandStrength().getStrength()))
+                    && player.getEvaluatedHand().getValue() > bestHand.getValue()) {
+                bestHand = player.getEvaluatedHand();
+                winner = player;
+            }
+        }
+        for (Player player : playersInRound) {
+            if (player.equals(winner)) {
+                continue;
+            }
+            if (player.getEvaluatedHand().getHandStrength().getStrength().equals(bestHand.getHandStrength().getStrength())
+                    && player.getEvaluatedHand().getValue().equals(player.getEvaluatedHand().getValue())) {
+                if (null != player.getEvaluatedHand().getHighCards() && null != winner.getEvaluatedHand().getHighCards()) {
+                    int equalCardNum = 0;
+                    for (int i = 0; i < player.getEvaluatedHand().getHighCards().size(); i++) {
+                        Card playerHighCard = player.getEvaluatedHand().getHighCards().get(i);
+                        Card winnerHighCard = winner.getEvaluatedHand().getHighCards().get(i);
+                        if (playerHighCard.getValue() > winnerHighCard.getValue()) {
+                            bestHand = player.getEvaluatedHand();
+                            winner = player;
+                            break;
+                        }
+                        if (playerHighCard.getValue() < winnerHighCard.getValue()) {
+                            break;
+                        }
+                        if (playerHighCard.getValue().equals(winnerHighCard.getValue())) {
+                            equalCardNum++;
+                        }
+                    }
+                    if (equalCardNum == player.getEvaluatedHand().getHighCards().size()) {
+                        winners.add(player);
+                    }
+                }
+            }
+        }
+        winners.add(winner);
+        return winners;
+
     }
 }

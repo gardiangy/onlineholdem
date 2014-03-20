@@ -1,5 +1,6 @@
 package hu.onlineholdem.entity;
 
+import hu.onlineholdem.util.EvaluatedHand;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.io.Serializable;
@@ -66,6 +67,9 @@ public class Player implements Serializable {
     @ManyToOne
     @JoinColumn(name="player_card_two", nullable=false)
     private Card cardTwo;
+
+    @Transient
+    private EvaluatedHand evaluatedHand;
 
 	public Player() {
 	}
@@ -174,6 +178,14 @@ public class Player implements Serializable {
 
     public void setPlayerBetAmount(Integer playerBetAmount) {
         this.playerBetAmount = playerBetAmount;
+    }
+
+    public EvaluatedHand getEvaluatedHand() {
+        return evaluatedHand;
+    }
+
+    public void setEvaluatedHand(EvaluatedHand evaluatedHand) {
+        this.evaluatedHand = evaluatedHand;
     }
 
     @Override

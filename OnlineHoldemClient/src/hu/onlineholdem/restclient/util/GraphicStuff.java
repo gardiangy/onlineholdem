@@ -7,6 +7,7 @@ import android.graphics.Point;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
+import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
@@ -101,6 +102,7 @@ public class GraphicStuff {
         int res3Id = resources.getIdentifier(game.getBoard().get(2).toString(), "drawable", packageName);
 
         Animation flop1Anim = createAnimation(screenWidth / 2, screenWidth / 2 - 300, 0, screenHeight / 4, true);
+        flop1Anim.setStartOffset(2000);
         flop1 = new ImageView(context);
         board.addView(flop1);
         flop1.setAnimation(flop1Anim);
@@ -109,6 +111,7 @@ public class GraphicStuff {
         flop1.startAnimation(flop1Anim);
 
         Animation flop2Anim = createAnimation(screenWidth / 2, screenWidth / 2 - 200, 0, screenHeight / 4, true);
+        flop2Anim.setStartOffset(2000);
         flop2 = new ImageView(context);
         board.addView(flop2);
         flop2.setAnimation(flop2Anim);
@@ -117,6 +120,7 @@ public class GraphicStuff {
         flop2.startAnimation(flop2Anim);
 
         Animation flop3Anim = createAnimation(screenWidth / 2, screenWidth / 2 - 100, 0, screenHeight / 4, true);
+        flop3Anim.setStartOffset(2000);
         flop3 = new ImageView(context);
         board.addView(flop3);
         flop3.setAnimation(flop3Anim);
@@ -163,6 +167,7 @@ public class GraphicStuff {
 
             TextView textView = player.getTextView();
             Animation card1Anim = createAnimation(screenWidth / 2, textView.getLeft() + screenWidth / 20, 0, textView.getTop() - screenHeight / 20, true);
+            card1Anim.setStartOffset(2000);
             ImageView card1 = new ImageView(context);
             board.addView(card1);
             card1.setAnimation(card1Anim);
@@ -174,6 +179,7 @@ public class GraphicStuff {
                     : resources.getIdentifier("back", "drawable", packageName);
 
             Animation card2Anim = createAnimation(screenWidth / 2, textView.getLeft() + screenWidth / 13, 0, textView.getTop() - screenHeight / 20, true);
+            card2Anim.setStartOffset(2000);
             ImageView card2 = new ImageView(context);
             board.addView(card2);
             card2.setAnimation(card2Anim);
@@ -190,17 +196,21 @@ public class GraphicStuff {
             if(!player.isUser()){
                 final int resId = resources.getIdentifier(player.getCardOne().toString(), "drawable", packageName);
                 final int res2Id = resources.getIdentifier(player.getCardTwo().toString(), "drawable", packageName);
-                player.getCard1View().setImageResource(resId);
                 player.getCard2View().setImageResource(res2Id);
+                player.getCard1View().setImageResource(resId);
+
             }
         }
-//        board.invalidate();
+        board.invalidate();
+//        Animation fakeAnim = createFakeAnimation(3000);
+//        board.setAnimation(fakeAnim);
+//        board.startAnimation(fakeAnim);
     }
 
     public void endRound() {
 
         for(Player player : players){
-            player.getTextView().setText(player.getStackSize().toString());
+            player.getTextView().setText(player.getPlayerName() + "\n" + player.getStackSize().toString());
         }
 
         List<Player> playerList = new ArrayList<>();
@@ -224,6 +234,7 @@ public class GraphicStuff {
         board.removeView(flop3);
         board.removeView(turn);
         board.removeView(river);
+        game.setBoard(new ArrayList<Card>());
 
 
     }
@@ -237,6 +248,12 @@ public class GraphicStuff {
         translateAnimation.setFillAfter(fillAfter);
 
         return translateAnimation;
+    }
+
+    public Animation createFakeAnimation(int duration) {
+        AlphaAnimation alphaAnimation = new AlphaAnimation(1.0f, 1.0f);
+        alphaAnimation.setDuration(duration);
+        return alphaAnimation;
     }
 
 
@@ -469,6 +486,8 @@ public class GraphicStuff {
                     player.setPlayerTurn(newPlayer.isPlayerTurn());
                     player.setPlayerInTurn(newPlayer.getPlayerInTurn());
                     player.setStackSize(newPlayer.getStackSize());
+                    player.setCardOne(newPlayer.getCardOne());
+                    player.setCardTwo(newPlayer.getCardTwo());
                 }
             }
         }
