@@ -202,6 +202,8 @@ public class GraphicStuff {
             }
         }
         board.invalidate();
+//        board.setVisibility(View.INVISIBLE);
+//        board.setVisibility(View.VISIBLE);
 //        Animation fakeAnim = createFakeAnimation(3000);
 //        board.setAnimation(fakeAnim);
 //        board.startAnimation(fakeAnim);
@@ -485,6 +487,7 @@ public class GraphicStuff {
                 if (player.getPlayerId().equals(newPlayer.getPlayerId())) {
                     player.setPlayerTurn(newPlayer.isPlayerTurn());
                     player.setPlayerInTurn(newPlayer.getPlayerInTurn());
+                    player.setPlayerWinner(newPlayer.isPlayerWinner());
                     player.setStackSize(newPlayer.getStackSize());
                     player.setCardOne(newPlayer.getCardOne());
                     player.setCardTwo(newPlayer.getCardTwo());

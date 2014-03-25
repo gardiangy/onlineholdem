@@ -32,6 +32,7 @@ public class Player implements Serializable {
     private Boolean playerTurn;
     private Boolean playerInTurn;
     private Boolean playerRaiser;
+    private Boolean playerWinner;
 
 	public Player() {
 	}
@@ -196,6 +197,13 @@ public class Player implements Serializable {
         this.playerInTurn = playerInTurn;
     }
 
+    public Boolean isPlayerWinner() {
+        return playerWinner;
+    }
+
+    public void setPlayerWinner(Boolean playerWinner) {
+        this.playerWinner = playerWinner;
+    }
 
     @Override
     public boolean equals(Object o) {

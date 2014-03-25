@@ -39,12 +39,13 @@ public class MultiPlayerActivity extends Activity {
     private boolean turnDealt = false;
     private boolean riverDealt = false;
     private boolean handDealt = false;
+    private boolean cardsShown = false;
     private long userId;
     private long playerId;
 
     private long gameId;
     private int actionSize = 0;
-    private static final String SERVICE_URL = "http://192.168.1.100:8080/rest";
+    private static final String SERVICE_URL = "http://192.168.1.103:8080/rest";
     private static final String TAG = "MultiplayerActivity";
     private GraphicStuff graphics;
     private Player currentPlayer;
@@ -82,24 +83,28 @@ public class MultiPlayerActivity extends Activity {
         if (!flopDealt && null != game.getBoard() && game.getBoard().size() >= 3) {
             graphics.dealFlop();
             flopDealt = true;
-            refreshTask.setWait(0);
         }
         if (!handDealt) {
             graphics.deal();
             handDealt = true;
         }
-        if(flopDealt && !game.getBoard().get(0).equals(graphics.getGame().getBoard().get(0))){
-            graphics.showCards();
-//            refreshTask.setWait(3000);
-//
+        if(cardsShown){
+            SystemClock.sleep(2000);
             graphics.endRound();
-//            flopDealt = false;
-//            turnDealt = false;
-//            riverDealt = false;
-//            handDealt = false;
+            cardsShown = false;
+            flopDealt = false;
+            turnDealt = false;
+            riverDealt = false;
+            handDealt = false;
 
 
         }
+        if(flopDealt && !game.getBoard().get(0).equals(graphics.getGame().getBoard().get(0))){
+            graphics.showCards();
+            cardsShown = true;
+        }
+
+
         graphics.updateGame(game);
         if (!turnDealt && null != game.getBoard() && game.getBoard().size() >= 4) {
             graphics.dealTurn();
@@ -164,6 +169,7 @@ public class MultiPlayerActivity extends Activity {
         if(game.getActions().size() == 0){
             showCurrentPlayer(false);
         }
+
     }
 
 
@@ -205,6 +211,7 @@ public class MultiPlayerActivity extends Activity {
         wst.addNameValuePair("gameId", String.valueOf(gameId));
 
         wst.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[]{postURL});
+        graphics.showActionButtons(false);
 
 
     }
@@ -241,6 +248,7 @@ public class MultiPlayerActivity extends Activity {
                 player.setPlayerTurn(playerItem.getBoolean("playerTurn"));
                 player.setPlayerInTurn(playerItem.getBoolean("playerInTurn"));
                 player.setPlayerRaiser(playerItem.getBoolean("playerRaiser"));
+                player.setPlayerWinner(playerItem.getBoolean("playerWinner"));
                 if (!playerItem.isNull("playerBetAmount")) {
                     player.setBetAmount(playerItem.getInt("playerBetAmount"));
                 }

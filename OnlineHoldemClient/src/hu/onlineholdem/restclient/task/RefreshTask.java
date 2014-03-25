@@ -42,6 +42,8 @@ public abstract class RefreshTask extends AsyncTask<String, Response, Response> 
 
     private boolean run = true;
 
+    private int wait = 0;
+
     protected RefreshTask(Context context) {
         this.context = context;
     }
@@ -52,7 +54,7 @@ public abstract class RefreshTask extends AsyncTask<String, Response, Response> 
         Response response = null;
         while (run) {
 
-            SystemClock.sleep(500);
+            SystemClock.sleep(500 + wait);
             HttpResponse httpResponse = doResponse(url);
 
             try {
@@ -117,5 +119,13 @@ public abstract class RefreshTask extends AsyncTask<String, Response, Response> 
             Log.e(TAG, e.getLocalizedMessage(), e);
         }
         return response;
+    }
+
+    public int getWait() {
+        return wait;
+    }
+
+    public void setWait(int wait) {
+        this.wait = wait;
     }
 }
