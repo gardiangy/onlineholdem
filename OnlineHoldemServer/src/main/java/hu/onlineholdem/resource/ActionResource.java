@@ -246,7 +246,10 @@ public class ActionResource {
             if (null == game.getRiver()) {
                 game.setRiver(getNextCard(game));
             } else {
-                evaluateRound(playersInRound,game);
+                List<Player> winners = evaluateRound(playersInRound,game);
+                for(Player player : playersInRound){
+                    player.setPlayerWinner(winners.contains(player));
+                }
                 startNewRound(game);
             }
         }

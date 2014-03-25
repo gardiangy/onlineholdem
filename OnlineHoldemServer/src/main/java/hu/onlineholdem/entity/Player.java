@@ -45,6 +45,9 @@ public class Player implements Serializable {
     @Column(name="player_bet_amount")
     private Integer playerBetAmount;
 
+    @Column(name="player_winner", nullable=false)
+    private Boolean playerWinner;
+
 	//bi-directional many-to-one association to User
 	@ManyToOne(fetch=FetchType.LAZY)
 	@JoinColumn(name="user_id", nullable=false)
@@ -186,6 +189,14 @@ public class Player implements Serializable {
 
     public void setEvaluatedHand(EvaluatedHand evaluatedHand) {
         this.evaluatedHand = evaluatedHand;
+    }
+
+    public Boolean getPlayerWinner() {
+        return playerWinner;
+    }
+
+    public void setPlayerWinner(Boolean playerWinner) {
+        this.playerWinner = playerWinner;
     }
 
     @Override
