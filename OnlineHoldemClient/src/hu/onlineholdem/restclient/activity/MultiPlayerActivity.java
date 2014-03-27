@@ -100,7 +100,14 @@ public class MultiPlayerActivity extends Activity {
 
         }
         if(flopDealt && !game.getBoard().get(0).equals(graphics.getGame().getBoard().get(0))){
+            List<Player> winners = new ArrayList<>();
+            for(Player player : graphics.getGame().getPlayers()){
+                if(player.isPlayerWinner()){
+                    winners.add(player);
+                }
+            }
             graphics.showCards();
+            graphics.assignChips(winners);
             cardsShown = true;
         }
 
@@ -249,6 +256,7 @@ public class MultiPlayerActivity extends Activity {
                 player.setPlayerInTurn(playerItem.getBoolean("playerInTurn"));
                 player.setPlayerRaiser(playerItem.getBoolean("playerRaiser"));
                 player.setPlayerWinner(playerItem.getBoolean("playerWinner"));
+                player.setAmountToWin(playerItem.getInt("playerAmountToWin"));
                 if (!playerItem.isNull("playerBetAmount")) {
                     player.setBetAmount(playerItem.getInt("playerBetAmount"));
                 }

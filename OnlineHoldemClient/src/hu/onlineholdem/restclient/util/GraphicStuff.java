@@ -7,7 +7,6 @@ import android.graphics.Point;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
-import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
@@ -202,11 +201,6 @@ public class GraphicStuff {
             }
         }
         board.invalidate();
-//        board.setVisibility(View.INVISIBLE);
-//        board.setVisibility(View.VISIBLE);
-//        Animation fakeAnim = createFakeAnimation(3000);
-//        board.setAnimation(fakeAnim);
-//        board.startAnimation(fakeAnim);
     }
 
     public void endRound() {
@@ -241,6 +235,63 @@ public class GraphicStuff {
 
     }
 
+    public void assignChips(List<Player> winners){
+        if (winners.size() > 1) {
+//            List<List<RelativeLayout>> chipsList = splitChips(game.getPotChips(), winners.size());
+//
+//            int splitPotAmount = game.getPotSize() / winners.size();
+//
+//            List<Player> winnerList = new ArrayList<>();
+//            winnerList.addAll(winners);
+//
+//            for (Player winner : winnerList) {
+//                if(winner.getAmountToWin() <= splitPotAmount){
+//                    game.setPotSize(game.getPotSize() - winner.getAmountToWin());
+//                    List<List<RelativeLayout>> layoutList = new ArrayList<>();
+//                    layoutList.addAll(chipsList);
+//                    for (List<RelativeLayout> relativeLayouts : layoutList) {
+//                        for (RelativeLayout chips : relativeLayouts) {
+//                            chips.animate().setDuration(500).x(winner.getTextView().getLeft()).y(winner.getTextView().getTop());
+//                        }
+//                        chipsList.remove(relativeLayouts);
+//                    }
+//                    winner.setStackSize(winner.getStackSize() + winner.getAmountToWin());
+//                    winners.remove(winner);
+//                }
+//            }
+//            for (Player winner : winners) {
+//                List<List<RelativeLayout>> layoutList = new ArrayList<>();
+//                layoutList.addAll(chipsList);
+//                for (List<RelativeLayout> relativeLayouts : layoutList) {
+//                    for (RelativeLayout chips : relativeLayouts) {
+//                        chips.animate().setDuration(500).x(winner.getTextView().getLeft()).y(winner.getTextView().getTop());
+//                    }
+//                    chipsList.remove(relativeLayouts);
+//                }
+//                winner.setStackSize(winner.getStackSize() + game.getPotSize() / winners.size());
+//            }
+        } else {
+            if(winners.get(0).getAmountToWin() >= game.getPotSize()){
+                for (final RelativeLayout chips : game.getPotChips()) {
+                    chips.animate().setDuration(500).x(winners.get(0).getTextView().getLeft()).y(winners.get(0).getTextView().getTop());
+                }
+            }
+            else {
+                game.getPotChips().get(0).animate().setDuration(500).x(winners.get(0).getTextView().getLeft()).y(winners.get(0).getTextView().getTop());
+                game.getPotChips().remove(0);
+                game.setPotSize(game.getPotSize() - winners.get(0).getAmountToWin());
+                List<Player> remainingPotWinners = new ArrayList<>();
+                remainingPotWinners.addAll(winners);
+                remainingPotWinners.remove(winners.get(0));
+                if(remainingPotWinners.size() > 0){
+                    assignChips(remainingPotWinners);
+                }
+
+            }
+
+        }
+    }
+
 
     public Animation createAnimation(int xFrom, int xTo, int yFrom, int yTo, boolean fillAfter) {
         TranslateAnimation translateAnimation = new TranslateAnimation(Animation.ABSOLUTE, xFrom, Animation.ABSOLUTE, xTo, Animation.ABSOLUTE, yFrom, Animation.ABSOLUTE, yTo);
@@ -250,12 +301,6 @@ public class GraphicStuff {
         translateAnimation.setFillAfter(fillAfter);
 
         return translateAnimation;
-    }
-
-    public Animation createFakeAnimation(int duration) {
-        AlphaAnimation alphaAnimation = new AlphaAnimation(1.0f, 1.0f);
-        alphaAnimation.setDuration(duration);
-        return alphaAnimation;
     }
 
 
@@ -557,6 +602,30 @@ public class GraphicStuff {
         }
 
         return availableActions;
+    }
+
+    public static List<List<RelativeLayout>> splitChips(List<RelativeLayout> list, int numberOfLists) {
+
+        int sizeOfSubList = list.size() / numberOfLists;
+        List<List<RelativeLayout>> subLists = new ArrayList<>(numberOfLists);
+
+        List<RelativeLayout> subList = new ArrayList<>();
+        for (RelativeLayout relativeLayout : list) {
+            if(subLists.size() == numberOfLists - 1){
+                subList = list.subList(list.indexOf(relativeLayout) - 1, list.size()-1);
+                subLists.add(subList);
+                break;
+            }
+            if (subList.size() < sizeOfSubList) {
+                subList.add(relativeLayout);
+            }
+            if (subList.size() == sizeOfSubList || list.indexOf(relativeLayout) == list.size() - 1) {
+                subLists.add(subList);
+                subList = new ArrayList<>();
+            }
+
+        }
+        return subLists;
     }
 
     public Game getGame() {

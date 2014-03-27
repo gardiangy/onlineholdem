@@ -337,11 +337,15 @@ public class HandEvaluator {
 
     public static List<Card> hasFullHouse(List<Card> cards) {
         List<Card> fullHouse = new ArrayList<>();
-        Card onePair = hasOnePair(cards);
+        List<Card> twoPair = hasTwoPair(cards);
         Card threeOfAKind = hasThreeOfAKind(cards);
 
-        if (null != onePair && null != threeOfAKind && !onePair.getValue().equals(threeOfAKind.getValue())) {
-            fullHouse.add(onePair);
+        if (null != twoPair && null != threeOfAKind) {
+            for(Card pair : twoPair){
+                if(!pair.getValue().equals(threeOfAKind.getValue())){
+                    fullHouse.add(pair);
+                }
+            }
             fullHouse.add(threeOfAKind);
             return fullHouse;
         }
