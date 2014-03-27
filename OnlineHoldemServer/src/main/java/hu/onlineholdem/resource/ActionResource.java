@@ -70,7 +70,7 @@ public class ActionResource {
 
         if (game.getActions().size() == 0) {
             action.setActionRound(1);
-        } else{
+        } else {
             lastAction = game.getActions().get(game.getActions().size() - 1);
 
             if (player.getPlayerOrder() < lastAction.getPlayer().getPlayerOrder() && !makeMovesAgain(playersInRound)) {
@@ -149,7 +149,20 @@ public class ActionResource {
         } else {
 
             if (isBettingRoundOver(playersInRound, player) && !makeMovesAgain(playersInRound)) {
-                endBettingRound(playersInRound,game);
+
+                if (null == game.getTurn()) {
+                    game.setTurn(getNextCard(game));
+                } else {
+                    if (null == game.getRiver()) {
+                        game.setRiver(getNextCard(game));
+                    } else {
+                        endRound(playersInRound,game);
+                        startNewRound(game);
+                    }
+                }
+                for (Player pl : game.getPlayers()) {
+                    pl.setPlayerBetAmount(0);
+                }
 
             }
 
@@ -228,6 +241,38 @@ public class ActionResource {
         return false;
     }
 
+    public void endRound(List<Player> playersInRound, Game game) {
+        List<Player> winners = evaluateRound(playersInRound, game);
+        for (Player pl : playersInRound) {
+            pl.setPlayerWinner(winners.contains(pl));
+        }
+        for (Player winner : winners) {
+            int amountToWin = 0;
+            for (Player player : game.getPlayers()) {
+                amountToWin += player.getPlayerAmountInPot() > winner.getPlayerAmountInPot() ? winner.getPlayerBetAmount() : player.getPlayerAmountInPot();
+            }
+            winner.setStackSize(winner.getStackSize() + amountToWin);
+            game.setPotSize(game.getPotSize() - amountToWin);
+        }
+        if (game.getPotSize() > 0) {
+            List<Player> notWinners = new ArrayList<>();
+            for (Player player : playersInRound) {
+                if (!winners.contains(player)) {
+                    notWinners.add(player);
+                }
+            }
+            int amountToWin = game.getPotSize() / notWinners.size();
+            for (Player notWinner : notWinners) {
+                notWinner.setStackSize(notWinner.getStackSize() + amountToWin);
+            }
+        }
+
+
+        for (Player player : game.getPlayers()) {
+            player.setPlayerAmountInPot(0);
+        }
+    }
+
     public List<Action> getLastRoundActions(List<Action> actions, int actionRound) {
         List<Action> lastRoundActions = new ArrayList<>();
         for (Action action : actions) {
@@ -238,25 +283,6 @@ public class ActionResource {
         return lastRoundActions;
     }
 
-
-    public void endBettingRound(List<Player> playersInRound, Game game) {
-        if (null == game.getTurn()) {
-            game.setTurn(getNextCard(game));
-        } else {
-            if (null == game.getRiver()) {
-                game.setRiver(getNextCard(game));
-            } else {
-                List<Player> winners = evaluateRound(playersInRound,game);
-                for(Player player : playersInRound){
-                    player.setPlayerWinner(winners.contains(player));
-                }
-                startNewRound(game);
-            }
-        }
-        for (Player pl : game.getPlayers()) {
-            pl.setPlayerBetAmount(0);
-        }
-    }
 
     public boolean isBettingRoundOver(List<Player> playersInRound, Player actualPlayer) {
         for (Player player : playersInRound) {
@@ -306,9 +332,18 @@ public class ActionResource {
 
 
     public List<Player> evaluateRound(List<Player> playersInRound, Game game) {
+        List<Card> board = new ArrayList<>();
+        board.addAll(game.getFlop());
+
+        if(null != game.getTurn()){
+            board.add(game.getTurn());
+        }
+        if(null != game.getRiver()){
+            board.add(game.getRiver());
+        }
 
         for (final Player player : playersInRound) {
-            final EvaluatedHand evaluatedHand = HandEvaluator.evaluateHand(game.getFlop(), player.getCardOne(), player.getCardTwo());
+            final EvaluatedHand evaluatedHand = HandEvaluator.evaluateHand(board, player.getCardOne(), player.getCardTwo());
             player.setEvaluatedHand(evaluatedHand);
         }
 
