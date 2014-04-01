@@ -52,7 +52,12 @@ public class GameResource {
         List<Player> players = game.getPlayers();
         player.setPlayerTurn(false);
         player.setStackSize(game.getStartingStackSize());
-        player.setPlayerInTurn(false);
+        player.setPlayerInTurn(true);
+        player.setPlayerRaiser(false);
+        player.setPlayerWinner(false);
+        player.setPlayerAmountInPot(0);
+        player.setPlayerBetAmount(0);
+        player.setPlayerAmountToWin(0);
         player.setGame(game);
 
         if(null == game.getPlayers()){

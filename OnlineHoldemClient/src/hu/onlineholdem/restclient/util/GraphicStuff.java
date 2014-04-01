@@ -284,7 +284,7 @@ public class GraphicStuff {
                 remainingPotWinners.addAll(winners);
                 remainingPotWinners.remove(winners.get(0));
                 if(remainingPotWinners.size() > 0){
-                    assignChips(remainingPotWinners);
+//                    assignChips(remainingPotWinners);
                 }
 
             }
@@ -349,7 +349,7 @@ public class GraphicStuff {
 
         if (null != actionPlayer.getChipLayout()) {
             TextView existingChipsTextViw = (TextView) actionPlayer.getChipLayout().getChildAt(0);
-            existingChipsTextViw.setText(actionPlayer.getBetAmount() + amount + "");
+            existingChipsTextViw.setText(amount + "");
         } else {
             RelativeLayout relativeLayout = new RelativeLayout(context);
             TextView chipsTextView = new TextView(context);
@@ -533,6 +533,7 @@ public class GraphicStuff {
                     player.setPlayerTurn(newPlayer.isPlayerTurn());
                     player.setPlayerInTurn(newPlayer.getPlayerInTurn());
                     player.setPlayerWinner(newPlayer.isPlayerWinner());
+                    player.setPlayerRaiser(newPlayer.isPlayerRaiser());
                     player.setStackSize(newPlayer.getStackSize());
                     player.setCardOne(newPlayer.getCardOne());
                     player.setCardTwo(newPlayer.getCardTwo());
