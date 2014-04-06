@@ -47,6 +47,7 @@ h1, h3 {
     font-size: 56px;
     color: #137235;
     font-weight: normal;
+    margin-bottom: 20px;
 }
 
 header h1 {
@@ -95,10 +96,15 @@ thead tr {
     background: #137235;
 }
 
+td {
+    height: 30px;
+}
+
 table {
     width: 100%;
     margin-top: 30px;
     margin-bottom: 20px;
+    border-collapse: collapse;
 }
 .dataTables_filter, .dataTables_info , .dataTables_paginate{
     float: right;
@@ -108,14 +114,85 @@ table {
     text-align: center;
 }
 
+.even {
+    background: #5E5E5E;
+}
+
+.overlay {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    z-index: 10;
+    background: #000000;
+    opacity: 0.5;
+}
 
 .form {
     margin: auto;
-    margin-top: 20px;
+    margin-top: 40px;
+    text-align: center;
 }
 
-.form td {
-    padding: 20px;
+
+.form label {
+    display: inline-block;
+    width: 30%;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.row {
+    display: inline-block;
+    width: 70%;
+    padding: 10px 0 10px 0;
+}
+
+.odd:hover, .even:hover {
+    background-color: #1C9949;
+}
+
+.closeBtn {
+     float: right;
+     font-size: 60px;
+     color:#137235;
+ }
+
+.closeBtn:hover {
+    color:#1C9949;
+}
+
+.button {
+    display: inline-block;
+    position: relative;
+    padding: 10px 20px 10px 20px;
+    color: #FFF;
+    text-shadow: none;
+    font-size: 18px;
+    letter-spacing: 1px;
+    background: #137235;
+    -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, .5) inset, 0 5px 0 #000000;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .5) inset, 0 5px 0 #000000;
+    cursor: pointer;
+    border: 0;
+    outline: none;
+}
+
+.button:active {
+    top: 5px;
+    outline: none;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+
+.button:hover {
+    background: #1C9949
+}
+
+.register-button {
+    display: block;
+    margin: 0 auto;
+    margin-top: 50px;
 }
 
 .content {
@@ -126,12 +203,67 @@ table {
     position: relative;
 }
 
+.popup {
+    padding: 40px 40px 80px 40px;
+    top: 100px;
+    width: 40%;
+    left: 25%;
+    background: #222;
+    position: absolute;
+    z-index: 100;
+}
+
+.popup .row{
+    width: 100%;
+}
+
+.paginate_enabled_next {
+    color: #137235;
+    cursor: pointer;
+}
+
+.paginate_enabled_previous {
+    color: #137235;
+    margin-right: 10px;
+    cursor: pointer;
+}
+.paginate_disabled_previous {
+    margin-right: 10px;
+}
+
+.dataTables_paginate {
+    margin-top: -20px;
+}
+
+.dataTables_info {
+    margin-top: -20px;
+    margin-right: 50px;
+}
+
 .header {
     padding: 20px 40px 20px 40px;
     width: 70%;
     background: #137235;
     margin-left: 200px;
     position: relative;
+}
+
+.errorInput {
+    border: 2px solid red;
+    background-color: rgb(255, 211, 211);
+}
+
+.field {
+    display: inline-block;
+    width: 70%;
+    height: 45px;
+}
+
+span.error {
+    color: red;
+    width: 20%;
+    display: inline-block;
+    vertical-align: middle;
 }
 
 ul.menu {
