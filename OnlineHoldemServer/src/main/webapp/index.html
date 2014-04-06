@@ -9,7 +9,8 @@
     <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon"/>
     <link rel="stylesheet" type="text/css" href="css/style.css"/>
     <link rel="stylesheet" type="text/css" href="css/animate.css"/>
-    <script src="js/jquery-1.9.1.js"></script>
+    <script src="js/jquery-1.9.1.js" type="text/javascript"></script>
+    <script src="js/jquery.dataTables.min.js" type="text/javascript"></script>
 </head>
 <body>
 <div id="container" class="container">
@@ -70,15 +71,18 @@
     </div>
 
     <div id="menu4content" class="content animated" style="display: none">
-        <h1>TITLE-4</h1>
+        <table id="table_id">
+            <thead>
+            <tr>
+                <th>Game ID</th>
+                <th>Game Name</th>
+                <th>Max PlayerNumber</th>
+                <th>StartTime</th>
+                <th>GameState</th>
+            </tr>
+            </thead>
 
-        <h2>Custom effects with jQuery</h2>
-
-        <p>A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I
-            enjoy with my whole heart.</p>
-
-        <p>A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I
-            enjoy with my whole heart.</p>
+        </table>
     </div>
 
     <div id="menu5content" class="content animated" style="display: none">
@@ -99,6 +103,17 @@
     $(function () {
         $("#menu1content").load("pageone.html");
         $("#menu2content").load("pagetwo.html");
+
+        $('#table_id').dataTable( {
+            "bProcessing": true,
+            "bServerSide": true,
+            "sDom": 'frtlpi',
+            "aoColumnDefs": [
+                { "sClass": "alignCenter", "aTargets": [ 2,4 ] }
+            ],
+            "sAjaxSource": 'rest/game/table'
+        } );
+
         var $menu = $("#menu");
         $("#menu a").click(function () {
             var $clickedMenu = $(this);

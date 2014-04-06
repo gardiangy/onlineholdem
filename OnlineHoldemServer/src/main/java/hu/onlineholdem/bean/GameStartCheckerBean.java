@@ -34,17 +34,13 @@ public class GameStartCheckerBean implements Runnable{
 
                         List<Card> deck = cardDAO.findAll();
                         Collections.shuffle(deck);
-                        game.setFlop(new ArrayList<Card>());
-                        game.getFlop().add(deck.get(0));
-                        game.getFlop().add(deck.get(1));
-                        game.getFlop().add(deck.get(2));
                         List<Player> players = game.getPlayers();
                         Player playerWithLowestOrder = players.get(0);
                         for(Player player : players){
-                            player.setCardOne(deck.get(3));
-                            deck.remove(3);
-                            player.setCardTwo(deck.get(3));
-                            deck.remove(3);
+                            player.setCardOne(deck.get(0));
+                            deck.remove(0);
+                            player.setCardTwo(deck.get(0));
+                            deck.remove(0);
                             if(player.getPlayerOrder() < playerWithLowestOrder.getPlayerOrder()){
                                 playerWithLowestOrder = player;
                             }
@@ -56,7 +52,7 @@ public class GameStartCheckerBean implements Runnable{
                     }
                 }
             } catch (InterruptedException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                e.printStackTrace();
             }
         }
     }

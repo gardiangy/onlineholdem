@@ -87,6 +87,28 @@ input {
     font-size: 18px;
 }
 
+th {
+    padding: 10px;
+}
+
+thead tr {
+    background: #137235;
+}
+
+table {
+    width: 100%;
+    margin-top: 30px;
+    margin-bottom: 20px;
+}
+.dataTables_filter, .dataTables_info , .dataTables_paginate{
+    float: right;
+}
+
+.alignCenter {
+    text-align: center;
+}
+
+
 .form {
     margin: auto;
     margin-top: 20px;

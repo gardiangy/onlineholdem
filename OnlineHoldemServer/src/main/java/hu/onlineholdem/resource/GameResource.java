@@ -14,9 +14,13 @@ import hu.onlineholdem.entity.User;
 import hu.onlineholdem.enums.ActionType;
 import hu.onlineholdem.enums.GameState;
 import hu.onlineholdem.enums.ResponseType;
+import hu.onlineholdem.response.DatatableAjaxResponse;
 import hu.onlineholdem.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -36,6 +40,41 @@ public class GameResource {
     private UserDAO userDAO;
     @Autowired
     private PlayerDAO playerDAO;
+
+
+    @GET
+    @Path("table")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Object getTableData(@QueryParam("sEcho") String sEcho, @QueryParam("sSearch")  String sSearch,
+                               @QueryParam("iDisplayLength")  Integer iDisplayLength, @QueryParam("iDisplayStart") Integer iDisplayStart) {
+        if (sSearch.contains(",") && sSearch.length() > 1)
+            sSearch = sSearch.split(",")[0];
+        if (sSearch.equals(","))
+            sSearch = "";
+
+
+        PageRequest pageRequest = new PageRequest(iDisplayStart / iDisplayLength, iDisplayLength);
+        Page<Game> gamesPage = gameDAO.findByGameNameContaining(sSearch,pageRequest);
+
+        DatatableAjaxResponse datatableAjaxResponse = new DatatableAjaxResponse();
+        datatableAjaxResponse.setiTotalRecords(gameDAO.count());
+        datatableAjaxResponse.setiTotalDisplayRecords(gamesPage.getTotalElements());
+        datatableAjaxResponse.setsEcho(sEcho);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd   HH:mm");
+
+        for (Game game : gamesPage) {
+            List<String> row = new ArrayList<>(5);
+            datatableAjaxResponse.getAaData().add(row);
+            row.add(game.getGameId().toString());
+            row.add(game.getGameName());
+            row.add(game.getMaxPlayerNumber().toString());
+            row.add(sdf.format(game.getStartTime()));
+            row.add(game.getGameState().toString());
+        }
+
+        return datatableAjaxResponse;
+    }
 
 
 
