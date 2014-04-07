@@ -1,9 +1,13 @@
 package hu.onlineholdem.restclient.util;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Point;
+import android.os.Bundle;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
@@ -20,6 +24,7 @@ import java.util.List;
 import java.util.Random;
 
 import hu.onlineholdem.restclient.R;
+import hu.onlineholdem.restclient.activity.GameBrowserActivity;
 import hu.onlineholdem.restclient.entity.Action;
 import hu.onlineholdem.restclient.entity.Card;
 import hu.onlineholdem.restclient.entity.Game;
@@ -166,7 +171,6 @@ public class GraphicStuff {
 
             TextView textView = player.getTextView();
             Animation card1Anim = createAnimation(screenWidth / 2, textView.getLeft() + screenWidth / 20, 0, textView.getTop() - screenHeight / 20, true);
-            card1Anim.setStartOffset(2000);
             ImageView card1 = new ImageView(context);
             board.addView(card1);
             card1.setAnimation(card1Anim);
@@ -178,7 +182,6 @@ public class GraphicStuff {
                     : resources.getIdentifier("back", "drawable", packageName);
 
             Animation card2Anim = createAnimation(screenWidth / 2, textView.getLeft() + screenWidth / 13, 0, textView.getTop() - screenHeight / 20, true);
-            card2Anim.setStartOffset(2000);
             ImageView card2 = new ImageView(context);
             board.addView(card2);
             card2.setAnimation(card2Anim);
@@ -503,10 +506,18 @@ public class GraphicStuff {
         }
         if (availableActions.contains(ActionType.RAISE)) {
             btnBet.setText("RAISE");
-            minBet = highestBetAction.getBetValue() * 2;
+            if(game.getUser().getStackSize() > highestBetAction.getBetValue() * 2){
+                minBet = highestBetAction.getBetValue() * 2;
+            } else {
+                minBet = game.getUser().getStackSize();
+                betBar.setMax(0);
+            }
+
+            betValue.setText("" + minBet);
         } else {
             btnBet.setText("BET");
             minBet = 30;
+            betValue.setText("" + minBet);
         }
         if (availableActions.contains(ActionType.ALL_IN)) {
             btnBet.setText("ALL IN");
@@ -528,17 +539,44 @@ public class GraphicStuff {
         }
 
         for (Player player : players) {
-            for (Player newPlayer : game.getPlayers()) {
-                if (player.getPlayerId().equals(newPlayer.getPlayerId())) {
-                    player.setPlayerTurn(newPlayer.isPlayerTurn());
-                    player.setPlayerInTurn(newPlayer.getPlayerInTurn());
-                    player.setPlayerWinner(newPlayer.isPlayerWinner());
-                    player.setPlayerRaiser(newPlayer.isPlayerRaiser());
-                    player.setStackSize(newPlayer.getStackSize());
-                    player.setCardOne(newPlayer.getCardOne());
-                    player.setCardTwo(newPlayer.getCardTwo());
+
+            if(game.getPlayers().contains(player)){
+                for (Player newPlayer : game.getPlayers()) {
+                    if (player.getPlayerId().equals(newPlayer.getPlayerId())) {
+                        player.setPlayerTurn(newPlayer.isPlayerTurn());
+                        player.setPlayerInTurn(newPlayer.getPlayerInTurn());
+                        player.setPlayerWinner(newPlayer.isPlayerWinner());
+                        player.setPlayerRaiser(newPlayer.isPlayerRaiser());
+                        player.setStackSize(newPlayer.getStackSize());
+                        player.setCardOne(newPlayer.getCardOne());
+                        player.setCardTwo(newPlayer.getCardTwo());
+                    }
+                }
+            } else {
+                seats.removeView(player.getTextView());
+                if(player.isUser()){
+                    AlertDialog alertDialog = new AlertDialog.Builder(
+                            context).create();
+
+                    alertDialog.setTitle("Game Over!");
+                    alertDialog.setMessage("You have finished " + game.getPlayers().size() + 1 + ". place!");
+
+                    final long userId = player.getUserId();
+                    alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL,"Back to Game Browser", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent gameBrowserActivity = new Intent(context.getApplicationContext(), GameBrowserActivity.class);
+                            gameBrowserActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            Bundle bundle = new Bundle();
+                            bundle.putLong("userId", userId);
+                            gameBrowserActivity.putExtras(bundle);
+                            context.startActivity(gameBrowserActivity);
+                        }
+                    });
+
+                    alertDialog.show();
                 }
             }
+
         }
 
     }

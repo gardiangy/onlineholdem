@@ -45,7 +45,7 @@ public class MultiPlayerActivity extends Activity {
 
     private long gameId;
     private int actionSize = 0;
-    private static final String SERVICE_URL = "http://192.168.0.105:8080/rest";
+    private static final String SERVICE_URL = "http://192.168.1.103:8010/rest";
     private static final String TAG = "MultiplayerActivity";
     private GraphicStuff graphics;
     private Player currentPlayer;
@@ -80,10 +80,7 @@ public class MultiPlayerActivity extends Activity {
             graphics.createPlayers();
             init = true;
         }
-        if (!flopDealt && null != game.getBoard() && game.getBoard().size() >= 3) {
-            graphics.dealFlop();
-            flopDealt = true;
-        }
+
         if (!handDealt) {
             graphics.deal();
             handDealt = true;
@@ -99,8 +96,15 @@ public class MultiPlayerActivity extends Activity {
 
 
         }
-        graphics.updateGame(game);
-        if (flopDealt && !game.getBoard().get(0).equals(graphics.getGame().getBoard().get(0))) {
+        List<Player> playersInRound = new ArrayList<>();
+        for(Player pl : game.getPlayers()){
+            if(pl.getPlayerInTurn()){
+                playersInRound.add(pl);
+            }
+        }
+
+        if (flopDealt && game.getBoard().size() == 0 || playersInRound.size() == 1) {
+            graphics.updateGame(game);
             List<Player> winners = new ArrayList<>();
             for (Player player : graphics.getGame().getPlayers()) {
                 if (player.isPlayerWinner()) {
@@ -111,7 +115,11 @@ public class MultiPlayerActivity extends Activity {
             graphics.assignChips(winners);
             cardsShown = true;
         }
-
+        graphics.updateGame(game);
+        if (!flopDealt && null != game.getBoard() && game.getBoard().size() >= 3) {
+            graphics.dealFlop();
+            flopDealt = true;
+        }
 
 
         if (!turnDealt && null != game.getBoard() && game.getBoard().size() >= 4) {
@@ -149,12 +157,6 @@ public class MultiPlayerActivity extends Activity {
                     }
                     if (action.getActionType().equals(ActionType.FOLD)) {
                         graphics.moveFold(action.getPlayer().getPlayerId());
-                    }
-                    List<Player> playersInRound = new ArrayList<>();
-                    for (Player player : graphics.getGame().getPlayers()) {
-                        if (player.getPlayerInTurn()) {
-                            playersInRound.add(player);
-                        }
                     }
                     Player raiser = getRaiser(playersInRound);
                     if (playersInRound.size() == 1) {

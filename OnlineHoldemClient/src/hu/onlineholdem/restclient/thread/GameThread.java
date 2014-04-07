@@ -369,7 +369,7 @@ public class GameThread extends Thread {
         int res3Id = resources.getIdentifier(deck.get(2).toString(), "drawable", packageName);
         game.getBoard().add(deck.get(2));
 
-        Animation flop1Anim = createAnimation(screenWidth / 2, screenWidth / 2 - 300, 0, screenHeight / 4, true);
+        Animation flop1Anim = createAnimation(screenWidth / 2, screenWidth / 2 - screenWidth / 6, 0, screenHeight / 6, true);
         flop1 = new ImageView(context);
         board.addView(flop1);
         flop1.setAnimation(flop1Anim);
@@ -378,7 +378,7 @@ public class GameThread extends Thread {
         flop1.startAnimation(flop1Anim);
         deck.remove(0);
 
-        Animation flop2Anim = createAnimation(screenWidth / 2, screenWidth / 2 - 200, 0, screenHeight / 4, true);
+        Animation flop2Anim = createAnimation(screenWidth / 2, screenWidth / 2 - screenWidth / 10, 0, screenHeight / 6, true);
         flop2 = new ImageView(context);
         board.addView(flop2);
         flop2.setAnimation(flop2Anim);
@@ -387,7 +387,7 @@ public class GameThread extends Thread {
         flop2.startAnimation(flop2Anim);
         deck.remove(0);
 
-        Animation flop3Anim = createAnimation(screenWidth / 2, screenWidth / 2 - 100, 0, screenHeight / 4, true);
+        Animation flop3Anim = createAnimation(screenWidth / 2, screenWidth / 2 - screenWidth / 32, 0, screenHeight / 6, true);
         flop3 = new ImageView(context);
         board.addView(flop3);
         flop3.setAnimation(flop3Anim);
@@ -404,7 +404,7 @@ public class GameThread extends Thread {
         int resId = resources.getIdentifier(deck.get(0).toString(), "drawable", packageName);
         game.getBoard().add(deck.get(0));
 
-        Animation turnAnim = createAnimation(screenWidth / 2, screenWidth / 2, 0, screenHeight / 4, true);
+        Animation turnAnim = createAnimation(screenWidth / 2, screenWidth / 2 + screenWidth / 26, 0, screenHeight / 6, true);
         turn = new ImageView(context);
         board.addView(turn);
         turn.setAnimation(turnAnim);
@@ -421,7 +421,7 @@ public class GameThread extends Thread {
         int resId = resources.getIdentifier(deck.get(0).toString(), "drawable", packageName);
         game.getBoard().add(deck.get(0));
 
-        Animation riverAnim = createAnimation(screenWidth / 2, screenWidth / 2 + 100, 0, screenHeight / 4, true);
+        Animation riverAnim = createAnimation(screenWidth / 2, screenWidth / 2 + screenWidth / 9, 0, screenHeight / 6, true);
         river = new ImageView(context);
         board.addView(river);
         river.setAnimation(riverAnim);
@@ -441,7 +441,7 @@ public class GameThread extends Thread {
 
             player.setCardOne(deck.get(deck.size() - 1));
             TextView textView = player.getTextView();
-            Animation card1Anim = createAnimation(screenWidth / 2, textView.getRight() - 150, 0, textView.getTop() - 40, true);
+            Animation card1Anim = createAnimation(screenWidth / 2, textView.getLeft() + screenWidth / 20, 0, textView.getTop() - screenHeight / 20, true);
             ImageView card1 = new ImageView(context);
             board.addView(card1);
             card1.setAnimation(card1Anim);
@@ -454,7 +454,7 @@ public class GameThread extends Thread {
                     : resources.getIdentifier("back", "drawable", packageName);
 
             player.setCardTwo(deck.get(deck.size() - 1));
-            Animation card2Anim = createAnimation(screenWidth / 2, textView.getRight() - 110, 0, textView.getTop() - 40, true);
+            Animation card2Anim = createAnimation(screenWidth / 2, textView.getLeft() + screenWidth / 13, 0, textView.getTop() - screenHeight / 20, true);
             ImageView card2 = new ImageView(context);
             board.addView(card2);
             card2.setAnimation(card2Anim);
@@ -669,7 +669,7 @@ public class GameThread extends Thread {
                     relativeLayout.addView(chipsImageView);
 
 
-                    RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(100, 40);
+                    RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 12, screenHeight / 18);
                     Position position = getChipsPosition(player);
                     layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
                     relativeLayout.setLayoutParams(layoutParams);

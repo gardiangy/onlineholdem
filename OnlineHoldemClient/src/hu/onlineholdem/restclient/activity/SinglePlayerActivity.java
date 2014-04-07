@@ -57,7 +57,7 @@ public class SinglePlayerActivity extends Activity {
         Button btnCheck = (Button) findViewById(R.id.btnCheck);
         Button btnBet = (Button) findViewById(R.id.btnBet);
         Button btnFold = (Button) findViewById(R.id.btnFold);
-        TextView betValue = (TextView) findViewById(R.id.betValue);
+        final TextView betValue = (TextView) findViewById(R.id.betValue);
 
         gameThread = new GameThread(screenWidth, screenHeight, flop1, flop2, flop3, turn, river, board, players,
                 potSize,btnCheck,btnBet,btnFold,betBar,betValue, this, getResources(), this.getPackageName());
@@ -70,7 +70,6 @@ public class SinglePlayerActivity extends Activity {
         betBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                TextView betValue = (TextView) findViewById(R.id.betValue);
                 betValue.setText("" + i);
                 betAmount = i;
 
@@ -97,15 +96,19 @@ public class SinglePlayerActivity extends Activity {
             player.setOrder(i);
             if (i == numberOfPlayers / 2) {
                 player.setIsUser(true);
+            } else {
+                player.setIsUser(false);
             }
 
             TextView textView = new TextView(this);
             textView.setBackgroundResource(R.drawable.seatnotactive);
 
-            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(200, 100);
+            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 5, screenHeight / 6);
             Position position = getPlayerPostion(i);
             layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
 
+            textView.setTop(position.getTop());
+            textView.setLeft(position.getLeft());
             textView.setLayoutParams(layoutParams);
             textView.setText(player.getStackSize().toString());
             textView.setGravity(Gravity.CENTER);
@@ -129,15 +132,15 @@ public class SinglePlayerActivity extends Activity {
             case 1:
                 return new Position(screenWidth / 6 * 5, screenHeight / 14);
             case 2:
-                return new Position(screenWidth / 7 * 6, screenHeight / 3);
+                return new Position(screenWidth / 10 * 8, screenHeight / 11 * 3);
             case 3:
-                return new Position(screenWidth / 3 * 2, screenHeight / 7 * 4);
+                return new Position(screenWidth / 3 * 2, screenHeight / 7 * 3);
             case 4:
-                return new Position(screenWidth / 5 * 2, screenHeight / 7 * 4);
+                return new Position(screenWidth / 5 * 2, screenHeight / 7 * 3);
             case 5:
-                return new Position(screenWidth / 6, screenHeight / 7 * 4);
+                return new Position(screenWidth / 6, screenHeight / 7 * 3);
             case 6:
-                return new Position(screenWidth / 40, screenHeight / 3);
+                return new Position(screenWidth / 40, screenHeight / 11 * 3);
             case 7:
                 return new Position(screenWidth / 18, screenHeight / 14);
         }

@@ -41,7 +41,7 @@ import hu.onlineholdem.restclient.util.GameListAdapter;
 public class GameBrowserActivity extends Activity implements DateTimeDialog.DateTimeDialogListener {
 
     private static final String TAG = "GameBrowserActivity";
-    private static final String SERVICE_URL = "http://192.168.0.105:8080/rest";
+    private static final String SERVICE_URL = "http://192.168.1.103:8010/rest";
 
     private ExpandableListView list;
     private GameListAdapter listAdapter;
