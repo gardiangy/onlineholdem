@@ -16,4 +16,6 @@ public interface GameDAO extends JpaRepository<Game,Long>{
     public List<Game>  findByGameNameContaining(String gameName);
 
     public Page<Game> findByGameNameContaining(String gameName, Pageable pageable);
+
+    public Game findByGameName(String gameName);
 }

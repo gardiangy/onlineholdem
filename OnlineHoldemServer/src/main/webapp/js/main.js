@@ -27,6 +27,7 @@ $(function () {
             $contentToLoad.show();
             $contentToLoad.removeClass("slideOutRight");
             $contentToLoad.addClass("slideInRight");
+            $contentToLoad.trigger("showPage");
         });
         $("#menu").find(".activeMenu").removeClass("activeMenu");
         $clickedMenu.addClass("activeMenu");

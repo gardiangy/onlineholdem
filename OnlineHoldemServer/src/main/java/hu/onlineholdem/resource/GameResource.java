@@ -150,6 +150,15 @@ public class GameResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response createGame(CreateGameBO createGameBO) {
 
+        Game existingGame = gameDAO.findByGameName(createGameBO.getGameName());
+
+        if(null != existingGame){
+            Response response = new Response();
+            response.setResponseObject("game exists with this name");
+            response.setResponseType(ResponseType.ERROR);
+            return response;
+        }
+
         Game game = new Game();
         game.setGameName(createGameBO.getGameName());
         game.setMaxPlayerNumber(createGameBO.getMaxPlayerNumber());

@@ -2,6 +2,7 @@ package hu.onlineholdem.resource;
 
 
 import hu.onlineholdem.bo.LoginBO;
+import hu.onlineholdem.bo.RegisterBO;
 import hu.onlineholdem.dao.UserDAO;
 import hu.onlineholdem.entity.User;
 import hu.onlineholdem.enums.ResponseType;
@@ -43,6 +44,36 @@ public class LoginResource {
         }
         Response response = new Response();
         response.setResponseObject(user);
+        response.setResponseType(ResponseType.OK);
+
+        return response;
+    }
+
+
+    @POST
+    @Path("register")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response register(RegisterBO registerBO) {
+
+        User existingUser = userDAO.findByUserName(registerBO.getUserName());
+
+        if(null != existingUser){
+            Response response = new Response();
+            response.setResponseObject("username taken");
+            response.setResponseType(ResponseType.ERROR);
+            return response;
+        }
+
+        User user = new User();
+        user.setUserName(registerBO.getUserName());
+        user.setUserEmail(registerBO.getUserEmail());
+        user.setUserPassword(registerBO.getUserPassword());
+
+        User persistedUser = userDAO.save(user);
+
+        Response response = new Response();
+        response.setResponseObject(persistedUser);
         response.setResponseType(ResponseType.OK);
 
         return response;
