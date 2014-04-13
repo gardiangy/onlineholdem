@@ -591,9 +591,15 @@ public class GraphicStuff {
                 availableActions.add(ActionType.FOLD);
                 break;
             case BET:
-                availableActions.add(ActionType.CALL);
-                availableActions.add(ActionType.RAISE);
-                availableActions.add(ActionType.FOLD);
+                if (stackBiggerThanRaiser) {
+                    availableActions.add(ActionType.CALL);
+                    availableActions.add(ActionType.RAISE);
+                    availableActions.add(ActionType.FOLD);
+                } else {
+                    availableActions.add(ActionType.ALL_IN);
+                    availableActions.add(ActionType.FOLD);
+                }
+
                 break;
             case RAISE:
                 if (stackBiggerThanRaiser) {

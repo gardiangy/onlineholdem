@@ -1,10 +1,15 @@
 package hu.onlineholdem.restclient.thread;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
@@ -20,7 +25,10 @@ import java.util.List;
 import java.util.Random;
 
 import hu.onlineholdem.restclient.R;
+import hu.onlineholdem.restclient.activity.MenuActivity;
 import hu.onlineholdem.restclient.activity.SinglePlayerActivity;
+import hu.onlineholdem.restclient.activity.SinglePlayerSettingsActivity;
+import hu.onlineholdem.restclient.entity.Action;
 import hu.onlineholdem.restclient.entity.Card;
 import hu.onlineholdem.restclient.entity.Game;
 import hu.onlineholdem.restclient.entity.Player;
@@ -58,14 +66,17 @@ public class GameThread extends Thread {
     private Game game;
     private boolean isPlayerTurn;
     private ActionType playerAction;
-    private ActionType previousAction;
+    //    private ActionType previousAction;
     private int playerBetAmount;
-    private int previousBetAmount;
+    //    private int previousBetAmount;
+    private Action highestBetAction;
+    private int minBet;
     private boolean roundOver = false;
     private boolean flopDealt = false;
     private boolean turnDealt = false;
     private boolean riverDealt = false;
     private boolean splitPot = false;
+    private boolean stopThread = false;
 
     public GameThread(int screenWidth, int screenHeight, ImageView flop1, ImageView flop2, ImageView flop3, ImageView turn, ImageView river,
                       RelativeLayout board, List<Player> players, TextView potsize, Button btnCheck, Button btnBet, Button btnFold,
@@ -112,6 +123,7 @@ public class GameThread extends Thread {
         playersInRound.addAll(players);
         game.setPotSize(0);
         game.setBoard(new ArrayList<Card>());
+        minBet = 30;
     }
 
     public void startRound() throws InterruptedException {
@@ -135,6 +147,7 @@ public class GameThread extends Thread {
                     }
                 });
                 flopDealt = true;
+                minBet = 30;
             } else if (!turnDealt) {
                 activity.runOnUiThread(new Runnable() {
                     public void run() {
@@ -142,6 +155,7 @@ public class GameThread extends Thread {
                     }
                 });
                 turnDealt = true;
+                minBet = 30;
             } else if (!riverDealt) {
                 activity.runOnUiThread(new Runnable() {
                     public void run() {
@@ -150,20 +164,21 @@ public class GameThread extends Thread {
                 });
                 riverDealt = true;
                 roundOver = true;
+                minBet = 30;
             }
             Thread.sleep(2000);
             makeMoves();
             while (makeMovesAgain()) {
                 makeMoves();
             }
-            if (roundOver) {
-                activity.runOnUiThread(new Runnable() {
-                    public void run() {
-                        endBettingRound();
-                    }
-                });
+        }
+        if (roundOver) {
+            activity.runOnUiThread(new Runnable() {
+                public void run() {
+                    endBettingRound();
+                }
+            });
 
-            }
         }
     }
 
@@ -178,29 +193,28 @@ public class GameThread extends Thread {
         Player winner = playersInRound.get(0);
         List<Player> winners = new ArrayList<>();
         for (Player player : playersInRound) {
-            if (player.equals(winner)) {
+            if (player.getOrder().equals(winner.getOrder())) {
                 continue;
             }
-            if (player.getEvaluatedHand().getHandStrength().getStrength() > bestHand.getHandStrength().getStrength()
-                    || (player.getEvaluatedHand().getHandStrength().getStrength().equals(bestHand.getHandStrength().getStrength()))
-                    && player.getEvaluatedHand().getValue() > bestHand.getValue()) {
+            if (HandEvaluator.isBetterHand(player.getEvaluatedHand(), bestHand)) {
                 bestHand = player.getEvaluatedHand();
                 winner = player;
                 splitPot = false;
             }
         }
         for (Player player : playersInRound) {
-            if (player.equals(winner)) {
+            if (player.getOrder().equals(winner.getOrder())) {
                 continue;
             }
             if (player.getEvaluatedHand().getHandStrength().getStrength().equals(bestHand.getHandStrength().getStrength())
-                    && player.getEvaluatedHand().getValue().equals(player.getEvaluatedHand().getValue())) {
+                    && player.getEvaluatedHand().getValue().equals(bestHand.getValue())) {
                 if (null != player.getEvaluatedHand().getHighCards() && null != winner.getEvaluatedHand().getHighCards()) {
                     int equalCardNum = 0;
                     for (int i = 0; i < player.getEvaluatedHand().getHighCards().size(); i++) {
                         Card playerHighCard = player.getEvaluatedHand().getHighCards().get(i);
                         Card winnerHighCard = winner.getEvaluatedHand().getHighCards().get(i);
-                        if (playerHighCard.getValue() > winnerHighCard.getValue()) {
+                        if (playerHighCard.getValue() > winnerHighCard.getValue()
+                                || (playerHighCard.getValue() == 1 && winnerHighCard.getValue() != 1)) {
                             bestHand = player.getEvaluatedHand();
                             winner = player;
                             break;
@@ -216,10 +230,23 @@ public class GameThread extends Thread {
                         splitPot = true;
                         winners.add(player);
                     }
+                } else {
+                    splitPot = true;
+                    winners.add(player);
                 }
             }
         }
         winners.add(winner);
+        for (Player w : winners) {
+            Log.i(TAG, "Winner : pl.order " + w.getOrder());
+            Log.i(TAG, "Winner : card " + w.getEvaluatedHand().getHandStrength());
+            Log.i(TAG, w.getEvaluatedHand().getValue().toString());
+            if (null != w.getEvaluatedHand().getHighCards()) {
+                Log.i(TAG, w.getEvaluatedHand().getHighCards().toString());
+            }
+
+        }
+
         return winners;
 
     }
@@ -244,17 +271,11 @@ public class GameThread extends Thread {
         for (Player playerOne : players) {
             int amountToWin = 0;
             for (Player playerTwo : players) {
-//                if (playerOne.equals(playerTwo)) {
-//                    continue;
-//                }
-                if (playerTwo.getAmountInPot() >= playerOne.getAmountInPot()) {
-                    amountToWin += playerOne.getAmountInPot();
-                }
-                if (playerTwo.getAmountInPot() < playerOne.getAmountInPot()) {
-                    amountToWin += playerTwo.getAmountInPot();
-                }
+                amountToWin += playerTwo.getAmountInPot() >= playerOne.getAmountInPot()
+                        ? playerOne.getAmountInPot() : playerTwo.getAmountInPot();
             }
             playerOne.setAmountToWin(amountToWin);
+            Log.i(TAG, "Player order: " + playerOne.getOrder() + " AmountToWin " + amountToWin);
 
         }
         handler.post(new Runnable() {
@@ -267,7 +288,7 @@ public class GameThread extends Thread {
 
     }
 
-    public void assignChips(List<Player> winners){
+    public void assignChips(List<Player> winners) {
         if (splitPot) {
             List<List<RelativeLayout>> chipsList = splitChips(game.getPotChips(), winners.size());
 
@@ -277,16 +298,14 @@ public class GameThread extends Thread {
             winnerList.addAll(winners);
 
             for (Player winner : winnerList) {
-                if(winner.getAmountToWin() <= splitPotAmount){
+                if (winner.getAmountToWin() <= splitPotAmount) {
+                    Log.i(TAG, "PotSize " + game.getPotSize());
+                    Log.i(TAG, "winner amount to win " + winner.getAmountToWin());
                     game.setPotSize(game.getPotSize() - winner.getAmountToWin());
-                    List<List<RelativeLayout>> layoutList = new ArrayList<>();
-                    layoutList.addAll(chipsList);
-                    for (List<RelativeLayout> relativeLayouts : layoutList) {
-                        for (RelativeLayout chips : relativeLayouts) {
-                            chips.animate().setDuration(500).x(winner.getTextView().getLeft()).y(winner.getTextView().getTop());
-                        }
-                        chipsList.remove(relativeLayouts);
+                    for (RelativeLayout chips : chipsList.get(0)) {
+                        chips.animate().setDuration(500).x(winner.getTextView().getLeft()).y(winner.getTextView().getTop());
                     }
+                    chipsList.remove(chipsList.get(0));
                     winner.setStackSize(winner.getStackSize() + winner.getAmountToWin());
                     winners.remove(winner);
                 }
@@ -294,6 +313,8 @@ public class GameThread extends Thread {
             for (Player winner : winners) {
                 List<List<RelativeLayout>> layoutList = new ArrayList<>();
                 layoutList.addAll(chipsList);
+                Log.i(TAG, "PotSize " + game.getPotSize());
+                Log.i(TAG, "winner amount to win " + winner.getAmountToWin());
                 for (List<RelativeLayout> relativeLayouts : layoutList) {
                     for (RelativeLayout chips : relativeLayouts) {
                         chips.animate().setDuration(500).x(winner.getTextView().getLeft()).y(winner.getTextView().getTop());
@@ -303,7 +324,9 @@ public class GameThread extends Thread {
                 winner.setStackSize(winner.getStackSize() + game.getPotSize() / winners.size());
             }
         } else {
-            if(winners.get(0).getAmountToWin() >= game.getPotSize()){
+            Log.i(TAG, "winner amount to win " + winners.get(0).getAmountToWin());
+            Log.i(TAG, "PotSize " + game.getPotSize());
+            if (winners.get(0).getAmountToWin() >= game.getPotSize()) {
                 for (final RelativeLayout chips : game.getPotChips()) {
                     chips.animate().setDuration(500).x(winners.get(0).getTextView().getLeft()).y(winners.get(0).getTextView().getTop());
                 }
@@ -324,7 +347,7 @@ public class GameThread extends Thread {
 
     public void endRound() {
 
-        for(Player player : players){
+        for (Player player : players) {
             player.getTextView().setText(player.getStackSize().toString());
         }
 
@@ -335,12 +358,66 @@ public class GameThread extends Thread {
             if (player.getStackSize() == 0) {
                 activity.removeSeat(player.getTextView());
                 players.remove(player);
+                if (player.isUser()) {
+                    AlertDialog alertDialog = new AlertDialog.Builder(
+                            context).create();
+
+                    alertDialog.setTitle("Game Over!");
+                    alertDialog.setMessage("You have finished " + playerList.size() + ". place!");
+
+
+                    alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Back to Menu", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent menuActivity = new Intent(context.getApplicationContext(), MenuActivity.class);
+                            menuActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            context.startActivity(menuActivity);
+//                            ((SinglePlayerActivity) context).finish();
+                        }
+                    });
+                    alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, "Start New", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent singlePlayerActivity = new Intent(context.getApplicationContext(), SinglePlayerSettingsActivity.class);
+                            singlePlayerActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            context.startActivity(singlePlayerActivity);
+                        }
+                    });
+                    alertDialog.show();
+                    stopThread = true;
+
+                }
             }
             board.removeView(player.getCard1View());
             board.removeView(player.getCard2View());
             player.setCard1View(null);
             player.setCard2View(null);
             player.setAmountInPot(0);
+        }
+        if (players.size() == 1 && players.get(0).isUser()) {
+            AlertDialog alertDialog = new AlertDialog.Builder(
+                    context).create();
+
+            alertDialog.setTitle("Congratulations!");
+            alertDialog.setMessage("You have finished 1. place!");
+
+
+            alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Back to Menu", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    Intent menuActivity = new Intent(context.getApplicationContext(), MenuActivity.class);
+                    menuActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    context.startActivity(menuActivity);
+//                    ((SinglePlayerActivity) context).finish();
+                }
+            });
+            alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, "Start New", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    Intent singlePlayerActivity = new Intent(context.getApplicationContext(), SinglePlayerSettingsActivity.class);
+                    singlePlayerActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    context.startActivity(singlePlayerActivity);
+                }
+            });
+            alertDialog.show();
+            stopThread = true;
+
         }
         for (RelativeLayout chip : game.getPotChips()) {
             board.removeView(chip);
@@ -478,18 +555,29 @@ public class GameThread extends Thread {
     }
 
     public void makeMoves() {
-        if (playersInRound.size() == 1) {
+        List<Player> playersWithStack = new ArrayList<>();
+        for(Player player : playersInRound){
+            if(player.getStackSize() > 0){
+                playersWithStack.add(player);
+            }
+        }
+        if (playersInRound.size() == 1 || playersWithStack.size() == 1) {
             roundOver = true;
             return;
         }
         List<Player> playerList = new ArrayList<>();
         playerList.addAll(playersInRound);
         for (final Player player : playerList) {
-            if ((null != player.getBetAmount() && player.getBetAmount() == previousBetAmount)
+            if (playersInRound.size() == 1) {
+                roundOver = true;
+                return;
+
+            }
+            if ((null != player.getBetAmount() && null != highestBetAction && player.getBetAmount().equals(highestBetAction.getBetValue()))
                     || player.getStackSize() == 0) {
                 continue;
             }
-            final List<ActionType> availableActions = getAvailableActions();
+            final List<ActionType> availableActions = getAvailableActions(player);
             activity.runOnUiThread(new Runnable() {
                 public void run() {
                     player.getTextView().setBackgroundResource(R.drawable.seatactive);
@@ -501,44 +589,42 @@ public class GameThread extends Thread {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                Random random = new Random();
-                int action = random.nextInt(availableActions.size());
-                ActionType randomAction = availableActions.get(action);
-                if (randomAction.equals(ActionType.CHECK)) {
-                    previousAction = ActionType.CHECK;
+                player.setEvaluatedHand(HandEvaluator.evaluateHand(game.getBoard(), player.getCardOne(), player.getCardTwo()));
+                Action nextAction = getNextAction(player, availableActions);
+                if (nextAction.getActionType().equals(ActionType.CHECK)) {
                     player.setActionType(ActionType.CHECK);
                 }
-                if (randomAction.equals(ActionType.BET)) {
-                    int amount = 50;
+                if (nextAction.getActionType().equals(ActionType.BET)) {
                     player.setActionType(ActionType.BET);
-                    previousBetAmount = amount;
-                    activity.setPreviousBetAmount(previousBetAmount);
-                    previousAction = ActionType.BET;
-                    moveBet(amount, player);
+                    highestBetAction = nextAction;
+                    minBet = nextAction.getBetValue() * 2;
+                    activity.setHighestBetAction(nextAction);
+                    moveBet(nextAction.getBetValue(), player);
                 }
-                if (randomAction.equals(ActionType.FOLD)) {
+                if (nextAction.getActionType().equals(ActionType.FOLD)) {
                     player.setActionType(ActionType.FOLD);
                     moveFold(player);
                 }
-                if (randomAction.equals(ActionType.CALL)) {
-                    int amount = previousBetAmount;
-                    previousAction = ActionType.CALL;
+                if (nextAction.getActionType().equals(ActionType.CALL)) {
+                    int amount = highestBetAction.getBetValue() > player.getStackSize()
+                            ? player.getStackSize() : highestBetAction.getBetValue();
                     player.setActionType(ActionType.CALL);
                     moveBet(amount, player);
                 }
-                if (randomAction.equals(ActionType.RAISE)) {
-                    previousAction = ActionType.RAISE;
+                if (nextAction.getActionType().equals(ActionType.RAISE)) {
                     player.setActionType(ActionType.RAISE);
-                    if (previousBetAmount * 2 > 1500) {
-                        player.setBetAmount(1500);
-                        previousBetAmount = 1500;
-                        moveBet(1500, player);
-                    } else {
-                        player.setBetAmount(previousBetAmount * 2);
-                        moveBet(previousBetAmount * 2, player);
-                        previousBetAmount = previousBetAmount * 2;
-                    }
-                    activity.setPreviousBetAmount(previousBetAmount);
+                    activity.setHighestBetAction(nextAction);
+                    minBet = nextAction.getBetValue() * 2;
+                    highestBetAction = nextAction;
+                    moveBet(nextAction.getBetValue(), player);
+
+                }
+                if (nextAction.getActionType().equals(ActionType.ALL_IN)) {
+                    player.setActionType(ActionType.ALL_IN);
+                    activity.setHighestBetAction(nextAction);
+                    highestBetAction = nextAction;
+                    moveBet(null == player.getBetAmount() ? nextAction.getBetValue()
+                            : nextAction.getBetValue() + player.getBetAmount(), player);
 
                 }
             } else {
@@ -553,7 +639,12 @@ public class GameThread extends Thread {
                         Log.i(TAG, handStrength.getHighCards().toString());
                     }
                 }
-                activity.getBetBar().setMax(player.getStackSize());
+                if(minBet > player.getStackSize()){
+                    minBet = null == player.getBetAmount() ? player.getStackSize()
+                            : player.getBetAmount() + player.getStackSize();
+                }
+                activity.getBetBar().setMax(null == player.getBetAmount() ? player.getStackSize() - minBet
+                                                    : player.getBetAmount() + player.getStackSize() - minBet );
                 activity.getBetBar().setProgress(0);
 
                 showActionButtons(true);
@@ -569,9 +660,10 @@ public class GameThread extends Thread {
                         } else {
                             btnBet.setText("BET");
                         }
-                        if (previousBetAmount > player.getStackSize()) {
+                        if (availableActions.contains(ActionType.ALL_IN)) {
                             btnCheck.setText("ALL IN");
                             btnBet.setVisibility(View.INVISIBLE);
+                            betBar.setVisibility(View.INVISIBLE);
                         }
                     }
                 });
@@ -582,24 +674,31 @@ public class GameThread extends Thread {
                         if (null != playerAction) {
                             if (playerAction.equals(ActionType.BET)) {
                                 moveBet(playerBetAmount, player);
-                                previousAction = ActionType.BET;
-                                previousBetAmount = playerBetAmount;
+                                highestBetAction = new Action();
+                                minBet = playerBetAmount * 2;
+                                highestBetAction.setBetValue(playerBetAmount);
+                                highestBetAction.setActionType(playerAction);
                             }
                             if (playerAction.equals(ActionType.CALL)) {
-                                int amount = previousBetAmount;
+                                int amount = highestBetAction.getBetValue();
                                 if (amount > player.getStackSize()) {
                                     amount = player.getStackSize();
                                 }
                                 moveBet(amount, player);
-                                previousAction = ActionType.CALL;
                             }
                             if (playerAction.equals(ActionType.RAISE)) {
                                 moveBet(playerBetAmount, player);
-                                previousAction = ActionType.RAISE;
-                                previousBetAmount = playerBetAmount;
+                                minBet = playerBetAmount * 2;
+                                highestBetAction = new Action();
+                                highestBetAction.setBetValue(playerBetAmount);
+                                highestBetAction.setActionType(playerAction);
                             }
                             if (playerAction.equals(ActionType.FOLD)) {
                                 moveFold(player);
+                            }
+                            if (playerAction.equals(ActionType.ALL_IN)) {
+                                moveBet(null == player.getBetAmount() ? player.getStackSize()
+                                        : player.getStackSize() + player.getBetAmount(), player);
                             }
                             isPlayerTurn = false;
                             showActionButtons(false);
@@ -618,35 +717,33 @@ public class GameThread extends Thread {
                     player.getTextView().setBackgroundResource(R.drawable.seatnotactive);
                 }
             });
-
-
         }
     }
 
-    public void moveBet(final int amount, final Player player) {
-        game.setPotSize(game.getPotSize() + amount);
+    public void moveBet(int amount, final Player player) {
         int betAmount = amount;
         if (amount > player.getStackSize()) {
-            betAmount = player.getStackSize();
-            if (null != player.getBetAmount()) {
-                betAmount = player.getBetAmount() + amount;
-            }
-
+            betAmount = null == player.getBetAmount() ? player.getStackSize()
+                    : player.getBetAmount() + player.getStackSize();
+            amount = null == player.getBetAmount() ? player.getStackSize()
+                    : player.getBetAmount() + player.getStackSize();
         }
-        player.setBetAmount(betAmount);
+        Log.i(TAG, "Player order: " + player.getOrder() + " Bet " + betAmount);
+
+        if (null != player.getBetAmount()) {
+            betAmount -= player.getBetAmount();
+        }
+        game.setPotSize(game.getPotSize() + betAmount);
         if (null == player.getAmountInPot()) {
             player.setAmountInPot(betAmount);
         } else {
             player.setAmountInPot(player.getAmountInPot() + betAmount);
         }
-        if (null != player.getChipLayout()) {
-            TextView existingChipsTextViw = (TextView) player.getChipLayout().getChildAt(0);
-            int prevBet = Integer.parseInt(existingChipsTextViw.getText().toString());
-            if (player.getStackSize() <= player.getBetAmount()) {
-                player.setStackSize(0);
-            } else {
-                player.setStackSize(player.getStackSize() - (amount - prevBet));
-            }
+        player.setBetAmount(amount);
+        Log.i(TAG, "Player order: " + player.getOrder() + " AmountInPot " + player.getAmountInPot());
+
+        if (player.getStackSize() <= player.getBetAmount()) {
+            player.setStackSize(0);
         } else {
             player.setStackSize(player.getStackSize() - betAmount);
         }
@@ -659,17 +756,12 @@ public class GameThread extends Thread {
                     TextView existingChipsTextViw = (TextView) player.getChipLayout().getChildAt(0);
                     existingChipsTextViw.setText(player.getBetAmount() + "");
                 } else {
-                    RelativeLayout relativeLayout = new RelativeLayout(context);
-                    TextView chipsTextView = new TextView(context);
-                    chipsTextView.setTextSize(15);
+                    RelativeLayout relativeLayout = (RelativeLayout) LayoutInflater.from(context).inflate(R.layout.chips, null);
+                    TextView chipsTextView = (TextView) relativeLayout.getChildAt(0);
                     chipsTextView.setText(player.getBetAmount().toString());
-                    relativeLayout.addView(chipsTextView);
-                    ImageView chipsImageView = new ImageView(context);
-                    chipsImageView.setImageResource(R.drawable.chips);
-                    relativeLayout.addView(chipsImageView);
 
 
-                    RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 12, screenHeight / 18);
+                    RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 12, screenHeight / 8);
                     Position position = getChipsPosition(player);
                     layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
                     relativeLayout.setLayoutParams(layoutParams);
@@ -704,13 +796,13 @@ public class GameThread extends Thread {
 
     public void collectChips() {
 
-        for (Player player : playersInRound) {
+        for (Player player : players) {
             if (null != player.getChipLayout()) {
                 int chipsShiftX = new Random().nextInt(100) - 50;
                 int chipsShiftY = new Random().nextInt(20) - 10;
                 TextView chipsText = (TextView) player.getChipLayout().getChildAt(0);
                 chipsText.setText("");
-                player.getChipLayout().animate().x(screenWidth / 2 + chipsShiftX).y(screenHeight / 7 + chipsShiftY);
+                player.getChipLayout().animate().x(screenWidth / 2 + chipsShiftX).y(screenHeight / 16 + chipsShiftY);
                 game.getPotChips().add(player.getChipLayout());
             }
             player.setChipLayout(null);
@@ -743,21 +835,22 @@ public class GameThread extends Thread {
     @Override
     public void run() {
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-
+        SystemClock.sleep(2000);
         createGame();
 
         try {
-            while (players.size() > 1) {
+            while (players.size() > 1 && !stopThread) {
                 shuffle();
                 startRound();
                 showCards();
-                Thread.sleep(4000);
+                Thread.sleep(2000);
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         endRound();
                     }
                 });
+                Thread.sleep(2000);
 
             }
 
@@ -771,46 +864,233 @@ public class GameThread extends Thread {
     public Position getChipsPosition(Player player) {
         switch (player.getOrder()) {
             case 1:
-                return new Position(player.getTextView().getLeft() - 70, player.getTextView().getTop() + 20);
+                return new Position(player.getTextView().getLeft() - 70, player.getTextView().getTop() + 80);
             case 2:
-                return new Position(player.getTextView().getLeft() - 50, player.getTextView().getTop() - 20);
+                return new Position(player.getTextView().getLeft() - 70, player.getTextView().getTop() + 20);
             case 3:
-                return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 100);
+                return new Position(player.getTextView().getLeft() - 50, player.getTextView().getTop() - 20);
             case 4:
-                return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 100);
+                return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 150);
             case 5:
-                return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 100);
+                return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 150);
             case 6:
-                return new Position(player.getTextView().getLeft() + 220, player.getTextView().getTop() + 20);
+                return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 150);
             case 7:
                 return new Position(player.getTextView().getLeft() + 220, player.getTextView().getTop() + 20);
+            case 8:
+                return new Position(player.getTextView().getLeft() + 220, player.getTextView().getTop() + 20);
+            case 9:
+                return new Position(player.getTextView().getLeft() + 100, player.getTextView().getTop() + 80);
         }
         return null;
     }
 
-    public List<ActionType> getAvailableActions() {
+    public List<ActionType> getAvailableActions(Player player) {
         List<ActionType> availableActions = new ArrayList<>();
-        if (null == previousAction || previousAction.equals(ActionType.CHECK)) {
-//            availableActions.add(ActionType.CHECK);
+        if (null == highestBetAction || highestBetAction.getActionType().equals(ActionType.CHECK)) {
+            availableActions.add(ActionType.CHECK);
             availableActions.add(ActionType.BET);
-//            availableActions.add(ActionType.FOLD);
-        }
-        if (null != previousAction) {
-            if (previousAction.equals(ActionType.BET) || previousAction.equals(ActionType.CALL)
-                    || previousAction.equals(ActionType.RAISE) || previousAction.equals(ActionType.FOLD)) {
+            availableActions.add(ActionType.FOLD);
+        } else if (highestBetAction.getActionType().equals(ActionType.BET) || highestBetAction.getActionType().equals(ActionType.CALL)
+                || highestBetAction.getActionType().equals(ActionType.RAISE) || highestBetAction.getActionType().equals(ActionType.ALL_IN)) {
+
+            if (player.getStackSize() > highestBetAction.getBetValue()) {
                 availableActions.add(ActionType.CALL);
-//                availableActions.add(ActionType.RAISE);
-//                availableActions.add(ActionType.FOLD);
+                availableActions.add(ActionType.RAISE);
+                availableActions.add(ActionType.FOLD);
+            } else {
+                availableActions.add(ActionType.ALL_IN);
+                availableActions.add(ActionType.FOLD);
             }
+
         }
+
 
         return availableActions;
     }
 
+    public Action getNextAction(Player player, List<ActionType> availableActions) {
+        int handStrength = 0;
+        handStrength += player.getCardOne().getValue() == 1 ? 14 : player.getCardOne().getValue();
+        handStrength += player.getCardTwo().getValue() == 1 ? 14 : player.getCardTwo().getValue();
+        if (player.getCardTwo().getValue().equals(player.getCardOne().getValue())) {
+            handStrength += player.getCardOne().getValue() == 1 ? 14 : player.getCardOne().getValue();
+
+        }
+        if (player.getCardTwo().getSuit().equals(player.getCardOne().getSuit())) {
+            handStrength += 5;
+        }
+        if (null != player.getEvaluatedHand()) {
+            switch (player.getEvaluatedHand().getHandStrength()) {
+                case ONE_PAIR:
+                    handStrength += 5;
+                    break;
+                case TWO_PAIR:
+                    handStrength += 10;
+                    break;
+                case THREE_OF_A_KIND:
+                    handStrength += 15;
+                    break;
+                case STRAIGHT:
+                    handStrength += 20;
+                    break;
+                case FLUSH:
+                    handStrength += 25;
+                    break;
+                case FULL_HOUSE:
+                    handStrength += 30;
+                    break;
+                case STRAIGHT_FLUSH:
+                    handStrength += 35;
+                    break;
+                case FOUR_OF_A_KIND:
+                    handStrength += 40;
+                    break;
+                case ROYAL_FLUSH:
+                    handStrength += 45;
+                    break;
+            }
+        }
+        Action action = null;
+        switch (player.getPlayStyle()) {
+            case MANIAC:
+                if (handStrength > 15) {
+                    if (availableActions.contains(ActionType.BET)) {
+                        Action maniacAction = new Action();
+                        maniacAction.setActionType(ActionType.BET);
+                        maniacAction.setBetValue(minBet * 2);
+                        action = maniacAction;
+                    } else if (availableActions.contains(ActionType.RAISE)) {
+                        Action maniacAction = new Action();
+                        maniacAction.setActionType(ActionType.RAISE);
+                        maniacAction.setBetValue(highestBetAction.getBetValue() * 2);
+                        action = maniacAction;
+                    } else if (availableActions.contains(ActionType.ALL_IN)) {
+                        Action maniacAction = new Action();
+                        maniacAction.setActionType(ActionType.ALL_IN);
+                        maniacAction.setBetValue(player.getStackSize());
+                        action = maniacAction;
+                    }
+
+                } else {
+                    Action maniacAction = new Action();
+                    maniacAction.setActionType(ActionType.FOLD);
+                    maniacAction.setBetValue(0);
+                    action = maniacAction;
+                }
+                break;
+            case CALLING_STATION:
+                if (handStrength > 15) {
+                    if (availableActions.contains(ActionType.CALL)) {
+                        Action callingAction = new Action();
+                        callingAction.setActionType(ActionType.CALL);
+                        callingAction.setBetValue(highestBetAction.getBetValue());
+                        action = callingAction;
+                    }
+                    if (availableActions.contains(ActionType.CHECK)) {
+                        Action callingAction = new Action();
+                        callingAction.setActionType(ActionType.CHECK);
+                        callingAction.setBetValue(0);
+                        action = callingAction;
+                    }
+                    if (availableActions.contains(ActionType.ALL_IN)) {
+                        Action callingAction = new Action();
+                        callingAction.setActionType(ActionType.ALL_IN);
+                        callingAction.setBetValue(player.getStackSize());
+                        action = callingAction;
+                    }
+
+                } else {
+                    Action callingAction = new Action();
+                    callingAction.setActionType(ActionType.FOLD);
+                    callingAction.setBetValue(0);
+                    action = callingAction;
+                }
+                break;
+
+            case ROCK:
+                if (handStrength > 35) {
+                    if (availableActions.contains(ActionType.BET)) {
+                        Action rockAction = new Action();
+                        rockAction.setActionType(ActionType.BET);
+                        rockAction.setBetValue(minBet * 2);
+                        action = rockAction;
+                    }
+                    if (availableActions.contains(ActionType.RAISE)) {
+                        Action rockAction = new Action();
+                        rockAction.setActionType(ActionType.RAISE);
+                        rockAction.setBetValue(highestBetAction.getBetValue() * 2);
+                        action = rockAction;
+                    }
+                    if (availableActions.contains(ActionType.ALL_IN)) {
+                        Action rockAction = new Action();
+                        rockAction.setActionType(ActionType.ALL_IN);
+                        rockAction.setBetValue(player.getStackSize());
+                        action = rockAction;
+                    }
+                } else {
+                    Action rockAction = new Action();
+                    rockAction.setActionType(ActionType.FOLD);
+                    rockAction.setBetValue(0);
+                    action = rockAction;
+                }
+                break;
+
+            case SHARK:
+
+                if (availableActions.contains(ActionType.BET)) {
+                    Action sharkAction = new Action();
+                    if (handStrength < 15) {
+                        sharkAction.setActionType(ActionType.FOLD);
+                        sharkAction.setBetValue(0);
+                    } else if (handStrength < 25) {
+                        sharkAction.setActionType(ActionType.CHECK);
+                        sharkAction.setBetValue(0);
+                    } else {
+                        sharkAction.setActionType(ActionType.BET);
+                        sharkAction.setBetValue(minBet * 3);
+                    }
+                    action = sharkAction;
+                } else if (availableActions.contains(ActionType.RAISE)) {
+                    Action sharkAction = new Action();
+                    if (handStrength < 25) {
+                        sharkAction.setActionType(ActionType.FOLD);
+                        sharkAction.setBetValue(0);
+                    } else if (handStrength < 40) {
+                        sharkAction.setActionType(ActionType.CALL);
+                        sharkAction.setBetValue(highestBetAction.getBetValue());
+                    } else {
+                        sharkAction.setActionType(ActionType.RAISE);
+                        sharkAction.setBetValue(highestBetAction.getBetValue() * 3);
+                    }
+                    action = sharkAction;
+                } else if (availableActions.contains(ActionType.ALL_IN)) {
+                    Action sharkAction = new Action();
+                    if (handStrength < 45) {
+                        sharkAction.setActionType(ActionType.FOLD);
+                        sharkAction.setBetValue(0);
+                    } else {
+                        sharkAction.setActionType(ActionType.ALL_IN);
+                        sharkAction.setBetValue(player.getStackSize());
+                    }
+                    action = sharkAction;
+                } else {
+                    Action sharkAction = new Action();
+                    sharkAction.setActionType(ActionType.FOLD);
+                    sharkAction.setBetValue(0);
+                    action = sharkAction;
+                }
+                break;
+
+        }
+        return action;
+
+    }
+
     public boolean makeMovesAgain() {
         for (Player player : playersInRound) {
-            if ((null != player.getBetAmount() && player.getBetAmount() != previousBetAmount && player.getStackSize() > 0)
-                    || (null == player.getBetAmount() && previousBetAmount != 0 && player.getStackSize() > 0)) {
+            if ((null != player.getBetAmount() && null != highestBetAction && player.getBetAmount() < highestBetAction.getBetValue()
+                    && player.getStackSize() > 0) || (null == player.getBetAmount() && null != highestBetAction && player.getStackSize() > 0)) {
                 return true;
             }
         }
@@ -819,34 +1099,36 @@ public class GameThread extends Thread {
 
     public void endBettingRound() {
         collectChips();
-        previousBetAmount = 0;
-        previousAction = null;
+        highestBetAction = null;
+//        previousAction = null;
         for (Player player : playersInRound) {
             player.setActionType(null);
             player.setBetAmount(null);
         }
     }
 
+    public boolean isUserStillInGame() {
+        for (Player player : players) {
+            if (player.isUser()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static List<List<RelativeLayout>> splitChips(List<RelativeLayout> list, int numberOfLists) {
 
-        int sizeOfSubList = list.size() / numberOfLists;
-        List<List<RelativeLayout>> subLists = new ArrayList<>(numberOfLists);
+        List<List<RelativeLayout>> subLists = new ArrayList<>();
 
-        List<RelativeLayout> subList = new ArrayList<>();
-        for (RelativeLayout relativeLayout : list) {
-            if(subLists.size() == numberOfLists - 1){
-                subList = list.subList(list.indexOf(relativeLayout) - 1, list.size()-1);
-                subLists.add(subList);
-                break;
-            }
-            if (subList.size() < sizeOfSubList) {
-                subList.add(relativeLayout);
-            }
-            if (subList.size() == sizeOfSubList || list.indexOf(relativeLayout) == list.size() - 1) {
-                subLists.add(subList);
-                subList = new ArrayList<>();
-            }
+        for (int i = 0; i < numberOfLists; i++) {
+            subLists.add(new ArrayList<RelativeLayout>());
+        }
 
+        int index = 0;
+
+        for (RelativeLayout layout : list) {
+            subLists.get(index).add(layout);
+            index = (index + 1) % numberOfLists;
         }
         return subLists;
     }
@@ -873,5 +1155,13 @@ public class GameThread extends Thread {
 
     public void setPlayerBetAmount(int playerBetAmount) {
         this.playerBetAmount = playerBetAmount;
+    }
+
+    public int getMinBet() {
+        return minBet;
+    }
+
+    public void setMinBet(int minBet) {
+        this.minBet = minBet;
     }
 }

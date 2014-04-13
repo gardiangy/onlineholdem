@@ -13,6 +13,7 @@ import hu.onlineholdem.restclient.R;
 public class SinglePlayerSettingsActivity extends Activity {
 
     private NumberPicker playerNumPicker;
+    private NumberPicker difficultyPicker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,10 +25,10 @@ public class SinglePlayerSettingsActivity extends Activity {
         playerNumPicker.setMaxValue(9);
         playerNumPicker.setMinValue(2);
 
-        NumberPicker difficultyPicker = (NumberPicker) findViewById(R.id.difficultyPicker);
+        difficultyPicker = (NumberPicker) findViewById(R.id.difficultyPicker);
         difficultyPicker.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
-        difficultyPicker.setMaxValue(3);
-        difficultyPicker.setMinValue(1);
+        difficultyPicker.setMaxValue(2);
+        difficultyPicker.setMinValue(0);
 
         String[] diffs = new String[3];
         diffs[0] = "Easy";
@@ -43,6 +44,7 @@ public class SinglePlayerSettingsActivity extends Activity {
         Intent intent = new Intent(this, SinglePlayerActivity.class);
         Bundle bundle = new Bundle();
         bundle.putInt("numOfPlayers", playerNumPicker.getValue());
+        bundle.putString("difficulty", difficultyPicker.getDisplayedValues()[difficultyPicker.getValue()].toUpperCase());
         intent.putExtras(bundle);
 
         startActivity(intent);

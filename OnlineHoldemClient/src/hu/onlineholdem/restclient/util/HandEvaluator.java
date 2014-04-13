@@ -225,7 +225,13 @@ public class HandEvaluator {
                     continue;
                 }
                 if (card.getValue().equals(otherCard.getValue()) && !pairs.contains(otherCard)) {
-                    sameCardValue++;
+                    boolean containsValue = false;
+                    for(Card pair : pairs){
+                        containsValue = otherCard.getValue().equals(pair.getValue());
+                    }
+                    if(!containsValue){
+                        sameCardValue++;
+                    }
                 }
             }
             if (sameCardValue > 0) {
@@ -379,5 +385,16 @@ public class HandEvaluator {
 
 
         return null;
+    }
+
+    public static boolean isBetterHand(EvaluatedHand hand1, EvaluatedHand hand2){
+        if (hand1.getHandStrength().getStrength() > hand2.getHandStrength().getStrength()){
+            return true;
+        } else if ( hand1.getHandStrength().getStrength().equals(hand2.getHandStrength().getStrength()) ) {
+            if(hand1.getValue() > hand2.getValue() && hand1.getValue() != 1){
+                return true;
+            }
+        }
+        return false;
     }
 }

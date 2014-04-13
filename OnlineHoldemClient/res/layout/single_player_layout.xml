@@ -8,35 +8,36 @@
 
     >
 
-    <RelativeLayout
-        android:id="@+id/potLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_alignParentTop="true">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:gravity="center"
-            android:text="Pot"
-            android:id="@+id/potText" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_below="@id/potText"
-            android:id="@+id/potSize" />
-    </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/board"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:layout_below="@id/potLayout">
+        android:orientation="horizontal">
+
+        <RelativeLayout
+            android:id="@+id/potLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:gravity="center"
+                android:text="Pot"
+                android:id="@+id/potText" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_below="@id/potText"
+                android:id="@+id/potSize" />
+        </RelativeLayout>
 
         <ImageView
             android:id="@+id/flop1"
@@ -76,22 +77,6 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_alignParentBottom="true">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_gravity="bottom"
-            android:gravity="left">
-
-        <Button
-
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Start"
-            android:id="@+id/btnFlop"
-            android:onClick="startGame" />
-
-        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"

@@ -3,6 +3,7 @@ package hu.onlineholdem.restclient.activity;
 import android.app.Activity;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
@@ -17,8 +18,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.onlineholdem.restclient.R;
+import hu.onlineholdem.restclient.entity.Action;
 import hu.onlineholdem.restclient.entity.Player;
 import hu.onlineholdem.restclient.enums.ActionType;
+import hu.onlineholdem.restclient.enums.Difficulty;
+import hu.onlineholdem.restclient.enums.PlayStyle;
 import hu.onlineholdem.restclient.thread.GameThread;
 import hu.onlineholdem.restclient.util.Position;
 
@@ -32,7 +36,8 @@ public class SinglePlayerActivity extends Activity {
     private RelativeLayout seats;
     private List<Player> players = new ArrayList<>();
     private int betAmount;
-    private int previousBetAmount;
+//    private int previousBetAmount;
+    private Action highestBetAction;
     private SeekBar betBar;
 
     @Override
@@ -64,14 +69,16 @@ public class SinglePlayerActivity extends Activity {
 
         Bundle bundle = getIntent().getExtras();
         int numOfPlayers = bundle.getInt("numOfPlayers");
-        createPlayers(numOfPlayers);
+        Difficulty difficulty = Difficulty.valueOf(bundle.getString("difficulty"));
+        createPlayers(numOfPlayers, difficulty);
+        gameThread.start();
 
 
         betBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                betValue.setText("" + i);
-                betAmount = i;
+                betValue.setText("" + (i + gameThread.getMinBet()));
+                betAmount = i + gameThread.getMinBet();
 
             }
 
@@ -89,15 +96,48 @@ public class SinglePlayerActivity extends Activity {
 
     }
 
-    public void createPlayers(int numberOfPlayers) {
+    public void createPlayers(int numberOfPlayers, Difficulty difficulty) {
+        Log.i(TAG, "Game started, difficulty: " + difficulty.toString());
         for (int i = 1; i <= numberOfPlayers; i++) {
             Player player = new Player();
             player.setStackSize(1500);
+            player.setAmountInPot(0);
             player.setOrder(i);
             if (i == numberOfPlayers / 2) {
                 player.setIsUser(true);
             } else {
                 player.setIsUser(false);
+            }
+
+            if(!player.isUser()){
+                switch (difficulty){
+                    case EASY:
+                        if(i % 2 == 0){
+                            player.setPlayStyle(PlayStyle.CALLING_STATION);
+                        } else {
+                            player.setPlayStyle(PlayStyle.MANIAC);
+                        }
+                        break;
+                    case MEDIUM:
+                        if(i % 4 == 0){
+                            player.setPlayStyle(PlayStyle.SHARK);
+                        } else if (i % 2 == 0){
+                            player.setPlayStyle(PlayStyle.CALLING_STATION);
+                        } else if(i % 3 == 0) {
+                            player.setPlayStyle(PlayStyle.ROCK);
+                        } else {
+                            player.setPlayStyle(PlayStyle.MANIAC);
+                        }
+                        break;
+                    case HARD:
+                        if(i % 2 == 0){
+                            player.setPlayStyle(PlayStyle.ROCK);
+                        } else {
+                            player.setPlayStyle(PlayStyle.SHARK);
+                        }
+                        break;
+                }
+                Log.i(TAG, "Player order " + player.getOrder() + " style: " + player.getPlayStyle().toString());
             }
 
             TextView textView = new TextView(this);
@@ -130,19 +170,23 @@ public class SinglePlayerActivity extends Activity {
     public Position getPlayerPostion(int order) {
         switch (order) {
             case 1:
-                return new Position(screenWidth / 6 * 5, screenHeight / 14);
+                return new Position(screenWidth / 3 * 2, screenHeight / 40);
             case 2:
-                return new Position(screenWidth / 10 * 8, screenHeight / 11 * 3);
+                return new Position(screenWidth / 6 * 5, screenHeight / 7);
             case 3:
-                return new Position(screenWidth / 3 * 2, screenHeight / 7 * 3);
+                return new Position(screenWidth / 10 * 8, screenHeight / 8 * 3);
             case 4:
-                return new Position(screenWidth / 5 * 2, screenHeight / 7 * 3);
+                return new Position(screenWidth / 3 * 2, screenHeight / 5 * 3);
             case 5:
-                return new Position(screenWidth / 6, screenHeight / 7 * 3);
+                return new Position(screenWidth / 5 * 2, screenHeight / 5 * 3);
             case 6:
-                return new Position(screenWidth / 40, screenHeight / 11 * 3);
+                return new Position(screenWidth / 6, screenHeight / 5 * 3);
             case 7:
-                return new Position(screenWidth / 18, screenHeight / 14);
+                return new Position(screenWidth / 70, screenHeight / 8 * 3);
+            case 8:
+                return new Position(screenWidth / 18, screenHeight / 7);
+            case 9:
+                return new Position(screenWidth / 6, screenHeight / 40);
         }
         return null;
     }
@@ -151,8 +195,10 @@ public class SinglePlayerActivity extends Activity {
         TextView textView = (TextView) view;
         if("CALL".equals(textView.getText())){
             gameThread.setPlayerAction(ActionType.CALL);
-            gameThread.setPlayerBetAmount(previousBetAmount);
-        }else{
+            gameThread.setPlayerBetAmount(highestBetAction.getBetValue());
+        } else if ("ALL IN".equals(textView.getText())){
+            gameThread.setPlayerAction(ActionType.ALL_IN);
+        } else {
             gameThread.setPlayerAction(ActionType.CHECK);
         }
 
@@ -176,12 +222,12 @@ public class SinglePlayerActivity extends Activity {
         seats.removeView(textView);
     }
 
-    public int getPreviousBetAmount() {
-        return previousBetAmount;
+    public Action getHighestBetAction() {
+        return highestBetAction;
     }
 
-    public void setPreviousBetAmount(int previousBetAmount) {
-        this.previousBetAmount = previousBetAmount;
+    public void setHighestBetAction(Action highestBetAction) {
+        this.highestBetAction = highestBetAction;
     }
 
     public SeekBar getBetBar() {

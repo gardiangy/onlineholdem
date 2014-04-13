@@ -7,6 +7,7 @@ import android.widget.TextView;
 import java.io.Serializable;
 
 import hu.onlineholdem.restclient.enums.ActionType;
+import hu.onlineholdem.restclient.enums.PlayStyle;
 import hu.onlineholdem.restclient.util.EvaluatedHand;
 
 public class Player implements Serializable {
@@ -33,6 +34,7 @@ public class Player implements Serializable {
     private Boolean playerInTurn;
     private Boolean playerRaiser;
     private Boolean playerWinner;
+    private PlayStyle playStyle;
 
 	public Player() {
 	}
@@ -205,6 +207,14 @@ public class Player implements Serializable {
         this.playerWinner = playerWinner;
     }
 
+    public PlayStyle getPlayStyle() {
+        return playStyle;
+    }
+
+    public void setPlayStyle(PlayStyle playStyle) {
+        this.playStyle = playStyle;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -212,6 +222,7 @@ public class Player implements Serializable {
 
         Player player = (Player) o;
 
+        if (order != null ? !order.equals(player.order) : player.order != null) return false;
         if (playerId != null ? !playerId.equals(player.playerId) : player.playerId != null)
             return false;
 
@@ -220,6 +231,8 @@ public class Player implements Serializable {
 
     @Override
     public int hashCode() {
-        return playerId != null ? playerId.hashCode() : 0;
+        int result = playerId != null ? playerId.hashCode() : 0;
+        result = 31 * result + (order != null ? order.hashCode() : 0);
+        return result;
     }
 }
