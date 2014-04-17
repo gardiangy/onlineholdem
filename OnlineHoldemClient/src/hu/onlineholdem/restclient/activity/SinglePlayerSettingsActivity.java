@@ -9,6 +9,7 @@ import android.view.Window;
 import android.widget.NumberPicker;
 
 import hu.onlineholdem.restclient.R;
+import hu.onlineholdem.restclient.enums.StartType;
 
 public class SinglePlayerSettingsActivity extends Activity {
 
@@ -45,6 +46,7 @@ public class SinglePlayerSettingsActivity extends Activity {
         Bundle bundle = new Bundle();
         bundle.putInt("numOfPlayers", playerNumPicker.getValue());
         bundle.putString("difficulty", difficultyPicker.getDisplayedValues()[difficultyPicker.getValue()].toUpperCase());
+        bundle.putString("type", StartType.NEW.name());
         intent.putExtras(bundle);
 
         startActivity(intent);

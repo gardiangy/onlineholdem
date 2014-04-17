@@ -1,6 +1,7 @@
 package hu.onlineholdem.restclient.activity;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,6 +17,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import hu.onlineholdem.restclient.R;
 import hu.onlineholdem.restclient.entity.Action;
@@ -23,7 +25,9 @@ import hu.onlineholdem.restclient.entity.Player;
 import hu.onlineholdem.restclient.enums.ActionType;
 import hu.onlineholdem.restclient.enums.Difficulty;
 import hu.onlineholdem.restclient.enums.PlayStyle;
+import hu.onlineholdem.restclient.enums.StartType;
 import hu.onlineholdem.restclient.thread.GameThread;
+import hu.onlineholdem.restclient.util.DatabaseHandler;
 import hu.onlineholdem.restclient.util.Position;
 
 public class SinglePlayerActivity extends Activity {
@@ -39,6 +43,46 @@ public class SinglePlayerActivity extends Activity {
 //    private int previousBetAmount;
     private Action highestBetAction;
     private SeekBar betBar;
+    private DatabaseHandler dbHandler;
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.i(TAG,"onPause");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        Log.i(TAG,"onRestart");
+        Intent intent = new Intent(this, SinglePlayerActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putString("type", StartType.LOAD.name());
+        intent.putExtras(bundle);
+
+        startActivity(intent);
+        finish();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.i(TAG,"onStop");
+        dbHandler.resetTables();
+        for(Player player : gameThread.getPlayers()){
+            dbHandler.addPlayer(player.getOrder(),player.getStackSize(),player.getPlayStyle().toString(),player.isUser());
+        }
+        List<Map<String, String>> playerDetails = dbHandler.getPlayerDetails();
+        Log.i(TAG,"DataBase");
+        for(Map<String, String> player : playerDetails){
+            Log.i(TAG, "Player order | " + player.get("player_order"));
+            Log.i(TAG, "Player stackSize | " + player.get("player_stack_size"));
+            Log.i(TAG, "Player playerSyle | " + player.get("player_style"));
+            Log.i(TAG, "Player isUser | " + player.get("player_is_user"));
+        }
+        gameThread.setRoundOver(true);
+        gameThread.setStopThread(true);
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -67,12 +111,19 @@ public class SinglePlayerActivity extends Activity {
         gameThread = new GameThread(screenWidth, screenHeight, flop1, flop2, flop3, turn, river, board, players,
                 potSize,btnCheck,btnBet,btnFold,betBar,betValue, this, getResources(), this.getPackageName());
 
+        dbHandler = new DatabaseHandler(this);
         Bundle bundle = getIntent().getExtras();
-        int numOfPlayers = bundle.getInt("numOfPlayers");
-        Difficulty difficulty = Difficulty.valueOf(bundle.getString("difficulty"));
-        createPlayers(numOfPlayers, difficulty);
-        gameThread.start();
+        StartType type = StartType.valueOf(bundle.getString("type"));
+        if(type.equals(StartType.LOAD)){
+            List<Map<String, String>> playerDetails = dbHandler.getPlayerDetails();
+            loadPlayers(playerDetails);
+        } else {
+            int numOfPlayers = bundle.getInt("numOfPlayers");
+            Difficulty difficulty = Difficulty.valueOf(bundle.getString("difficulty"));
+            createPlayers(numOfPlayers, difficulty);
+        }
 
+        gameThread.start();
 
         betBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -94,6 +145,8 @@ public class SinglePlayerActivity extends Activity {
         });
 
 
+
+
     }
 
     public void createPlayers(int numberOfPlayers, Difficulty difficulty) {
@@ -105,6 +158,7 @@ public class SinglePlayerActivity extends Activity {
             player.setOrder(i);
             if (i == numberOfPlayers / 2) {
                 player.setIsUser(true);
+                player.setPlayStyle(PlayStyle.USER);
             } else {
                 player.setIsUser(false);
             }
@@ -118,7 +172,7 @@ public class SinglePlayerActivity extends Activity {
                             player.setPlayStyle(PlayStyle.MANIAC);
                         }
                         break;
-                    case MEDIUM:
+                    case NORMAL:
                         if(i % 4 == 0){
                             player.setPlayStyle(PlayStyle.SHARK);
                         } else if (i % 2 == 0){
@@ -163,6 +217,45 @@ public class SinglePlayerActivity extends Activity {
 
     }
 
+    public void loadPlayers(List<Map<String,String>> players) {
+        for (Map<String,String> pl : players) {
+            Player player = new Player();
+            player.setStackSize(Integer.valueOf(pl.get("player_stack_size")));
+            player.setAmountInPot(0);
+            player.setOrder(Integer.valueOf(pl.get("player_order")));
+            player.setPlayStyle(PlayStyle.valueOf(pl.get("player_style")));
+            if (Boolean.valueOf(pl.get("player_is_user"))){
+                player.setIsUser(true);
+            } else {
+                player.setIsUser(false);
+            }
+
+            Log.i(TAG, "Player order " + player.getOrder() + " style: " + player.getPlayStyle().toString());
+
+
+            TextView textView = new TextView(this);
+            textView.setBackgroundResource(R.drawable.seatnotactive);
+
+            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 5, screenHeight / 6);
+            Position position = getPlayerPostion(player.getOrder());
+            layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
+
+            textView.setTop(position.getTop());
+            textView.setLeft(position.getLeft());
+            textView.setLayoutParams(layoutParams);
+            textView.setText(player.getStackSize().toString());
+            textView.setGravity(Gravity.CENTER);
+            textView.setTextColor(0xFF000000);
+            textView.setTextSize(15);
+
+            player.setTextView(textView);
+            this.players.add(player);
+
+            seats.addView(textView);
+        }
+
+    }
+
     public void startGame(View view) {
         gameThread.start();
     }
@@ -170,23 +263,23 @@ public class SinglePlayerActivity extends Activity {
     public Position getPlayerPostion(int order) {
         switch (order) {
             case 1:
-                return new Position(screenWidth / 3 * 2, screenHeight / 40);
+                return new Position(screenWidth / 5 * 3, screenHeight / 15);
             case 2:
-                return new Position(screenWidth / 6 * 5, screenHeight / 7);
+                return new Position(screenWidth / 10 * 8, screenHeight / 5);
             case 3:
-                return new Position(screenWidth / 10 * 8, screenHeight / 8 * 3);
+                return new Position(screenWidth / 10 * 8, screenHeight / 7 * 3);
             case 4:
-                return new Position(screenWidth / 3 * 2, screenHeight / 5 * 3);
+                return new Position(screenWidth / 25 * 16, screenHeight / 5 * 3);
             case 5:
                 return new Position(screenWidth / 5 * 2, screenHeight / 5 * 3);
             case 6:
                 return new Position(screenWidth / 6, screenHeight / 5 * 3);
             case 7:
-                return new Position(screenWidth / 70, screenHeight / 8 * 3);
+                return new Position(screenWidth / 70, screenHeight / 7 * 3);
             case 8:
-                return new Position(screenWidth / 18, screenHeight / 7);
+                return new Position(screenWidth / 70, screenHeight / 5);
             case 9:
-                return new Position(screenWidth / 6, screenHeight / 40);
+                return new Position(screenWidth / 5, screenHeight / 15);
         }
         return null;
     }

@@ -446,7 +446,7 @@ public class GameThread extends Thread {
         int res3Id = resources.getIdentifier(deck.get(2).toString(), "drawable", packageName);
         game.getBoard().add(deck.get(2));
 
-        Animation flop1Anim = createAnimation(screenWidth / 2, screenWidth / 2 - screenWidth / 6, 0, screenHeight / 6, true);
+        Animation flop1Anim = createAnimation(screenWidth / 2, screenWidth / 2 - screenWidth / 6, 0, screenHeight / 3, true);
         flop1 = new ImageView(context);
         board.addView(flop1);
         flop1.setAnimation(flop1Anim);
@@ -455,7 +455,7 @@ public class GameThread extends Thread {
         flop1.startAnimation(flop1Anim);
         deck.remove(0);
 
-        Animation flop2Anim = createAnimation(screenWidth / 2, screenWidth / 2 - screenWidth / 10, 0, screenHeight / 6, true);
+        Animation flop2Anim = createAnimation(screenWidth / 2, screenWidth / 2 - screenWidth / 10, 0, screenHeight / 3, true);
         flop2 = new ImageView(context);
         board.addView(flop2);
         flop2.setAnimation(flop2Anim);
@@ -464,7 +464,7 @@ public class GameThread extends Thread {
         flop2.startAnimation(flop2Anim);
         deck.remove(0);
 
-        Animation flop3Anim = createAnimation(screenWidth / 2, screenWidth / 2 - screenWidth / 32, 0, screenHeight / 6, true);
+        Animation flop3Anim = createAnimation(screenWidth / 2, screenWidth / 2 - screenWidth / 32, 0, screenHeight / 3, true);
         flop3 = new ImageView(context);
         board.addView(flop3);
         flop3.setAnimation(flop3Anim);
@@ -481,7 +481,7 @@ public class GameThread extends Thread {
         int resId = resources.getIdentifier(deck.get(0).toString(), "drawable", packageName);
         game.getBoard().add(deck.get(0));
 
-        Animation turnAnim = createAnimation(screenWidth / 2, screenWidth / 2 + screenWidth / 26, 0, screenHeight / 6, true);
+        Animation turnAnim = createAnimation(screenWidth / 2, screenWidth / 2 + screenWidth / 26, 0, screenHeight / 3, true);
         turn = new ImageView(context);
         board.addView(turn);
         turn.setAnimation(turnAnim);
@@ -498,7 +498,7 @@ public class GameThread extends Thread {
         int resId = resources.getIdentifier(deck.get(0).toString(), "drawable", packageName);
         game.getBoard().add(deck.get(0));
 
-        Animation riverAnim = createAnimation(screenWidth / 2, screenWidth / 2 + screenWidth / 9, 0, screenHeight / 6, true);
+        Animation riverAnim = createAnimation(screenWidth / 2, screenWidth / 2 + screenWidth / 9, 0, screenHeight / 3, true);
         river = new ImageView(context);
         board.addView(river);
         river.setAnimation(riverAnim);
@@ -555,19 +555,29 @@ public class GameThread extends Thread {
     }
 
     public void makeMoves() {
-        List<Player> playersWithStack = new ArrayList<>();
-        for(Player player : playersInRound){
-            if(player.getStackSize() > 0){
-                playersWithStack.add(player);
-            }
-        }
-        if (playersInRound.size() == 1 || playersWithStack.size() == 1) {
-            roundOver = true;
-            return;
-        }
+//        List<Player> playersWithStack = new ArrayList<>();
+//        for(Player player : playersInRound){
+//            if(player.getStackSize() > 0){
+//                playersWithStack.add(player);
+//            }
+//        }
+//        if (playersInRound.size() == 1 || playersWithStack.size() == 1) {
+//            roundOver = true;
+//            return;
+//        }
         List<Player> playerList = new ArrayList<>();
         playerList.addAll(playersInRound);
         for (final Player player : playerList) {
+            List<Player> playersWithNoStack = new ArrayList<>();
+            for(Player pl : playersInRound){
+                if(pl.getStackSize() == 0 && null == pl.getBetAmount()){
+                    playersWithNoStack.add(pl);
+                }
+            }
+            if (playersWithNoStack.size() == playersInRound.size() - 1) {
+                return;
+
+            }
             if (playersInRound.size() == 1) {
                 roundOver = true;
                 return;
@@ -593,12 +603,14 @@ public class GameThread extends Thread {
                 Action nextAction = getNextAction(player, availableActions);
                 if (nextAction.getActionType().equals(ActionType.CHECK)) {
                     player.setActionType(ActionType.CHECK);
+                    Log.i(TAG, "Player order: " + player.getOrder() + " CHECK");
                 }
                 if (nextAction.getActionType().equals(ActionType.BET)) {
                     player.setActionType(ActionType.BET);
                     highestBetAction = nextAction;
                     minBet = nextAction.getBetValue() * 2;
                     activity.setHighestBetAction(nextAction);
+                    Log.i(TAG, "Player order: " + player.getOrder() + " BET amount: " + nextAction.getBetValue());
                     moveBet(nextAction.getBetValue(), player);
                 }
                 if (nextAction.getActionType().equals(ActionType.FOLD)) {
@@ -609,6 +621,7 @@ public class GameThread extends Thread {
                     int amount = highestBetAction.getBetValue() > player.getStackSize()
                             ? player.getStackSize() : highestBetAction.getBetValue();
                     player.setActionType(ActionType.CALL);
+                    Log.i(TAG, "Player order: " + player.getOrder() + " CALL amount: " + amount);
                     moveBet(amount, player);
                 }
                 if (nextAction.getActionType().equals(ActionType.RAISE)) {
@@ -616,6 +629,7 @@ public class GameThread extends Thread {
                     activity.setHighestBetAction(nextAction);
                     minBet = nextAction.getBetValue() * 2;
                     highestBetAction = nextAction;
+                    Log.i(TAG, "Player order: " + player.getOrder() + " RAISE amount: " + nextAction.getBetValue());
                     moveBet(nextAction.getBetValue(), player);
 
                 }
@@ -623,8 +637,10 @@ public class GameThread extends Thread {
                     player.setActionType(ActionType.ALL_IN);
                     activity.setHighestBetAction(nextAction);
                     highestBetAction = nextAction;
-                    moveBet(null == player.getBetAmount() ? nextAction.getBetValue()
-                            : nextAction.getBetValue() + player.getBetAmount(), player);
+                    int amount = null == player.getBetAmount() ? nextAction.getBetValue()
+                            : nextAction.getBetValue() + player.getBetAmount();
+                    Log.i(TAG, "Player order: " + player.getOrder() + " ALL IN amount: " + amount);
+                    moveBet(amount, player);
 
                 }
             } else {
@@ -669,7 +685,7 @@ public class GameThread extends Thread {
                 });
 
 
-                while (isPlayerTurn) {
+                while (isPlayerTurn && !stopThread) {
                     try {
                         if (null != playerAction) {
                             if (playerAction.equals(ActionType.BET)) {
@@ -802,7 +818,7 @@ public class GameThread extends Thread {
                 int chipsShiftY = new Random().nextInt(20) - 10;
                 TextView chipsText = (TextView) player.getChipLayout().getChildAt(0);
                 chipsText.setText("");
-                player.getChipLayout().animate().x(screenWidth / 2 + chipsShiftX).y(screenHeight / 16 + chipsShiftY);
+                player.getChipLayout().animate().x(screenWidth / 2 + chipsShiftX).y(screenHeight / 6 + chipsShiftY);
                 game.getPotChips().add(player.getChipLayout());
             }
             player.setChipLayout(null);
@@ -842,15 +858,18 @@ public class GameThread extends Thread {
             while (players.size() > 1 && !stopThread) {
                 shuffle();
                 startRound();
-                showCards();
-                Thread.sleep(2000);
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        endRound();
-                    }
-                });
-                Thread.sleep(2000);
+                if(!stopThread){
+                    showCards();
+                    Thread.sleep(2000);
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            endRound();
+                        }
+                    });
+                    Thread.sleep(2000);
+                }
+
 
             }
 
@@ -864,23 +883,23 @@ public class GameThread extends Thread {
     public Position getChipsPosition(Player player) {
         switch (player.getOrder()) {
             case 1:
-                return new Position(player.getTextView().getLeft() - 70, player.getTextView().getTop() + 80);
+                return new Position(player.getTextView().getLeft() - 100, player.getTextView().getTop() + 80);
             case 2:
-                return new Position(player.getTextView().getLeft() - 70, player.getTextView().getTop() + 20);
+                return new Position(player.getTextView().getLeft() - 100, player.getTextView().getTop() + 20);
             case 3:
                 return new Position(player.getTextView().getLeft() - 50, player.getTextView().getTop() - 20);
             case 4:
                 return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 150);
             case 5:
-                return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 150);
+                return new Position(player.getTextView().getLeft() + 150, player.getTextView().getTop() - 150);
             case 6:
-                return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 150);
+                return new Position(player.getTextView().getLeft() + 150, player.getTextView().getTop() - 150);
             case 7:
-                return new Position(player.getTextView().getLeft() + 220, player.getTextView().getTop() + 20);
+                return new Position(player.getTextView().getLeft() + 370, player.getTextView().getTop() - 70);
             case 8:
-                return new Position(player.getTextView().getLeft() + 220, player.getTextView().getTop() + 20);
+                return new Position(player.getTextView().getLeft() + 400, player.getTextView().getTop() + 20);
             case 9:
-                return new Position(player.getTextView().getLeft() + 100, player.getTextView().getTop() + 80);
+                return new Position(player.getTextView().getLeft() + 400, player.getTextView().getTop() + 80);
         }
         return null;
     }
@@ -896,7 +915,15 @@ public class GameThread extends Thread {
 
             if (player.getStackSize() > highestBetAction.getBetValue()) {
                 availableActions.add(ActionType.CALL);
-                availableActions.add(ActionType.RAISE);
+                List<Player> playersWithStack = new ArrayList<>();
+                for(Player pl : playersInRound){
+                    if(!pl.equals(player) && pl.getStackSize() > 0){
+                        playersWithStack.add(pl);
+                    }
+                }
+                if(playersWithStack.size() > 0){
+                    availableActions.add(ActionType.RAISE);
+                }
                 availableActions.add(ActionType.FOLD);
             } else {
                 availableActions.add(ActionType.ALL_IN);
@@ -952,18 +979,22 @@ public class GameThread extends Thread {
             }
         }
         Action action = null;
+        int amountCanBeRaisedTo = null == player.getBetAmount() ? player.getStackSize() :
+                player.getBetAmount() + player.getStackSize();
         switch (player.getPlayStyle()) {
             case MANIAC:
                 if (handStrength > 15) {
                     if (availableActions.contains(ActionType.BET)) {
                         Action maniacAction = new Action();
                         maniacAction.setActionType(ActionType.BET);
-                        maniacAction.setBetValue(minBet * 2);
+                        maniacAction.setBetValue(minBet * 2 > amountCanBeRaisedTo
+                                ? amountCanBeRaisedTo : minBet * 2);
                         action = maniacAction;
                     } else if (availableActions.contains(ActionType.RAISE)) {
                         Action maniacAction = new Action();
                         maniacAction.setActionType(ActionType.RAISE);
-                        maniacAction.setBetValue(highestBetAction.getBetValue() * 2);
+                        maniacAction.setBetValue(highestBetAction.getBetValue() * 2 > amountCanBeRaisedTo
+                                ? amountCanBeRaisedTo : highestBetAction.getBetValue() * 2);
                         action = maniacAction;
                     } else if (availableActions.contains(ActionType.ALL_IN)) {
                         Action maniacAction = new Action();
@@ -1013,13 +1044,15 @@ public class GameThread extends Thread {
                     if (availableActions.contains(ActionType.BET)) {
                         Action rockAction = new Action();
                         rockAction.setActionType(ActionType.BET);
-                        rockAction.setBetValue(minBet * 2);
+                        rockAction.setBetValue(minBet * 2 > amountCanBeRaisedTo
+                                ? amountCanBeRaisedTo : minBet * 2);
                         action = rockAction;
                     }
                     if (availableActions.contains(ActionType.RAISE)) {
                         Action rockAction = new Action();
                         rockAction.setActionType(ActionType.RAISE);
-                        rockAction.setBetValue(highestBetAction.getBetValue() * 2);
+                        rockAction.setBetValue(highestBetAction.getBetValue() * 2 > amountCanBeRaisedTo
+                                ? amountCanBeRaisedTo : highestBetAction.getBetValue() * 2);
                         action = rockAction;
                     }
                     if (availableActions.contains(ActionType.ALL_IN)) {
@@ -1048,7 +1081,8 @@ public class GameThread extends Thread {
                         sharkAction.setBetValue(0);
                     } else {
                         sharkAction.setActionType(ActionType.BET);
-                        sharkAction.setBetValue(minBet * 3);
+                        sharkAction.setBetValue(minBet * 3 > amountCanBeRaisedTo
+                                ? amountCanBeRaisedTo : minBet * 3);
                     }
                     action = sharkAction;
                 } else if (availableActions.contains(ActionType.RAISE)) {
@@ -1061,7 +1095,8 @@ public class GameThread extends Thread {
                         sharkAction.setBetValue(highestBetAction.getBetValue());
                     } else {
                         sharkAction.setActionType(ActionType.RAISE);
-                        sharkAction.setBetValue(highestBetAction.getBetValue() * 3);
+                        sharkAction.setBetValue(highestBetAction.getBetValue() * 3 > amountCanBeRaisedTo
+                                ? amountCanBeRaisedTo : highestBetAction.getBetValue() * 3);
                     }
                     action = sharkAction;
                 } else if (availableActions.contains(ActionType.ALL_IN)) {
@@ -1163,5 +1198,29 @@ public class GameThread extends Thread {
 
     public void setMinBet(int minBet) {
         this.minBet = minBet;
+    }
+
+    public List<Player> getPlayers() {
+        return players;
+    }
+
+    public void setPlayers(List<Player> players) {
+        this.players = players;
+    }
+
+    public boolean isStopThread() {
+        return stopThread;
+    }
+
+    public void setStopThread(boolean stopThread) {
+        this.stopThread = stopThread;
+    }
+
+    public boolean isRoundOver() {
+        return roundOver;
+    }
+
+    public void setRoundOver(boolean roundOver) {
+        this.roundOver = roundOver;
     }
 }
