@@ -56,6 +56,7 @@ public class GameThread extends Thread {
     private SeekBar betBar;
     private TextView potsize;
     private TextView betValue;
+    private TextView blindsText;
     private RelativeLayout board;
     private List<Player> players = new ArrayList<>();
     private List<Player> playersInRound;
@@ -77,6 +78,9 @@ public class GameThread extends Thread {
     private boolean riverDealt = false;
     private boolean splitPot = false;
     private boolean stopThread = false;
+    private int smallBlind;
+    private int bigBlind;
+    private long timePassedSinceBlindRaise;
 
     public GameThread(int screenWidth, int screenHeight, ImageView flop1, ImageView flop2, ImageView flop3, ImageView turn, ImageView river,
                       RelativeLayout board, List<Player> players, TextView potsize, Button btnCheck, Button btnBet, Button btnFold,
@@ -100,12 +104,18 @@ public class GameThread extends Thread {
         this.betBar = betBar;
         this.betValue = betValue;
         activity = (SinglePlayerActivity) context;
+        blindsText = (TextView) activity.findViewById(R.id.blindsText);
     }
 
     public void createGame() {
         game = new Game();
         game.setPlayers(players);
         game.setPotChips(new ArrayList<RelativeLayout>());
+        game.setDealer(players.get(0));
+        setBlindPlayers(players, game.getDealer());
+        timePassedSinceBlindRaise = System.currentTimeMillis();
+        smallBlind = 10;
+        bigBlind = 20;
     }
 
     public void shuffle() {
@@ -123,7 +133,7 @@ public class GameThread extends Thread {
         playersInRound.addAll(players);
         game.setPotSize(0);
         game.setBoard(new ArrayList<Card>());
-        minBet = 30;
+        minBet = bigBlind;
     }
 
     public void startRound() throws InterruptedException {
@@ -133,9 +143,17 @@ public class GameThread extends Thread {
                 deal();
             }
         });
+        moveBet(smallBlind,game.getSmallBlind());
+        moveBet(bigBlind,game.getBigBlind());
+        Action blindAction = new Action();
+        blindAction.setActionType(ActionType.BET);
+        blindAction.setBetValue(bigBlind);
+        blindAction.setPlayer(game.getBigBlind());
+        activity.setHighestBetAction(blindAction);
+        highestBetAction = blindAction;
         Thread.sleep(1000);
         makeMoves();
-        while (makeMovesAgain()) {
+        while (makeMovesAgain() && !stopThread) {
             makeMoves();
         }
         while (!roundOver) {
@@ -147,7 +165,7 @@ public class GameThread extends Thread {
                     }
                 });
                 flopDealt = true;
-                minBet = 30;
+                minBet = bigBlind;
             } else if (!turnDealt) {
                 activity.runOnUiThread(new Runnable() {
                     public void run() {
@@ -155,7 +173,7 @@ public class GameThread extends Thread {
                     }
                 });
                 turnDealt = true;
-                minBet = 30;
+                minBet = bigBlind;
             } else if (!riverDealt) {
                 activity.runOnUiThread(new Runnable() {
                     public void run() {
@@ -164,11 +182,11 @@ public class GameThread extends Thread {
                 });
                 riverDealt = true;
                 roundOver = true;
-                minBet = 30;
+                minBet = bigBlind;
             }
             Thread.sleep(2000);
             makeMoves();
-            while (makeMovesAgain()) {
+            while (makeMovesAgain() && !stopThread) {
                 makeMoves();
             }
         }
@@ -428,11 +446,13 @@ public class GameThread extends Thread {
         board.removeView(turn);
         board.removeView(river);
 
-
         flopDealt = false;
         turnDealt = false;
         riverDealt = false;
 
+        int dealerIndex = players.indexOf(game.getDealer());
+        game.setDealer(dealerIndex == players.size() - 1 ? players.get(0) : players.get(dealerIndex + 1));
+        setBlindPlayers(players,game.getDealer());
     }
 
     public void dealFlop() {
@@ -583,8 +603,8 @@ public class GameThread extends Thread {
                 return;
 
             }
-            if ((null != player.getBetAmount() && null != highestBetAction && player.getBetAmount().equals(highestBetAction.getBetValue()))
-                    || player.getStackSize() == 0) {
+            if ((null != player.getBetAmount() && null != highestBetAction && player.getBetAmount().equals(highestBetAction.getBetValue())
+                    && !game.getBigBlind().equals(player)) || player.getStackSize() == 0) {
                 continue;
             }
             final List<ActionType> availableActions = getAvailableActions(player);
@@ -852,6 +872,28 @@ public class GameThread extends Thread {
     public void run() {
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
         SystemClock.sleep(2000);
+        Thread blindRaiser = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (!stopThread){
+                    SystemClock.sleep(1000);
+                    long actualTime = System.currentTimeMillis();
+                    if(actualTime - timePassedSinceBlindRaise >= 300000){
+                        timePassedSinceBlindRaise = actualTime;
+                        bigBlind *= 2;
+                        smallBlind *= 2;
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                blindsText.setText("Blinds: " + smallBlind + " / " + bigBlind);
+                            }
+                        });
+                        Log.i(TAG, "Raise blind small: " + smallBlind + " big: " + bigBlind);
+                    }
+                }
+            }
+        });
+        blindRaiser.start();
         createGame();
 
         try {
@@ -1142,13 +1184,16 @@ public class GameThread extends Thread {
         }
     }
 
-    public boolean isUserStillInGame() {
-        for (Player player : players) {
-            if (player.isUser()) {
-                return true;
-            }
-        }
-        return false;
+    public void setBlindPlayers(List<Player> players, Player dealer) {
+        int dealerIndex = players.indexOf(dealer);
+        Player smallBlind = dealerIndex == players.size() - 1 ? players.get(0) : players.get(dealerIndex + 1);
+        int smallBlindIndex = players.indexOf(smallBlind);
+        Player bigBlind = smallBlindIndex == players.size() - 1 ? players.get(0) : players.get(smallBlindIndex + 1);
+        game.setBigBlind(bigBlind);
+        game.setSmallBlind(smallBlind);
+        Log.i(TAG, "Dealer: " + dealer.getOrder());
+        Log.i(TAG,"SmallBlind: " + smallBlind.getOrder());
+        Log.i(TAG,"BigBlind: " + bigBlind.getOrder());
     }
 
     public static List<List<RelativeLayout>> splitChips(List<RelativeLayout> list, int numberOfLists) {

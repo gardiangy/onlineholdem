@@ -34,6 +34,12 @@ public class Game implements Serializable {
 
     private List<Action> actions;
 
+    private Player dealer;
+
+    private Player smallBlind;
+
+    private Player bigBlind;
+
 	public Game() {
 	}
 
@@ -132,6 +138,30 @@ public class Game implements Serializable {
 
     public void setActions(List<Action> actions) {
         this.actions = actions;
+    }
+
+    public Player getDealer() {
+        return dealer;
+    }
+
+    public void setDealer(Player dealer) {
+        this.dealer = dealer;
+    }
+
+    public Player getBigBlind() {
+        return bigBlind;
+    }
+
+    public void setBigBlind(Player bigBlind) {
+        this.bigBlind = bigBlind;
+    }
+
+    public Player getSmallBlind() {
+        return smallBlind;
+    }
+
+    public void setSmallBlind(Player smallBlind) {
+        this.smallBlind = smallBlind;
     }
 
     @Override

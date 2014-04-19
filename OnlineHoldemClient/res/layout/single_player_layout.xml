@@ -17,14 +17,20 @@
 
         <RelativeLayout
             android:id="@+id/potLayout"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true">
-
+            android:orientation="horizontal"
+            android:layout_alignParentTop="true">
             <TextView
                 android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:gravity="left"
+                android:text="Blinds: 10 / 20"
+                android:id="@+id/blindsText" />
+
+            <TextView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:gravity="center"
@@ -32,7 +38,7 @@
                 android:id="@+id/potText" />
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:layout_below="@id/potText"
