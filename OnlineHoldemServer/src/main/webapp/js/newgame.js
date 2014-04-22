@@ -5,23 +5,25 @@ $(function () {
     var $startingStackSize = $("#inp-starting-stack-size");
     var $startTime = $("#inp-start-time");
 
-    $startTime.datepicker();
+    $startTime.datetimepicker({minDate: 0});
 
-    $("#btn-new-game").on("click", function(){
-         $("#overlay").show();
-         $("#new-game-content").show().removeClass("slideOutUp").addClass("slideInDown");
+    $("#btn-new-game").on("click", function () {
+        if (undefined == sessionStorage.userId) {
+            showLoginForm();
+            return;
+        }
+        $("#overlay").show();
+        $("#new-game-content").show().removeClass("slideOutUp").addClass("slideInDown");
 
 
     });
 
-    $("#btn-new-game-close").on("click", function(e){
+    $("#btn-new-game-close").on("click", function (e) {
         e.preventDefault();
         $("#overlay").hide();
         $("#new-game-content").removeClass("slideInDown").addClass("slideOutUp");
         clearForm();
     });
-
-
 
 
     $("#btn-add-new-game").on("click", function () {
@@ -31,7 +33,7 @@ $(function () {
         validFields = validateStackSizeField($startingStackSize) ? validFields + 1 : validFields;
         validFields = validateStartTime($startTime) ? validFields + 1 : validFields;
 
-        if(validFields == 4){
+        if (validFields == 4) {
             var DTO = { 'gameName': $gameName.val(),
                 'maxPlayerNumber': $maxPlayerNumber.val(),
                 'startingStackSize': $startingStackSize.val(),
@@ -43,22 +45,22 @@ $(function () {
                 contentType: "application/json",
                 dataType: "json",
                 data: JSON.stringify(DTO)
-            }).done(function(data){
-                    if(data.responseType == 'OK'){
-                        $("#game-table").trigger("reload");
-                        $("#new-game-overlay").hide();
-                        $("#new-game-content").removeClass("slideInDown").addClass("slideOutUp");
-                        var n = noty({text: 'Game has been created!',
-                            layout: 'top',
-                            type: 'success'});
-                        clearForm();
-                    }
-                    if(data.responseType == 'ERROR'){
-                        var n = noty({text: data.responseObject,
-                            layout: 'top',
-                            type: 'error'});
-                    }
-                });
+            }).done(function (data) {
+                if (data.responseType == 'OK') {
+                    $("#game-table").trigger("reload");
+                    $("#overlay").hide();
+                    $("#new-game-content").removeClass("slideInDown").addClass("slideOutUp");
+                    var n = noty({text: 'Game has been created!',
+                        layout: 'top',
+                        type: 'success'});
+                    clearForm();
+                }
+                if (data.responseType == 'ERROR') {
+                    var n = noty({text: data.responseObject,
+                        layout: 'top',
+                        type: 'error'});
+                }
+            });
         }
 
     });
@@ -75,7 +77,7 @@ $(function () {
         validateStackSizeField($(this));
     });
 
-    function clearForm(){
+    function clearForm() {
         $gameName.val('');
         removeError($gameName);
         $maxPlayerNumber.val('');

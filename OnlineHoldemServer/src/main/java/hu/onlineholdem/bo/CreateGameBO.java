@@ -1,11 +1,13 @@
 package hu.onlineholdem.bo;
 
+import java.util.Date;
+
 public class CreateGameBO {
 
     private String gameName;
     private Integer maxPlayerNumber;
     private Integer startingStackSize;
-    private String startTime;
+    private Date startTime;
 
     public String getGameName() {
         return gameName;
@@ -31,11 +33,11 @@ public class CreateGameBO {
         this.startingStackSize = startingStackSize;
     }
 
-    public String getStartTime() {
+    public Date getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(String startTime) {
+    public void setStartTime(Date startTime) {
         this.startTime = startTime;
     }
 }

@@ -31,7 +31,7 @@ public class User implements Serializable {
 	private String userPassword;
 
 	//bi-directional many-to-one association to Player
-	@OneToMany(mappedBy="user")
+	@OneToMany(mappedBy="user", fetch = FetchType.EAGER)
 	private List<Player> players;
 
 	public User() {

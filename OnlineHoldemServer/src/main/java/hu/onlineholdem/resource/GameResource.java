@@ -165,12 +165,7 @@ public class GameResource {
         game.setStartingStackSize(createGameBO.getStartingStackSize());
         game.setPotSize(0);
         game.setGameState(GameState.REGISTERING);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-        try {
-            game.setStartTime(sdf.parse(createGameBO.getStartTime()));
-        } catch (ParseException e) {
-            game.setStartTime(new Date());
-        }
+        game.setStartTime(createGameBO.getStartTime());
 
         Game persistedGame = gameDAO.save(game);
 
@@ -219,6 +214,24 @@ public class GameResource {
         response.setResponseType(ResponseType.OK);
 
         return response;
+    }
+
+    @GET
+    @Path("user/{userId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getGamesContainingName(@PathParam("userId") Long userId) {
+
+      User user = userDAO.findOne(userId);
+      Game game = null;
+      for(Player player : user.getPlayers()){
+        game = player.getGame();
+      }
+
+      Response response = new Response();
+      response.setResponseObject(game);
+      response.setResponseType(ResponseType.OK);
+
+      return response;
     }
 
     @GET

@@ -17,6 +17,7 @@
     <script src="js/jquery.dataTables.min.js" type="text/javascript"></script>
     <script src="js/jquery.dataTables.ext.js" type="text/javascript"></script>
     <script src="js/jquery.noty.packaged.min.js" type="text/javascript"></script>
+    <script src="js/jquery-ui-timepicker.js" type="text/javascript"></script>
     <script src="js/main.js" type="text/javascript"></script>
     <script src="js/register.js" type="text/javascript"></script>
     <script src="js/newgame.js" type="text/javascript"></script>
@@ -33,7 +34,12 @@
     </ul>
     <header class="header">
         <h1 style="display: inline-block">Online Holdem</h1>
-        <a href="" id="btn-login" style="float: right; margin-top: 20px">login</a>
+        <a href="" id="btn-login" style="float: right;">login</a>
+        <div id="login-inf" style="display: none;float: right; width: 160px;">
+            <span id="username" style="margin-right: 20px"></span>
+            |
+            <a href="" id="btn-logout" style="float: right;">logout</a>
+        </div>
     </header>
     <div id="menu1content" class="content animated">
         <!--<h1>TITLE</h1>-->
@@ -101,7 +107,17 @@
 
         <h1>Games</h1>
 
+        <div id="joined-game" style="display: none">
+            <h3 class="joinedGame">Currently in Game:</h3>
+            <div id="joined-game-id" class="joinedGame"style="display: none"></div>
+            <div id="joined-game-name" class="joinedGame"></div>
+            <div id="joined-game-max-player-num" class="joinedGame"></div>
+            <div id="joined-game-start-time" class="joinedGame"></div>
+        </div>
+
         <input id="btn-new-game" type="button" value="New Game" class="button" />
+        <input id="btn-join-game" type="button" value="Join Game" class="button" />
+        <input id="btn-leave-game" type="button" value="Leave Game" class="button" style="display: none"/>
 
         <table id="game-table">
             <thead>

@@ -98,6 +98,7 @@ thead tr {
 
 td {
     height: 30px;
+    cursor: pointer;
 }
 
 table {
@@ -142,13 +143,22 @@ table {
     vertical-align: middle;
 }
 
+.firstCol {
+    padding-left: 10px;
+}
+
+.joinedGame {
+    display: inline-block;
+    padding: 0 10px 0 10px;
+}
+
 .row {
     display: inline-block;
     width: 70%;
     padding: 10px 0 10px 0;
 }
 
-.odd:hover, .even:hover {
+.odd:hover, .even:hover, .selectedRow {
     background-color: #1C9949;
 }
 
@@ -245,6 +255,7 @@ table {
     width: 70%;
     background: #137235;
     margin-left: 200px;
+    display: inline-block;
     position: relative;
 }
 
