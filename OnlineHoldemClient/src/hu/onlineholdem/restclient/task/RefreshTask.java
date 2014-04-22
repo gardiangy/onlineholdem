@@ -61,10 +61,10 @@ public abstract class RefreshTask extends AsyncTask<String, Response, Response> 
                 String data = EntityUtils.toString(httpResponse.getEntity());
                 JSONObject item = new JSONObject(data);
                 response = parseJson(item);
-            } catch (SocketTimeoutException | NullPointerException e) {
+            } catch (SocketTimeoutException | NullPointerException | JSONException e) {
                 serverNotResponding = true;
                 Log.e(TAG, e.getLocalizedMessage(), e);
-            } catch (IllegalStateException | IOException | JSONException e) {
+            } catch (IllegalStateException | IOException e) {
                 Log.e(TAG, e.getLocalizedMessage(), e);
             }
             publishProgress(response);

@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Animation;
@@ -36,6 +37,7 @@ import hu.onlineholdem.restclient.enums.ActionType;
 import hu.onlineholdem.restclient.enums.Suit;
 import hu.onlineholdem.restclient.util.EvaluatedHand;
 import hu.onlineholdem.restclient.util.HandEvaluator;
+import hu.onlineholdem.restclient.util.PlayerComperator;
 import hu.onlineholdem.restclient.util.Position;
 
 public class GameThread extends Thread {
@@ -71,6 +73,7 @@ public class GameThread extends Thread {
     private int playerBetAmount;
     //    private int previousBetAmount;
     private Action highestBetAction;
+    private RelativeLayout dealerLayout;
     private int minBet;
     private boolean roundOver = false;
     private boolean flopDealt = false;
@@ -116,6 +119,28 @@ public class GameThread extends Thread {
         timePassedSinceBlindRaise = System.currentTimeMillis();
         smallBlind = 10;
         bigBlind = 20;
+
+        dealerLayout = new RelativeLayout(context);
+        ImageView dealerBtn = new ImageView(context);
+        dealerBtn.setImageResource(R.drawable.dealer);
+        dealerBtn.setLayoutParams(new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.MATCH_PARENT,
+                RelativeLayout.LayoutParams.MATCH_PARENT));
+
+
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 20, screenHeight / 20);
+        Position position = getDealerBtnPosition(game.getDealer());
+        layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
+        dealerLayout.setLayoutParams(layoutParams);
+        dealerLayout.addView(dealerBtn);
+
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                board.addView(dealerLayout);
+            }
+        });
+
     }
 
     public void shuffle() {
@@ -143,20 +168,25 @@ public class GameThread extends Thread {
                 deal();
             }
         });
-        moveBet(smallBlind,game.getSmallBlind());
-        moveBet(bigBlind,game.getBigBlind());
+        moveBet(smallBlind, game.getSmallBlind());
+        moveBet(bigBlind, game.getBigBlind());
         Action blindAction = new Action();
         blindAction.setActionType(ActionType.BET);
         blindAction.setBetValue(bigBlind);
         blindAction.setPlayer(game.getBigBlind());
         activity.setHighestBetAction(blindAction);
         highestBetAction = blindAction;
+        setOrder(playersInRound,game.getSmallBlind(),game.getBigBlind(),true);
+        Collections.sort(playersInRound,new PlayerComperator());
+        for(Player pl : playersInRound){
+            Log.i(TAG,"Player id: " + pl.getPlayerId() + " order: " + pl.getOrder());
+        }
         Thread.sleep(1000);
         makeMoves();
         while (makeMovesAgain() && !stopThread) {
             makeMoves();
         }
-        while (!roundOver) {
+        while (!roundOver && playersInRound.size() > 1) {
             Thread.sleep(2000);
             if (!flopDealt) {
                 activity.runOnUiThread(new Runnable() {
@@ -184,13 +214,15 @@ public class GameThread extends Thread {
                 roundOver = true;
                 minBet = bigBlind;
             }
+            setOrder(playersInRound,game.getSmallBlind(),game.getBigBlind(),false);
+            Collections.sort(playersInRound,new PlayerComperator());
             Thread.sleep(2000);
             makeMoves();
             while (makeMovesAgain() && !stopThread) {
                 makeMoves();
             }
         }
-        if (roundOver) {
+        if (roundOver || playersInRound.size() == 1) {
             activity.runOnUiThread(new Runnable() {
                 public void run() {
                     endBettingRound();
@@ -211,7 +243,7 @@ public class GameThread extends Thread {
         Player winner = playersInRound.get(0);
         List<Player> winners = new ArrayList<>();
         for (Player player : playersInRound) {
-            if (player.getOrder().equals(winner.getOrder())) {
+            if (player.equals(winner)) {
                 continue;
             }
             if (HandEvaluator.isBetterHand(player.getEvaluatedHand(), bestHand)) {
@@ -221,7 +253,7 @@ public class GameThread extends Thread {
             }
         }
         for (Player player : playersInRound) {
-            if (player.getOrder().equals(winner.getOrder())) {
+            if (player.equals(winner)) {
                 continue;
             }
             if (player.getEvaluatedHand().getHandStrength().getStrength().equals(bestHand.getHandStrength().getStrength())
@@ -256,7 +288,7 @@ public class GameThread extends Thread {
         }
         winners.add(winner);
         for (Player w : winners) {
-            Log.i(TAG, "Winner : pl.order " + w.getOrder());
+            Log.i(TAG, "Winner : pl.id " + w.getPlayerId());
             Log.i(TAG, "Winner : card " + w.getEvaluatedHand().getHandStrength());
             Log.i(TAG, w.getEvaluatedHand().getValue().toString());
             if (null != w.getEvaluatedHand().getHighCards()) {
@@ -293,7 +325,7 @@ public class GameThread extends Thread {
                         ? playerOne.getAmountInPot() : playerTwo.getAmountInPot();
             }
             playerOne.setAmountToWin(amountToWin);
-            Log.i(TAG, "Player order: " + playerOne.getOrder() + " AmountToWin " + amountToWin);
+            Log.i(TAG, "Player id: " + playerOne.getPlayerId() + " AmountToWin " + amountToWin);
 
         }
         handler.post(new Runnable() {
@@ -372,7 +404,6 @@ public class GameThread extends Thread {
         List<Player> playerList = new ArrayList<>();
         playerList.addAll(players);
         for (Player player : playerList) {
-            Log.i(TAG, player.getOrder() + ": " + player.getAmountInPot());
             if (player.getStackSize() == 0) {
                 activity.removeSeat(player.getTextView());
                 players.remove(player);
@@ -452,7 +483,9 @@ public class GameThread extends Thread {
 
         int dealerIndex = players.indexOf(game.getDealer());
         game.setDealer(dealerIndex == players.size() - 1 ? players.get(0) : players.get(dealerIndex + 1));
-        setBlindPlayers(players,game.getDealer());
+        setBlindPlayers(players, game.getDealer());
+        Position dealerPos = getDealerBtnPosition(game.getDealer());
+        dealerLayout.animate().setDuration(500).x(dealerPos.getLeft()).y(dealerPos.getTop());
     }
 
     public void dealFlop() {
@@ -588,9 +621,14 @@ public class GameThread extends Thread {
         List<Player> playerList = new ArrayList<>();
         playerList.addAll(playersInRound);
         for (final Player player : playerList) {
+            if (playersInRound.size() == 1) {
+                roundOver = true;
+                return;
+
+            }
             List<Player> playersWithNoStack = new ArrayList<>();
-            for(Player pl : playersInRound){
-                if(pl.getStackSize() == 0 && null == pl.getBetAmount()){
+            for (Player pl : playersInRound) {
+                if (pl.getStackSize() == 0 && null == pl.getBetAmount()) {
                     playersWithNoStack.add(pl);
                 }
             }
@@ -598,11 +636,7 @@ public class GameThread extends Thread {
                 return;
 
             }
-            if (playersInRound.size() == 1) {
-                roundOver = true;
-                return;
 
-            }
             if ((null != player.getBetAmount() && null != highestBetAction && player.getBetAmount().equals(highestBetAction.getBetValue())
                     && !game.getBigBlind().equals(player)) || player.getStackSize() == 0) {
                 continue;
@@ -623,25 +657,26 @@ public class GameThread extends Thread {
                 Action nextAction = getNextAction(player, availableActions);
                 if (nextAction.getActionType().equals(ActionType.CHECK)) {
                     player.setActionType(ActionType.CHECK);
-                    Log.i(TAG, "Player order: " + player.getOrder() + " CHECK");
+                    Log.i(TAG, "Player id: " + player.getPlayerId() + " CHECK");
                 }
                 if (nextAction.getActionType().equals(ActionType.BET)) {
                     player.setActionType(ActionType.BET);
                     highestBetAction = nextAction;
                     minBet = nextAction.getBetValue() * 2;
                     activity.setHighestBetAction(nextAction);
-                    Log.i(TAG, "Player order: " + player.getOrder() + " BET amount: " + nextAction.getBetValue());
+                    Log.i(TAG, "Player id: " + player.getPlayerId() + " BET amount: " + nextAction.getBetValue());
                     moveBet(nextAction.getBetValue(), player);
                 }
                 if (nextAction.getActionType().equals(ActionType.FOLD)) {
                     player.setActionType(ActionType.FOLD);
+                    Log.i(TAG, "Player id: " + player.getPlayerId() + " FOLD");
                     moveFold(player);
                 }
                 if (nextAction.getActionType().equals(ActionType.CALL)) {
                     int amount = highestBetAction.getBetValue() > player.getStackSize()
                             ? player.getStackSize() : highestBetAction.getBetValue();
                     player.setActionType(ActionType.CALL);
-                    Log.i(TAG, "Player order: " + player.getOrder() + " CALL amount: " + amount);
+                    Log.i(TAG, "Player id: " + player.getPlayerId() + " CALL amount: " + amount);
                     moveBet(amount, player);
                 }
                 if (nextAction.getActionType().equals(ActionType.RAISE)) {
@@ -649,7 +684,7 @@ public class GameThread extends Thread {
                     activity.setHighestBetAction(nextAction);
                     minBet = nextAction.getBetValue() * 2;
                     highestBetAction = nextAction;
-                    Log.i(TAG, "Player order: " + player.getOrder() + " RAISE amount: " + nextAction.getBetValue());
+                    Log.i(TAG, "Player id: " + player.getPlayerId() + " RAISE amount: " + nextAction.getBetValue());
                     moveBet(nextAction.getBetValue(), player);
 
                 }
@@ -659,7 +694,7 @@ public class GameThread extends Thread {
                     highestBetAction = nextAction;
                     int amount = null == player.getBetAmount() ? nextAction.getBetValue()
                             : nextAction.getBetValue() + player.getBetAmount();
-                    Log.i(TAG, "Player order: " + player.getOrder() + " ALL IN amount: " + amount);
+                    Log.i(TAG, "Player id: " + player.getPlayerId() + " ALL IN amount: " + amount);
                     moveBet(amount, player);
 
                 }
@@ -675,12 +710,12 @@ public class GameThread extends Thread {
                         Log.i(TAG, handStrength.getHighCards().toString());
                     }
                 }
-                if(minBet > player.getStackSize()){
+                if (minBet > player.getStackSize()) {
                     minBet = null == player.getBetAmount() ? player.getStackSize()
                             : player.getBetAmount() + player.getStackSize();
                 }
                 activity.getBetBar().setMax(null == player.getBetAmount() ? player.getStackSize() - minBet
-                                                    : player.getBetAmount() + player.getStackSize() - minBet );
+                        : player.getBetAmount() + player.getStackSize() - minBet);
                 activity.getBetBar().setProgress(0);
 
                 showActionButtons(true);
@@ -764,7 +799,7 @@ public class GameThread extends Thread {
             amount = null == player.getBetAmount() ? player.getStackSize()
                     : player.getBetAmount() + player.getStackSize();
         }
-        Log.i(TAG, "Player order: " + player.getOrder() + " Bet " + betAmount);
+        Log.i(TAG, "Player id: " + player.getPlayerId() + " Bet " + betAmount);
 
         if (null != player.getBetAmount()) {
             betAmount -= player.getBetAmount();
@@ -776,7 +811,7 @@ public class GameThread extends Thread {
             player.setAmountInPot(player.getAmountInPot() + betAmount);
         }
         player.setBetAmount(amount);
-        Log.i(TAG, "Player order: " + player.getOrder() + " AmountInPot " + player.getAmountInPot());
+        Log.i(TAG, "Player id: " + player.getPlayerId() + " AmountInPot " + player.getAmountInPot());
 
         if (player.getStackSize() <= player.getBetAmount()) {
             player.setStackSize(0);
@@ -875,10 +910,10 @@ public class GameThread extends Thread {
         Thread blindRaiser = new Thread(new Runnable() {
             @Override
             public void run() {
-                while (!stopThread){
+                while (!stopThread) {
                     SystemClock.sleep(1000);
                     long actualTime = System.currentTimeMillis();
-                    if(actualTime - timePassedSinceBlindRaise >= 300000){
+                    if (actualTime - timePassedSinceBlindRaise >= 300000) {
                         timePassedSinceBlindRaise = actualTime;
                         bigBlind *= 2;
                         smallBlind *= 2;
@@ -900,7 +935,7 @@ public class GameThread extends Thread {
             while (players.size() > 1 && !stopThread) {
                 shuffle();
                 startRound();
-                if(!stopThread){
+                if (!stopThread) {
                     showCards();
                     Thread.sleep(2000);
                     activity.runOnUiThread(new Runnable() {
@@ -923,27 +958,56 @@ public class GameThread extends Thread {
     }
 
     public Position getChipsPosition(Player player) {
-        switch (player.getOrder()) {
+        switch (player.getPlayerId().intValue()) {
             case 1:
-                return new Position(player.getTextView().getLeft() - 100, player.getTextView().getTop() + 80);
+                return new Position(player.getTextView().getLeft() - getPixels(20), player.getTextView().getTop() + getPixels(80));
             case 2:
-                return new Position(player.getTextView().getLeft() - 100, player.getTextView().getTop() + 20);
+                return new Position(player.getTextView().getLeft() - getPixels(50), player.getTextView().getTop() + getPixels(20));
             case 3:
-                return new Position(player.getTextView().getLeft() - 50, player.getTextView().getTop() - 20);
+                return new Position(player.getTextView().getLeft() - getPixels(50), player.getTextView().getTop() - getPixels(20));
             case 4:
-                return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 150);
+                return new Position(player.getTextView().getLeft() + getPixels(50), player.getTextView().getTop() - getPixels(80));
             case 5:
-                return new Position(player.getTextView().getLeft() + 150, player.getTextView().getTop() - 150);
+                return new Position(player.getTextView().getLeft() + getPixels(80), player.getTextView().getTop() - getPixels(80));
             case 6:
-                return new Position(player.getTextView().getLeft() + 150, player.getTextView().getTop() - 150);
+                return new Position(player.getTextView().getLeft() + getPixels(80), player.getTextView().getTop() - getPixels(80));
             case 7:
-                return new Position(player.getTextView().getLeft() + 370, player.getTextView().getTop() - 70);
+                return new Position(player.getTextView().getLeft() + getPixels(200), player.getTextView().getTop() - getPixels(40));
             case 8:
-                return new Position(player.getTextView().getLeft() + 400, player.getTextView().getTop() + 20);
+                return new Position(player.getTextView().getLeft() + getPixels(200), player.getTextView().getTop() + getPixels(20));
             case 9:
-                return new Position(player.getTextView().getLeft() + 400, player.getTextView().getTop() + 80);
+                return new Position(player.getTextView().getLeft() + getPixels(200), player.getTextView().getTop() + getPixels(80));
         }
         return null;
+    }
+
+    public Position getDealerBtnPosition(Player player) {
+        switch (player.getPlayerId().intValue()) {
+            case 1:
+                return new Position(player.getTextView().getLeft() - getPixels(10), player.getTextView().getTop() + getPixels(60));
+            case 2:
+                return new Position(player.getTextView().getLeft() + getPixels(10), player.getTextView().getTop() - getPixels(20));
+            case 3:
+                return new Position(player.getTextView().getLeft() + getPixels(10), player.getTextView().getTop() - getPixels(20));
+            case 4:
+                return new Position(player.getTextView().getLeft() + getPixels(10), player.getTextView().getTop() - getPixels(20));
+            case 5:
+                return new Position(player.getTextView().getLeft() + getPixels(10), player.getTextView().getTop() - getPixels(20));
+            case 6:
+                return new Position(player.getTextView().getLeft() + getPixels(10), player.getTextView().getTop() - getPixels(20));
+            case 7:
+                return new Position(player.getTextView().getLeft() + getPixels(120), player.getTextView().getTop() - getPixels(20));
+            case 8:
+                return new Position(player.getTextView().getLeft() + getPixels(120), player.getTextView().getTop() - getPixels(20));
+            case 9:
+                return new Position(player.getTextView().getLeft() + getPixels(100), player.getTextView().getTop() + getPixels(60));
+        }
+        return null;
+    }
+
+    public int getPixels(int dp){
+        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                (float) dp, context.getResources().getDisplayMetrics());
     }
 
     public List<ActionType> getAvailableActions(Player player) {
@@ -958,12 +1022,12 @@ public class GameThread extends Thread {
             if (player.getStackSize() > highestBetAction.getBetValue()) {
                 availableActions.add(ActionType.CALL);
                 List<Player> playersWithStack = new ArrayList<>();
-                for(Player pl : playersInRound){
-                    if(!pl.equals(player) && pl.getStackSize() > 0){
+                for (Player pl : playersInRound) {
+                    if (!pl.equals(player) && pl.getStackSize() > 0) {
                         playersWithStack.add(pl);
                     }
                 }
-                if(playersWithStack.size() > 0){
+                if (playersWithStack.size() > 0) {
                     availableActions.add(ActionType.RAISE);
                 }
                 availableActions.add(ActionType.FOLD);
@@ -1043,6 +1107,11 @@ public class GameThread extends Thread {
                         maniacAction.setActionType(ActionType.ALL_IN);
                         maniacAction.setBetValue(player.getStackSize());
                         action = maniacAction;
+                    } else if (availableActions.contains(ActionType.CALL)) {
+                        Action maniacAction = new Action();
+                        maniacAction.setActionType(ActionType.CALL);
+                        maniacAction.setBetValue(highestBetAction.getBetValue());
+                        action = maniacAction;
                     }
 
                 } else {
@@ -1060,13 +1129,13 @@ public class GameThread extends Thread {
                         callingAction.setBetValue(highestBetAction.getBetValue());
                         action = callingAction;
                     }
-                    if (availableActions.contains(ActionType.CHECK)) {
+                    else if (availableActions.contains(ActionType.CHECK)) {
                         Action callingAction = new Action();
                         callingAction.setActionType(ActionType.CHECK);
                         callingAction.setBetValue(0);
                         action = callingAction;
                     }
-                    if (availableActions.contains(ActionType.ALL_IN)) {
+                    else if (availableActions.contains(ActionType.ALL_IN)) {
                         Action callingAction = new Action();
                         callingAction.setActionType(ActionType.ALL_IN);
                         callingAction.setBetValue(player.getStackSize());
@@ -1090,17 +1159,23 @@ public class GameThread extends Thread {
                                 ? amountCanBeRaisedTo : minBet * 2);
                         action = rockAction;
                     }
-                    if (availableActions.contains(ActionType.RAISE)) {
+                    else if (availableActions.contains(ActionType.RAISE)) {
                         Action rockAction = new Action();
                         rockAction.setActionType(ActionType.RAISE);
                         rockAction.setBetValue(highestBetAction.getBetValue() * 2 > amountCanBeRaisedTo
                                 ? amountCanBeRaisedTo : highestBetAction.getBetValue() * 2);
                         action = rockAction;
                     }
-                    if (availableActions.contains(ActionType.ALL_IN)) {
+                    else if (availableActions.contains(ActionType.ALL_IN)) {
                         Action rockAction = new Action();
                         rockAction.setActionType(ActionType.ALL_IN);
                         rockAction.setBetValue(player.getStackSize());
+                        action = rockAction;
+                    }
+                    else if (availableActions.contains(ActionType.CALL)) {
+                        Action rockAction = new Action();
+                        rockAction.setActionType(ActionType.CALL);
+                        rockAction.setBetValue(highestBetAction.getBetValue());
                         action = rockAction;
                     }
                 } else {
@@ -1127,7 +1202,8 @@ public class GameThread extends Thread {
                                 ? amountCanBeRaisedTo : minBet * 3);
                     }
                     action = sharkAction;
-                } else if (availableActions.contains(ActionType.RAISE)) {
+                } else if (availableActions.contains(ActionType.RAISE)
+                        || availableActions.contains(ActionType.CALL)) {
                     Action sharkAction = new Action();
                     if (handStrength < 25) {
                         sharkAction.setActionType(ActionType.FOLD);
@@ -1191,9 +1267,45 @@ public class GameThread extends Thread {
         Player bigBlind = smallBlindIndex == players.size() - 1 ? players.get(0) : players.get(smallBlindIndex + 1);
         game.setBigBlind(bigBlind);
         game.setSmallBlind(smallBlind);
-        Log.i(TAG, "Dealer: " + dealer.getOrder());
-        Log.i(TAG,"SmallBlind: " + smallBlind.getOrder());
-        Log.i(TAG,"BigBlind: " + bigBlind.getOrder());
+        Log.i(TAG, "Dealer: " + dealer.getPlayerId());
+        Log.i(TAG, "SmallBlind: " + smallBlind.getPlayerId());
+        Log.i(TAG, "BigBlind: " + bigBlind.getPlayerId());
+    }
+
+    public void setOrder(List<Player> players, Player smallBlind, Player bigBlind, boolean preFlop) {
+        int order = 1;
+
+        int bigBlindIndex = players.indexOf(bigBlind);
+        int firstPlayerIndex;
+        if (preFlop) {
+            firstPlayerIndex = players.size() - 1 > bigBlindIndex ? bigBlindIndex + 1 : 0;
+        } else {
+            firstPlayerIndex = players.indexOf(smallBlind);
+            if(firstPlayerIndex == -1){
+                firstPlayerIndex = players.indexOf(bigBlind) == -1 ? 0 : players.indexOf(bigBlind);
+            }
+        }
+        for (Player player : players) {
+
+            if (players.indexOf(player) == firstPlayerIndex) {
+                order = 1;
+                player.setOrder(order);
+                order++;
+            }
+
+            if (players.indexOf(player) > firstPlayerIndex) {
+                player.setOrder(order);
+                order++;
+            }
+        }
+        for (Player player : players) {
+            if (players.indexOf(player) < firstPlayerIndex) {
+                player.setOrder(order);
+                order++;
+            }
+
+        }
+
     }
 
     public static List<List<RelativeLayout>> splitChips(List<RelativeLayout> list, int numberOfLists) {

@@ -70,11 +70,12 @@ public class SinglePlayerActivity extends Activity {
         Log.i(TAG,"onStop");
         dbHandler.resetTables();
         for(Player player : gameThread.getPlayers()){
-            dbHandler.addPlayer(player.getOrder(),player.getStackSize(),player.getPlayStyle().toString(),player.isUser());
+            dbHandler.addPlayer(player);
         }
         List<Map<String, String>> playerDetails = dbHandler.getPlayerDetails();
         Log.i(TAG,"DataBase");
         for(Map<String, String> player : playerDetails){
+            Log.i(TAG, "Player id | " + player.get("player_id"));
             Log.i(TAG, "Player order | " + player.get("player_order"));
             Log.i(TAG, "Player stackSize | " + player.get("player_stack_size"));
             Log.i(TAG, "Player playerSyle | " + player.get("player_style"));
@@ -153,6 +154,7 @@ public class SinglePlayerActivity extends Activity {
         Log.i(TAG, "Game started, difficulty: " + difficulty.toString());
         for (int i = 1; i <= numberOfPlayers; i++) {
             Player player = new Player();
+            player.setPlayerId((long)i);
             player.setStackSize(1500);
             player.setAmountInPot(0);
             player.setOrder(i);
@@ -191,13 +193,13 @@ public class SinglePlayerActivity extends Activity {
                         }
                         break;
                 }
-                Log.i(TAG, "Player order " + player.getOrder() + " style: " + player.getPlayStyle().toString());
+                Log.i(TAG, "Player id " + player.getPlayerId() + " style: " + player.getPlayStyle().toString());
             }
 
             TextView textView = new TextView(this);
             textView.setBackgroundResource(R.drawable.seatnotactive);
 
-            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 5, screenHeight / 6);
+            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 5, screenHeight / 7);
             Position position = getPlayerPostion(i);
             layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
 
@@ -221,6 +223,7 @@ public class SinglePlayerActivity extends Activity {
         for (Map<String,String> pl : players) {
             Player player = new Player();
             player.setStackSize(Integer.valueOf(pl.get("player_stack_size")));
+            player.setPlayerId(Long.valueOf(pl.get("player_id")));
             player.setAmountInPot(0);
             player.setOrder(Integer.valueOf(pl.get("player_order")));
             player.setPlayStyle(PlayStyle.valueOf(pl.get("player_style")));
@@ -230,14 +233,14 @@ public class SinglePlayerActivity extends Activity {
                 player.setIsUser(false);
             }
 
-            Log.i(TAG, "Player order " + player.getOrder() + " style: " + player.getPlayStyle().toString());
+            Log.i(TAG, "Player id " + player.getPlayerId() + " style: " + player.getPlayStyle().toString());
 
 
             TextView textView = new TextView(this);
             textView.setBackgroundResource(R.drawable.seatnotactive);
 
             RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 5, screenHeight / 6);
-            Position position = getPlayerPostion(player.getOrder());
+            Position position = getPlayerPostion(player.getPlayerId().intValue());
             layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
 
             textView.setTop(position.getTop());
@@ -260,8 +263,8 @@ public class SinglePlayerActivity extends Activity {
         gameThread.start();
     }
 
-    public Position getPlayerPostion(int order) {
-        switch (order) {
+    public Position getPlayerPostion(int pos) {
+        switch (pos) {
             case 1:
                 return new Position(screenWidth / 5 * 3, screenHeight / 15);
             case 2:

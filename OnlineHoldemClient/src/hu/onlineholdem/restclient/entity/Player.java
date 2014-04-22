@@ -222,7 +222,6 @@ public class Player implements Serializable {
 
         Player player = (Player) o;
 
-        if (order != null ? !order.equals(player.order) : player.order != null) return false;
         if (playerId != null ? !playerId.equals(player.playerId) : player.playerId != null)
             return false;
 
@@ -231,8 +230,6 @@ public class Player implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = playerId != null ? playerId.hashCode() : 0;
-        result = 31 * result + (order != null ? order.hashCode() : 0);
-        return result;
+        return playerId != null ? playerId.hashCode() : 0;
     }
 }
