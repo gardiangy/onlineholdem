@@ -22,6 +22,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -41,7 +43,7 @@ import hu.onlineholdem.restclient.util.GameListAdapter;
 public class GameBrowserActivity extends Activity implements DateTimeDialog.DateTimeDialogListener {
 
     private static final String TAG = "GameBrowserActivity";
-    private static final String SERVICE_URL = "http://192.168.1.103:8010/rest";
+    private static final String SERVICE_URL = "http://192.168.1.104:8010/rest";
 
     private ExpandableListView list;
     private GameListAdapter listAdapter;
@@ -53,7 +55,8 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
     private EditText startTime;
     private RefreshGamesTask refreshTask;
 
-    private String newGameStartTime;
+    private Date newGameStartTime;
+    private String startTimeString;
     private Long userId;
     private boolean startedMultiPlayerActivity = false;
 
@@ -138,7 +141,7 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
             return;
         }
 
-        if (newGameStartTime.length() == 0) {
+        if (startTimeString.length() == 0) {
             Toast.makeText(this, "Start Time is required!", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -149,7 +152,7 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
         wst.addNameValuePair("gameName", gameName.getText().toString());
         wst.addNameValuePair("startingStackSize", startingStackSize.getText().toString());
         wst.addNameValuePair("maxPlayerNumber", String.valueOf(playerNumPicker.getValue()));
-        wst.addNameValuePair("startTime", newGameStartTime);
+        wst.addNameValuePair("startTime", String.valueOf(newGameStartTime.getTime()));
 
         wst.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[]{postURL});
 
@@ -305,7 +308,14 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
         int hour = time.getCurrentHour();
         int minute = time.getCurrentMinute();
         startTime.setText(year + "/" + month + "/" + day + " " + hour + ":" + minute);
-        newGameStartTime = (year + "-" + month + "-" + day + " " + hour + ":" + minute);
+        startTimeString = (year + "-" + month + "-" + day + " " + hour + ":" + minute);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+        try {
+            newGameStartTime = sdf.parse(startTimeString);
+        } catch (ParseException e) {
+            newGameStartTime = new Date();
+        }
     }
 
 

@@ -20,7 +20,7 @@ import hu.onlineholdem.restclient.task.WebServiceTask;
 
 public class LoginActivity extends Activity{
 
-    private static final String SERVICE_URL = "http://192.168.1.103:8010/rest";
+    private static final String SERVICE_URL = "http://192.168.1.104:8010/rest";
 
     private EditText inputUserName;
     private EditText inputPassword;

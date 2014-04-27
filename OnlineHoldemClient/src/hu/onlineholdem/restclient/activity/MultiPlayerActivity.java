@@ -45,7 +45,7 @@ public class MultiPlayerActivity extends Activity {
 
     private long gameId;
     private int actionSize = 0;
-    private static final String SERVICE_URL = "http://192.168.1.103:8010/rest";
+    private static final String SERVICE_URL = "http://192.168.1.104:8010/rest";
     private static final String TAG = "MultiplayerActivity";
     private GraphicStuff graphics;
     private Player currentPlayer;

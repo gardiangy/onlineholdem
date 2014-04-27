@@ -38,10 +38,7 @@ public abstract class WebServiceTask extends AsyncTask<String, Response, Respons
 
     private static final String TAG = "WebServiceTask";
 
-    // connection timeout, in milliseconds (waiting to connect)
     private static final int CONN_TIMEOUT = 3000;
-
-    // socket timeout, in milliseconds (waiting for data)
     private static final int SOCKET_TIMEOUT = 5000;
 
     private boolean serverNotResponding = false;
@@ -120,7 +117,6 @@ public abstract class WebServiceTask extends AsyncTask<String, Response, Respons
 
     }
 
-    // Establish connection and socket (data retrieval) timeouts
     private HttpParams getHttpParams() {
 
         HttpParams htpp = new BasicHttpParams();
@@ -134,8 +130,6 @@ public abstract class WebServiceTask extends AsyncTask<String, Response, Respons
 
     private HttpResponse doResponse(String url) {
 
-        // Use our connection and data timeouts as parameters for our
-        // DefaultHttpClient
         HttpClient httpclient = new DefaultHttpClient(getHttpParams());
 
         HttpResponse response = null;
@@ -145,7 +139,6 @@ public abstract class WebServiceTask extends AsyncTask<String, Response, Respons
 
                 case POST_TASK:
                     HttpPost httppost = new HttpPost(url);
-                    // Add parameters
                     JSONObject json = new JSONObject();
                     for (NameValuePair pair : params) {
                         json.put(pair.getName(), pair.getValue());

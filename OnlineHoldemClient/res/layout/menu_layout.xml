@@ -4,9 +4,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:text="Online Holdem"
+        android:textColor="#176823"
+        android:textSize="40sp"
+        android:gravity="center"
+        />
 
     <HorizontalScrollView
-        android:id="@+id/potLayout"
+        android:id="@+id/menu"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
@@ -19,20 +28,20 @@
 
             <LinearLayout
                 android:layout_height="wrap_content"
-                android:layout_width="300dp"
+                android:layout_width="350dp"
                 android:orientation="vertical"
                 android:animateLayoutChanges="true">
 
                 <LinearLayout
-                    android:layout_height="100dp"
-                    android:layout_width="100dp"
+                    android:layout_height="130dp"
+                    android:layout_width="120dp"
                     android:orientation="vertical"
                     android:layout_gravity="center"
                     android:onClick="showSinglePlayerOptions">
 
                     <ImageButton
-                        android:layout_height="wrap_content"
-                        android:layout_width="wrap_content"
+                        android:layout_height="100dp"
+                        android:layout_width="100dp"
                         android:background="@drawable/single"
                         android:layout_gravity="center"
                         android:onClick="showSinglePlayerOptions" />
@@ -41,6 +50,7 @@
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:layout_gravity="center"
+                        android:textSize="20sp"
                         android:text="SinglePlayer" />
                 </LinearLayout>
 
@@ -54,15 +64,15 @@
                     <LinearLayout
                         android:id="@+id/newGame"
                         android:layout_height="100dp"
-                        android:layout_width="150dp"
+                        android:layout_width="180dp"
                         android:gravity="center"
                         android:orientation="vertical"
                         android:onClick="startNewGame">
 
                         <ImageButton
 
-                            android:layout_height="50dp"
-                            android:layout_width="50dp"
+                            android:layout_height="60dp"
+                            android:layout_width="60dp"
                             android:background="@drawable/new_icon"
                             android:layout_gravity="center"
                             android:onClick="startNewGame" />
@@ -104,14 +114,14 @@
 
 
             <LinearLayout
-                android:layout_height="wrap_content"
+                android:layout_height="130dp"
                 android:layout_width="wrap_content"
                 android:orientation="vertical"
                 android:layout_marginRight="100dp">
 
                 <ImageButton
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
+                    android:layout_height="100dp"
+                    android:layout_width="150dp"
                     android:layout_gravity="center"
                     android:background="@drawable/multi"
                     android:onClick="startMultiPlayerGame" />
@@ -119,6 +129,8 @@
                 <TextView
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
+                    android:layout_gravity="center"
+                    android:textSize="20dp"
                     android:text="MultiPlayer" />
             </LinearLayout>
 
@@ -127,6 +139,14 @@
 
 
     </HorizontalScrollView>
+    <LinearLayout
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:background="@drawable/chips">
+
+        </LinearLayout>
 
 
 </RelativeLayout>
