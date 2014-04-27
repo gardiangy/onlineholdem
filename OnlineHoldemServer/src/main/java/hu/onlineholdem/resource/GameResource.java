@@ -69,6 +69,7 @@ public class GameResource {
             row.add(game.getGameId().toString());
             row.add(game.getGameName());
             row.add(game.getMaxPlayerNumber().toString());
+            row.add(null == game.getPlayers() ? "0" : game.getPlayers().size() + "");
             row.add(sdf.format(game.getStartTime()));
             row.add(game.getGameState().toString());
         }
@@ -84,6 +85,23 @@ public class GameResource {
     public Response joinToGame(JoinLeaveBO joinLeaveBO) {
 
         Game game = gameDAO.findOne(joinLeaveBO.getGameId());
+        if(null != game.getPlayers() && game.getPlayers().size() == game.getMaxPlayerNumber()){
+            Response response = new Response();
+            response.setErrorMessage(game.getGameName() + " is full");
+            response.setResponseType(ResponseType.ERROR);
+            return response;
+        }
+
+        if(!game.getGameState().equals(GameState.REGISTERING)){
+            Response response = new Response();
+            if(game.getGameState().equals(GameState.STARTED)){
+                response.setErrorMessage(game.getGameName() + " has already started");
+            } else {
+                response.setErrorMessage(game.getGameName() + " has already finished");
+            }
+            response.setResponseType(ResponseType.ERROR);
+            return response;
+        }
         User user = userDAO.findOne(joinLeaveBO.getUserId());
 
         Player player = new Player();
@@ -154,7 +172,7 @@ public class GameResource {
 
         if(null != existingGame){
             Response response = new Response();
-            response.setResponseObject("game exists with this name");
+            response.setResponseObject("Another game exists with this name");
             response.setResponseType(ResponseType.ERROR);
             return response;
         }

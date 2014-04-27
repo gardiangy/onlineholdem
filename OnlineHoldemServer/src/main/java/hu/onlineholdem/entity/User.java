@@ -34,6 +34,11 @@ public class User implements Serializable {
 	@OneToMany(mappedBy="user", fetch = FetchType.EAGER)
 	private List<Player> players;
 
+    //bi-directional many-to-one association to Rankings
+    @OneToOne
+    @JoinColumn(name="rank_id")
+    private Rankings rankings;
+
 	public User() {
 	}
 
@@ -77,6 +82,15 @@ public class User implements Serializable {
 	public void setPlayers(List<Player> players) {
 		this.players = players;
 	}
+
+    @JsonIgnore
+    public Rankings getRankings() {
+        return rankings;
+    }
+
+    public void setRankings(Rankings rankings) {
+        this.rankings = rankings;
+    }
 
     @Override
     public boolean equals(Object o) {

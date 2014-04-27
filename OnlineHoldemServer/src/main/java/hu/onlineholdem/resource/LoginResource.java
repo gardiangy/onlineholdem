@@ -60,7 +60,7 @@ public class LoginResource {
 
         if(null != existingUser){
             Response response = new Response();
-            response.setResponseObject("username taken");
+            response.setResponseObject("Another user exists with this username");
             response.setResponseType(ResponseType.ERROR);
             return response;
         }
