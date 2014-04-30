@@ -86,7 +86,7 @@ public class ActionResource {
         for (Player pl : game.getPlayers()) {
             if (pl.getPlayerInTurn()) {
                 if (pl.getPlayerId().equals(player.getPlayerId())) {
-                    if (action.getBetValue() > highestBetAmount || action.getActionRound() > lastAction.getActionRound()) {
+                    if (action.getBetValue() > highestBetAmount || (null != lastAction && action.getActionRound() > lastAction.getActionRound())) {
                         setRaiser(pl, game);
                     }
                     if (actionType.equals(ActionType.BET)) {
@@ -159,7 +159,7 @@ public class ActionResource {
         } else {
 
             if (playersInRound.size() == 1) {
-                endRound(playersInRound, game);
+                endRound(playersInRound, game, action);
                 startNewRound(game);
             } else if (isBettingRoundOver(playersInRound, player) && !makeMovesAgain(playersInRound)) {
 
@@ -174,7 +174,7 @@ public class ActionResource {
                     if (null == game.getRiver()) {
                         game.setRiver(getNextCard(game));
                     } else {
-                        endRound(playersInRound, game);
+                        endRound(playersInRound, game, action);
                         startNewRound(game);
                     }
                 }
@@ -205,7 +205,7 @@ public class ActionResource {
             if (null == game.getRiver()) {
                 game.setRiver(getNextCard(game));
             }
-            endRound(playersInRound, game);
+            endRound(playersInRound, game, action);
             startNewRound(game);
         }
 
@@ -283,7 +283,7 @@ public class ActionResource {
         return false;
     }
 
-    public void endRound(List<Player> playersInRound, Game game) {
+    public void endRound(List<Player> playersInRound, Game game, Action action) {
         if (playersInRound.size() == 1) {
             playersInRound.get(0).setStackSize(playersInRound.get(0).getStackSize() + game.getPotSize());
             playersInRound.get(0).setPlayerWinner(true);
@@ -325,6 +325,26 @@ public class ActionResource {
                 game.getPlayers().remove(player);
             }
         }
+        int dealerIndex = players.indexOf(game.getDealer());
+        game.setDealer(dealerIndex == players.size() - 1 ? players.get(0) : players.get(dealerIndex + 1));
+        setBlindPlayers(game);
+
+        Action smallBlindAction = new Action();
+        smallBlindAction.setActionRound(action.getActionRound() + 1);
+        smallBlindAction.setBetValue(game.getSmallBlindValue());
+        smallBlindAction.setGame(game);
+        smallBlindAction.setPlayer(game.getSmallBlind());
+        smallBlindAction.setActionType(ActionType.BET);
+
+        Action bigBlindAction = new Action();
+        bigBlindAction.setActionRound(action.getActionRound() + 1);
+        bigBlindAction.setBetValue(game.getBigBlindValue());
+        bigBlindAction.setGame(game);
+        bigBlindAction.setPlayer(game.getBigBlind());
+        bigBlindAction.setActionType(ActionType.BET);
+
+        game.getActions().add(smallBlindAction);
+        game.getActions().add(bigBlindAction);
     }
 
     public List<Action> getLastRoundActions(List<Action> actions, int actionRound) {
@@ -401,6 +421,16 @@ public class ActionResource {
             }
         }
         return 0;
+    }
+
+    public void setBlindPlayers(Game game) {
+        List<Player> players = game.getPlayers();
+        int dealerIndex = players.indexOf(game.getDealer());
+        Player smallBlind = dealerIndex == players.size() - 1 ? players.get(0) : players.get(dealerIndex + 1);
+        int smallBlindIndex = players.indexOf(smallBlind);
+        Player bigBlind = smallBlindIndex == players.size() - 1 ? players.get(0) : players.get(smallBlindIndex + 1);
+        game.setBigBlind(bigBlind);
+        game.setSmallBlind(smallBlind);
     }
 
 

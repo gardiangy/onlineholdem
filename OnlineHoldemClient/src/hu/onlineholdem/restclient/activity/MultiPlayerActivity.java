@@ -31,6 +31,7 @@ import hu.onlineholdem.restclient.response.Response;
 import hu.onlineholdem.restclient.task.RefreshTask;
 import hu.onlineholdem.restclient.task.WebServiceTask;
 import hu.onlineholdem.restclient.util.GraphicStuff;
+import hu.onlineholdem.restclient.util.Position;
 
 public class MultiPlayerActivity extends Activity {
 
@@ -78,6 +79,7 @@ public class MultiPlayerActivity extends Activity {
         if (!init) {
             graphics.setGame(game);
             graphics.createPlayers();
+            graphics.addDealer();
             init = true;
         }
 
@@ -165,6 +167,7 @@ public class MultiPlayerActivity extends Activity {
                     } else if (null != raiser) {
                         if (isRoundOver(raiser, action.getPlayer(), playersInRound) && !newBettingRound) {
                             graphics.collectChips(playersInRound);
+                            graphics.moveDealer();
                             roundOver = true;
                         }
                     }
@@ -250,6 +253,8 @@ public class MultiPlayerActivity extends Activity {
             GameState gameState = GameState.valueOf(gamesJSON.getString("gameState"));
             game.setGameState(gameState);
             game.setPotChips(new ArrayList<RelativeLayout>());
+            game.setSmallBlindValue(gamesJSON.getInt("smallBlindValue"));
+            game.setBigBlindValue(gamesJSON.getInt("bigBlindValue"));
 
             JSONArray playerArray = gamesJSON.getJSONArray("players");
             List<Player> playerList = new ArrayList<>();
@@ -262,6 +267,7 @@ public class MultiPlayerActivity extends Activity {
                 player.setPlayerName(playerItem.getJSONObject("user").getString("userName"));
                 player.setUserId(playerItem.getJSONObject("user").getLong("userId"));
                 player.setOrder(playerItem.getInt("playerOrder"));
+                player.setPosition(playerItem.getInt("playerPosition"));
                 player.setPlayerTurn(playerItem.getBoolean("playerTurn"));
                 player.setPlayerInTurn(playerItem.getBoolean("playerInTurn"));
                 player.setPlayerRaiser(playerItem.getBoolean("playerRaiser"));
@@ -290,6 +296,20 @@ public class MultiPlayerActivity extends Activity {
                 playerList.add(player);
             }
             game.setPlayers(playerList);
+            JSONObject smallBlind = gamesJSON.getJSONObject("smallBlind");
+            JSONObject bigBlind = gamesJSON.getJSONObject("bigBlind");
+            JSONObject dealer = gamesJSON.getJSONObject("dealer");
+            for(Player player : game.getPlayers()){
+                if(player.getPlayerId() == smallBlind.getLong("playerId")){
+                    game.setSmallBlind(player);
+                }
+                if(player.getPlayerId() == bigBlind.getLong("playerId")){
+                    game.setBigBlind(player);
+                }
+                if(player.getPlayerId() == dealer.getLong("playerId")){
+                    game.setDealer(player);
+                }
+            }
 
 
             if (!gamesJSON.isNull("flop")) {

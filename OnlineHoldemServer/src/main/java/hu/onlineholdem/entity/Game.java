@@ -42,6 +42,12 @@ public class Game implements Serializable {
     @Column(name = "game_state")
     private GameState gameState;
 
+    @Column(name = "game_small_blind_value")
+    private Integer smallBlindValue;
+
+    @Column(name = "game_big_blind_value")
+    private Integer bigBlindValue;
+
     //bi-directional many-to-one association to Action
     @OneToMany(mappedBy = "game", cascade = {CascadeType.ALL})
     private List<Action> actions;
@@ -63,6 +69,18 @@ public class Game implements Serializable {
     @ManyToOne
     @JoinColumn(name="game_river", nullable=false)
     private Card river;
+
+    @ManyToOne
+    @JoinColumn(name="game_dealer", nullable=true)
+    private Player dealer;
+
+    @ManyToOne
+    @JoinColumn(name="game_small_blind", nullable=true)
+    private Player smallBlind;
+
+    @ManyToOne
+    @JoinColumn(name="game_big_blind", nullable=true)
+    private Player bigBlind;
 
     public Game() {
     }
@@ -161,6 +179,46 @@ public class Game implements Serializable {
 
     public void setRiver(Card river) {
         this.river = river;
+    }
+
+    public Player getDealer() {
+        return dealer;
+    }
+
+    public void setDealer(Player dealer) {
+        this.dealer = dealer;
+    }
+
+    public Player getSmallBlind() {
+        return smallBlind;
+    }
+
+    public void setSmallBlind(Player smallBlind) {
+        this.smallBlind = smallBlind;
+    }
+
+    public Player getBigBlind() {
+        return bigBlind;
+    }
+
+    public void setBigBlind(Player bigBlind) {
+        this.bigBlind = bigBlind;
+    }
+
+    public Integer getSmallBlindValue() {
+        return smallBlindValue;
+    }
+
+    public void setSmallBlindValue(Integer smallBlindValue) {
+        this.smallBlindValue = smallBlindValue;
+    }
+
+    public Integer getBigBlindValue() {
+        return bigBlindValue;
+    }
+
+    public void setBigBlindValue(Integer bigBlindValue) {
+        this.bigBlindValue = bigBlindValue;
     }
 
     @Override

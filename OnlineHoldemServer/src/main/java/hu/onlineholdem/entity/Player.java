@@ -30,6 +30,9 @@ public class Player implements Serializable {
     @Column(name="player_order", nullable=false)
     private Integer playerOrder;
 
+    @Column(name="player_position", nullable=false)
+    private Integer playerPosition;
+
     @Column(name="player_turn", nullable=false)
     private Boolean playerTurn;
 
@@ -208,6 +211,14 @@ public class Player implements Serializable {
 
     public void setPlayerAmountToWin(Integer playerAmountToWin) {
         this.playerAmountToWin = playerAmountToWin;
+    }
+
+    public Integer getPlayerPosition() {
+        return playerPosition;
+    }
+
+    public void setPlayerPosition(Integer playerPosition) {
+        this.playerPosition = playerPosition;
     }
 
     @Override

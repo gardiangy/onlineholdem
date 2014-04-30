@@ -17,6 +17,7 @@ public class Player implements Serializable {
 	private Integer stackSize;
     private Boolean isUser;
     private Integer order;
+    private Integer position;
     private TextView textView;
     private ImageView card1View;
     private ImageView card2View;
@@ -213,6 +214,14 @@ public class Player implements Serializable {
 
     public void setPlayStyle(PlayStyle playStyle) {
         this.playStyle = playStyle;
+    }
+
+    public Integer getPosition() {
+        return position;
+    }
+
+    public void setPosition(Integer position) {
+        this.position = position;
     }
 
     @Override

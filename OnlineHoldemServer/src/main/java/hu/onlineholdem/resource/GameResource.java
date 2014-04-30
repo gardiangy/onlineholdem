@@ -122,9 +122,11 @@ public class GameResource {
         }
         if(game.getPlayers().size() == 0){
             player.setPlayerOrder(1);
+            player.setPlayerPosition(1);
         } else {
             List<Player> playersHighestOrder = playerDAO.findByGameOrderByPlayerOrderDesc(game);
             player.setPlayerOrder(playersHighestOrder.get(0).getPlayerOrder() + 1);
+            player.setPlayerPosition(playersHighestOrder.get(0).getPlayerOrder() + 1);
         }
 
         game.getPlayers().add(player);

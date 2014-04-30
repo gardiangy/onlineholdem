@@ -40,6 +40,10 @@ public class Game implements Serializable {
 
     private Player bigBlind;
 
+    private Integer smallBlindValue;
+
+    private Integer bigBlindValue;
+
 	public Game() {
 	}
 
@@ -162,6 +166,22 @@ public class Game implements Serializable {
 
     public void setSmallBlind(Player smallBlind) {
         this.smallBlind = smallBlind;
+    }
+
+    public Integer getSmallBlindValue() {
+        return smallBlindValue;
+    }
+
+    public void setSmallBlindValue(Integer smallBlindValue) {
+        this.smallBlindValue = smallBlindValue;
+    }
+
+    public Integer getBigBlindValue() {
+        return bigBlindValue;
+    }
+
+    public void setBigBlindValue(Integer bigBlindValue) {
+        this.bigBlindValue = bigBlindValue;
     }
 
     @Override

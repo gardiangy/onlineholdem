@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
@@ -55,7 +56,8 @@ public class GraphicStuff {
     private Activity activity;
     private List<Player> players;
     private int betAmount;
-    private int minBet = 30;
+    private int minBet;
+    private RelativeLayout dealerLayout;
 
     public GraphicStuff(Context context) {
         this.context = context;
@@ -438,6 +440,35 @@ public class GraphicStuff {
         return null;
     }
 
+    public Position getDealerBtnPosition(Player player) {
+        switch (player.getPosition()) {
+            case 1:
+                return new Position(player.getTextView().getLeft() - getPixels(10), player.getTextView().getTop() + getPixels(60));
+            case 2:
+                return new Position(player.getTextView().getLeft() + getPixels(10), player.getTextView().getTop() - getPixels(20));
+            case 3:
+                return new Position(player.getTextView().getLeft() + getPixels(10), player.getTextView().getTop() - getPixels(20));
+            case 4:
+                return new Position(player.getTextView().getLeft() + getPixels(10), player.getTextView().getTop() - getPixels(20));
+            case 5:
+                return new Position(player.getTextView().getLeft() + getPixels(10), player.getTextView().getTop() - getPixels(20));
+            case 6:
+                return new Position(player.getTextView().getLeft() + getPixels(10), player.getTextView().getTop() - getPixels(20));
+            case 7:
+                return new Position(player.getTextView().getLeft() + getPixels(120), player.getTextView().getTop() - getPixels(20));
+            case 8:
+                return new Position(player.getTextView().getLeft() + getPixels(120), player.getTextView().getTop() - getPixels(20));
+            case 9:
+                return new Position(player.getTextView().getLeft() + getPixels(100), player.getTextView().getTop() + getPixels(60));
+        }
+        return null;
+    }
+
+    public int getPixels(int dp){
+        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                (float) dp, context.getResources().getDisplayMetrics());
+    }
+
 
     public void createPlayers() {
         players = new ArrayList<>();
@@ -465,6 +496,23 @@ public class GraphicStuff {
         }
     }
 
+    public void addDealer(){
+        dealerLayout = new RelativeLayout(context);
+        ImageView dealerBtn = new ImageView(context);
+        dealerBtn.setImageResource(R.drawable.dealer);
+        dealerBtn.setLayoutParams(new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.MATCH_PARENT,
+                RelativeLayout.LayoutParams.MATCH_PARENT));
+
+
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 20, screenHeight / 20);
+        Position position = getDealerBtnPosition(game.getDealer());
+        layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
+        dealerLayout.setLayoutParams(layoutParams);
+        dealerLayout.addView(dealerBtn);
+        board.addView(dealerLayout);
+    }
+
     public void showActionButtons(final boolean show) {
         if (show) {
             btnCheck.setVisibility(View.VISIBLE);
@@ -482,6 +530,11 @@ public class GraphicStuff {
         }
 
 
+    }
+
+    public void moveDealer(){
+        Position dealerPos = getDealerBtnPosition(game.getDealer());
+        dealerLayout.animate().setDuration(500).x(dealerPos.getLeft()).y(dealerPos.getTop());
     }
 
     public void showAvailableActionButtons(Action lastAction, Action highestBetAction, boolean roundOver) {
@@ -516,7 +569,7 @@ public class GraphicStuff {
             betValue.setText("" + minBet);
         } else {
             btnBet.setText("BET");
-            minBet = 30;
+            minBet = game.getBigBlindValue();
             betValue.setText("" + minBet);
         }
         if (availableActions.contains(ActionType.ALL_IN)) {
@@ -537,7 +590,11 @@ public class GraphicStuff {
                 }
             }
         }
-
+        this.game.setDealer(game.getDealer());
+        this.game.setSmallBlind(game.getSmallBlind());
+        this.game.setSmallBlindValue(game.getSmallBlindValue());
+        this.game.setBigBlind(game.getBigBlind());
+        this.game.setBigBlindValue(game.getBigBlindValue());
         for (Player player : players) {
 
             if(game.getPlayers().contains(player)){
