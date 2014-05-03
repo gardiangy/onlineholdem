@@ -40,29 +40,9 @@ public class SinglePlayerActivity extends Activity {
     private RelativeLayout seats;
     private List<Player> players = new ArrayList<>();
     private int betAmount;
-//    private int previousBetAmount;
     private Action highestBetAction;
     private SeekBar betBar;
     private DatabaseHandler dbHandler;
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.i(TAG,"onPause");
-    }
-
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-        Log.i(TAG,"onRestart");
-        Intent intent = new Intent(this, SinglePlayerActivity.class);
-        Bundle bundle = new Bundle();
-        bundle.putString("type", StartType.LOAD.name());
-        intent.putExtras(bundle);
-
-        startActivity(intent);
-        finish();
-    }
 
     @Override
     protected void onStop() {
@@ -81,8 +61,6 @@ public class SinglePlayerActivity extends Activity {
             Log.i(TAG, "Player playerSyle | " + player.get("player_style"));
             Log.i(TAG, "Player isUser | " + player.get("player_is_user"));
         }
-        gameThread.setRoundOver(true);
-        gameThread.setStopThread(true);
     }
 
     @Override
@@ -115,13 +93,13 @@ public class SinglePlayerActivity extends Activity {
         dbHandler = new DatabaseHandler(this);
         Bundle bundle = getIntent().getExtras();
         StartType type = StartType.valueOf(bundle.getString("type"));
-        if(type.equals(StartType.LOAD)){
-            List<Map<String, String>> playerDetails = dbHandler.getPlayerDetails();
-            loadPlayers(playerDetails);
-        } else {
+        if(type.equals(StartType.NEW)){
             int numOfPlayers = bundle.getInt("numOfPlayers");
             Difficulty difficulty = Difficulty.valueOf(bundle.getString("difficulty"));
             createPlayers(numOfPlayers, difficulty);
+        } else {
+            List<Map<String, String>> playerDetails = dbHandler.getPlayerDetails();
+            loadPlayers(playerDetails);
         }
 
         gameThread.start();
@@ -144,9 +122,6 @@ public class SinglePlayerActivity extends Activity {
 
             }
         });
-
-
-
 
     }
 
