@@ -1,16 +1,11 @@
 package hu.onlineholdem.restclient.activity;
 
 import android.app.Activity;
-import android.content.Intent;
-import android.graphics.Point;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Display;
-import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -28,21 +23,20 @@ import hu.onlineholdem.restclient.enums.PlayStyle;
 import hu.onlineholdem.restclient.enums.StartType;
 import hu.onlineholdem.restclient.thread.GameThread;
 import hu.onlineholdem.restclient.util.DatabaseHandler;
-import hu.onlineholdem.restclient.util.Position;
+import hu.onlineholdem.restclient.util.GraphicStuff;
 
 public class SinglePlayerActivity extends Activity {
 
     private static final String TAG = "SinglePlayerActivity";
 
     private GameThread gameThread;
-    private int screenWidth;
-    private int screenHeight;
     private RelativeLayout seats;
     private List<Player> players = new ArrayList<>();
     private int betAmount;
     private Action highestBetAction;
     private SeekBar betBar;
     private DatabaseHandler dbHandler;
+    private GraphicStuff graphs;
 
     @Override
     protected void onStop() {
@@ -68,27 +62,17 @@ public class SinglePlayerActivity extends Activity {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.single_player_layout);
-        ImageView flop1 = (ImageView) findViewById(R.id.flop1);
-        ImageView flop2 = (ImageView) findViewById(R.id.flop2);
-        ImageView flop3 = (ImageView) findViewById(R.id.flop3);
-        ImageView turn = (ImageView) findViewById(R.id.turn);
-        ImageView river = (ImageView) findViewById(R.id.river);
         TextView potSize = (TextView) findViewById(R.id.potSize);
-        RelativeLayout board = (RelativeLayout) findViewById(R.id.board);
         seats = (RelativeLayout) findViewById(R.id.seats);
-        Display display = getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        screenWidth = size.x;
-        screenHeight = size.y;
         betBar = (SeekBar) findViewById(R.id.betBar);
         Button btnCheck = (Button) findViewById(R.id.btnCheck);
         Button btnBet = (Button) findViewById(R.id.btnBet);
         Button btnFold = (Button) findViewById(R.id.btnFold);
         final TextView betValue = (TextView) findViewById(R.id.betValue);
 
-        gameThread = new GameThread(screenWidth, screenHeight, flop1, flop2, flop3, turn, river, board, players,
-                potSize,btnCheck,btnBet,btnFold,betBar,betValue, this, getResources(), this.getPackageName());
+        graphs = new GraphicStuff(this);
+
+        gameThread = new GameThread(players,potSize,btnCheck,btnBet,btnFold,betBar,betValue, this,graphs);
 
         dbHandler = new DatabaseHandler(this);
         Bundle bundle = getIntent().getExtras();
@@ -109,18 +93,11 @@ public class SinglePlayerActivity extends Activity {
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 betValue.setText("" + (i + gameThread.getMinBet()));
                 betAmount = i + gameThread.getMinBet();
-
             }
-
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
+            public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
+            public void onStopTrackingTouch(SeekBar seekBar) {}
         });
 
     }
@@ -133,6 +110,7 @@ public class SinglePlayerActivity extends Activity {
             player.setStackSize(1500);
             player.setAmountInPot(0);
             player.setOrder(i);
+            player.setPosition(i);
             if (i == numberOfPlayers / 2) {
                 player.setIsUser(true);
                 player.setPlayStyle(PlayStyle.USER);
@@ -170,26 +148,8 @@ public class SinglePlayerActivity extends Activity {
                 }
                 Log.i(TAG, "Player id " + player.getPlayerId() + " style: " + player.getPlayStyle().toString());
             }
-
-            TextView textView = new TextView(this);
-            textView.setBackgroundResource(R.drawable.seatnotactive);
-
-            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 5, screenHeight / 7);
-            Position position = getPlayerPostion(i);
-            layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
-
-            textView.setTop(position.getTop());
-            textView.setLeft(position.getLeft());
-            textView.setLayoutParams(layoutParams);
-            textView.setText(player.getStackSize().toString());
-            textView.setGravity(Gravity.CENTER);
-            textView.setTextColor(0xFF000000);
-            textView.setTextSize(15);
-
-            player.setTextView(textView);
+            player.setTextView(graphs.createPlayerView(player));
             players.add(player);
-
-            seats.addView(textView);
         }
 
     }
@@ -210,56 +170,14 @@ public class SinglePlayerActivity extends Activity {
 
             Log.i(TAG, "Player id " + player.getPlayerId() + " style: " + player.getPlayStyle().toString());
 
-
-            TextView textView = new TextView(this);
-            textView.setBackgroundResource(R.drawable.seatnotactive);
-
-            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 5, screenHeight / 6);
-            Position position = getPlayerPostion(player.getPlayerId().intValue());
-            layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
-
-            textView.setTop(position.getTop());
-            textView.setLeft(position.getLeft());
-            textView.setLayoutParams(layoutParams);
-            textView.setText(player.getStackSize().toString());
-            textView.setGravity(Gravity.CENTER);
-            textView.setTextColor(0xFF000000);
-            textView.setTextSize(15);
-
-            player.setTextView(textView);
+            player.setTextView(graphs.createPlayerView(player));
             this.players.add(player);
-
-            seats.addView(textView);
         }
 
     }
 
     public void startGame(View view) {
         gameThread.start();
-    }
-
-    public Position getPlayerPostion(int pos) {
-        switch (pos) {
-            case 1:
-                return new Position(screenWidth / 5 * 3, screenHeight / 15);
-            case 2:
-                return new Position(screenWidth / 10 * 8, screenHeight / 5);
-            case 3:
-                return new Position(screenWidth / 10 * 8, screenHeight / 7 * 3);
-            case 4:
-                return new Position(screenWidth / 25 * 16, screenHeight / 5 * 3);
-            case 5:
-                return new Position(screenWidth / 5 * 2, screenHeight / 5 * 3);
-            case 6:
-                return new Position(screenWidth / 6, screenHeight / 5 * 3);
-            case 7:
-                return new Position(screenWidth / 70, screenHeight / 7 * 3);
-            case 8:
-                return new Position(screenWidth / 70, screenHeight / 5);
-            case 9:
-                return new Position(screenWidth / 5, screenHeight / 15);
-        }
-        return null;
     }
 
     public void moveCheck(View view){

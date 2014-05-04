@@ -1,7 +1,10 @@
 package hu.onlineholdem.restclient.activity;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -9,6 +12,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -31,7 +35,6 @@ import hu.onlineholdem.restclient.response.Response;
 import hu.onlineholdem.restclient.task.RefreshTask;
 import hu.onlineholdem.restclient.task.WebServiceTask;
 import hu.onlineholdem.restclient.util.GraphicStuff;
-import hu.onlineholdem.restclient.util.Position;
 
 public class MultiPlayerActivity extends Activity {
 
@@ -49,6 +52,15 @@ public class MultiPlayerActivity extends Activity {
     private static final String SERVICE_URL = "http://192.168.1.104:8010/rest";
     private static final String TAG = "MultiplayerActivity";
     private GraphicStuff graphics;
+    private Game game;
+    private Context context;
+    private Button btnCheck;
+    private Button btnBet;
+    private Button btnFold;
+    private SeekBar betBar;
+    private TextView betValue;
+    private int betAmount;
+    private int minBet;
     private Player currentPlayer;
     private Action lastAction;
     private Action highestBetAction;
@@ -59,6 +71,25 @@ public class MultiPlayerActivity extends Activity {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.multi_player_layout);
+
+        context = this;
+        betBar = (SeekBar) findViewById(R.id.betBar);
+        btnCheck = (Button) findViewById(R.id.btnCheck);
+        btnBet = (Button) findViewById(R.id.btnBet);
+        btnFold = (Button) findViewById(R.id.btnFold);
+        betValue = (TextView) findViewById(R.id.betValue);
+
+        betBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                betValue.setText("" + (i + minBet));
+                betAmount = i + minBet;
+            }
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
 
         Bundle bundle = getIntent().getExtras();
         userId = bundle.getLong("userId");
@@ -77,19 +108,22 @@ public class MultiPlayerActivity extends Activity {
         Game game = (Game) gameResponse.getResponseObject();
 
         if (!init) {
-            graphics.setGame(game);
-            graphics.createPlayers();
-            graphics.addDealer();
+            this.game = game;
+            createPlayers();
+            graphics.addDealer(this.game.getDealer());
             init = true;
         }
 
         if (!handDealt) {
-            graphics.deal();
+            for(Player player : this.game.getPlayers()){
+                graphics.deal(player);
+            }
+
             handDealt = true;
         }
         if (cardsShown) {
             SystemClock.sleep(2000);
-            graphics.endRound();
+            endRound();
             cardsShown = false;
             flopDealt = false;
             turnDealt = false;
@@ -106,30 +140,44 @@ public class MultiPlayerActivity extends Activity {
         }
 
         if (flopDealt && game.getBoard().size() == 0 || playersInRound.size() == 1) {
-            graphics.updateGame(game);
+            updateGame(game);
             List<Player> winners = new ArrayList<>();
-            for (Player player : graphics.getGame().getPlayers()) {
+            for (Player player : this.game.getPlayers()) {
                 if (player.isPlayerWinner()) {
                     winners.add(player);
                 }
             }
-            graphics.showCards();
-            graphics.assignChips(winners);
+            graphics.showCards(winners);
+            if(winners.size() > 1){
+                List<List<RelativeLayout>> chipList = graphics.splitChips(this.game.getPotChips(), winners.size());
+                for (List<RelativeLayout> chips : chipList) {
+                    for(RelativeLayout chip : chips){
+                        graphics.assignChips(chip, winners.get(chipList.indexOf(chips)));
+                    }
+                }
+            } else {
+                for(RelativeLayout chip : this.game.getPotChips()){
+                    graphics.assignChips(chip, winners.get(0));
+                }
+
+            }
+
             cardsShown = true;
         }
-        graphics.updateGame(game);
+        updateGame(game);
         if (!flopDealt && null != game.getBoard() && game.getBoard().size() >= 3) {
-            graphics.dealFlop();
+            List<Card> board = this.game.getBoard();
+            graphics.dealFlop(board.get(0),board.get(1),board.get(2));
             flopDealt = true;
         }
 
 
         if (!turnDealt && null != game.getBoard() && game.getBoard().size() >= 4) {
-            graphics.dealTurn();
+            graphics.dealTurn(this.game.getBoard().get(3));
             turnDealt = true;
         }
         if (!riverDealt && null != game.getBoard() && game.getBoard().size() >= 5) {
-            graphics.dealRiver();
+            graphics.dealRiver(this.game.getBoard().get(4));
             riverDealt = true;
         }
 
@@ -155,19 +203,21 @@ public class MultiPlayerActivity extends Activity {
                 if (null == lastAction || action.getActionId() > lastAction.getActionId()) {
                     if (action.getActionType().equals(ActionType.BET) || action.getActionType().equals(ActionType.CALL)
                             || action.getActionType().equals(ActionType.RAISE) || action.getActionType().equals(ActionType.ALL_IN)) {
-                        graphics.moveBet(action.getBetValue(), action.getPlayer().getPlayerId());
+//                        graphics.moveBet(action.getBetValue(), action.getPlayer().getPlayerId());
+                        graphics.moveBet(getPlayer(action.getPlayer().getPlayerId()));
                     }
                     if (action.getActionType().equals(ActionType.FOLD)) {
-                        graphics.moveFold(action.getPlayer().getPlayerId());
+//                        graphics.moveFold(action.getPlayer().getPlayerId());
+                        graphics.moveFold(getPlayer(action.getPlayer().getPlayerId()));
                     }
                     Player raiser = getRaiser(playersInRound);
                     if (playersInRound.size() == 1) {
-                        graphics.collectChips(playersInRound);
+                        collectChips(playersInRound);
                         roundOver = true;
                     } else if (null != raiser) {
                         if (isRoundOver(raiser, action.getPlayer(), playersInRound) && !newBettingRound) {
-                            graphics.collectChips(playersInRound);
-                            graphics.moveDealer();
+                            collectChips(playersInRound);
+                            graphics.moveDealer(this.game.getDealer());
                             roundOver = true;
                         }
                     }
@@ -371,11 +421,15 @@ public class MultiPlayerActivity extends Activity {
     }
 
     public void showCurrentPlayer(boolean roundOver) {
-        for (Player player : graphics.getGame().getPlayers()) {
+        for (Player player : this.game.getPlayers()) {
             if (player.isPlayerTurn()) {
 //                if (!player.equals(currentPlayer)) {
-                    graphics.showCurrentPlayer(player);
-                    graphics.showAvailableActionButtons(lastAction, highestBetAction, roundOver);
+                    graphics.showCurrentPlayer(player, this.game.getPlayers());
+                    if (player.isUser()) {
+                        betBar.setMax(player.getStackSize() - minBet);
+                        betBar.setProgress(0);
+                    }
+                    showAvailableActionButtons(lastAction, highestBetAction, roundOver);
                     currentPlayer = player;
 //                }
 
@@ -403,6 +457,188 @@ public class MultiPlayerActivity extends Activity {
             return true;
         }
         return false;
+    }
+
+    public void updateGame(Game game) {
+
+        this.game.setPotSize(game.getPotSize());
+        graphics.updatePotSize(game.getPotSize());
+        if(game.getBoard().size() > this.game.getBoard().size()){
+            for(Card card : game.getBoard()){
+                if(game.getBoard().indexOf(card) > this.game.getBoard().size() - 1){
+                    this.game.getBoard().add(card);
+                }
+            }
+        }
+        this.game.setDealer(getPlayer(game.getDealer().getPlayerId()));
+        this.game.setSmallBlind(getPlayer(game.getSmallBlind().getPlayerId()));
+        this.game.setSmallBlindValue(game.getSmallBlindValue());
+        this.game.setBigBlind(getPlayer(game.getBigBlind().getPlayerId()));
+        this.game.setBigBlindValue(game.getBigBlindValue());
+        for (Player player : this.game.getPlayers()) {
+
+            if(game.getPlayers().contains(player)){
+                for (Player newPlayer : game.getPlayers()) {
+                    if (player.getPlayerId().equals(newPlayer.getPlayerId())) {
+                        player.setPlayerTurn(newPlayer.isPlayerTurn());
+                        player.setPlayerInTurn(newPlayer.getPlayerInTurn());
+                        player.setPlayerWinner(newPlayer.isPlayerWinner());
+                        player.setBetAmount(newPlayer.getBetAmount());
+                        player.setPlayerRaiser(newPlayer.isPlayerRaiser());
+                        player.setStackSize(newPlayer.getStackSize());
+                        player.setStackSize(newPlayer.getStackSize());
+                        player.setCardOne(newPlayer.getCardOne());
+                        player.setCardTwo(newPlayer.getCardTwo());
+                    }
+                }
+            } else {
+                graphics.removeSeat(player);
+                if(player.isUser()){
+                    AlertDialog alertDialog = new AlertDialog.Builder(
+                            this).create();
+
+                    alertDialog.setTitle("Game Over!");
+                    alertDialog.setMessage("You have finished " + game.getPlayers().size() + 1 + ". place!");
+
+                    final long userId = player.getUserId();
+                    alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL,"Back to Game Browser", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent gameBrowserActivity = new Intent(context.getApplicationContext(), GameBrowserActivity.class);
+                            gameBrowserActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            Bundle bundle = new Bundle();
+                            bundle.putLong("userId", userId);
+                            gameBrowserActivity.putExtras(bundle);
+                            context.startActivity(gameBrowserActivity);
+                        }
+                    });
+
+                    alertDialog.show();
+                }
+            }
+
+        }
+
+    }
+
+    public Player getPlayer(Long playerId){
+        for(Player player : this.game.getPlayers()){
+            if(player.getPlayerId().equals(playerId)){
+                return player;
+            }
+        }
+        return null;
+    }
+
+    public void collectChips(List<Player> players) {
+
+        for (final Player player : players) {
+            if(null != player.getChipLayout()){
+                graphics.collectChips(player);
+                game.getPotChips().add(player.getChipLayout());
+            }
+
+            player.setChipLayout(null);
+            player.setBetAmount(0);
+        }
+    }
+
+    public void endRound() {
+
+        for (Player player : game.getPlayers()) {
+            player.getTextView().setText(player.getPlayerName() + "\n" + player.getStackSize().toString());
+        }
+
+        List<Player> playerList = new ArrayList<>();
+        playerList.addAll(game.getPlayers());
+        for (Player player : playerList) {
+            if (player.getStackSize() == 0) {
+//                seats.removeView(player.getTextView());
+                graphics.removeSeat(player);
+                game.getPlayers().remove(player);
+            }
+//            board.removeView(player.getCard1View());
+//            board.removeView(player.getCard2View());
+            graphics.removePlayerCards(player);
+            player.setCard1View(null);
+            player.setCard2View(null);
+            player.setAmountInPot(0);
+        }
+        for (RelativeLayout chip : game.getPotChips()) {
+//            board.removeView(chip);
+            graphics.removeChips(chip);
+        }
+//        board.removeView(flop1);
+//        board.removeView(flop2);
+//        board.removeView(flop3);
+//        board.removeView(turn);
+//        board.removeView(river);
+        graphics.removeBoard();
+        game.setBoard(new ArrayList<Card>());
+    }
+
+    public void createPlayers() {
+        for (Player player : game.getPlayers()) {
+
+//            TextView textView = new TextView(context);
+//            textView.setBackgroundResource(R.drawable.seatnotactive);
+//
+//            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 5, screenHeight / 6);
+//            Position position = graphics.getPlayerPosition(player.getPosition());
+//            layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
+//
+//            textView.setTop(position.getTop());
+//            textView.setLeft(position.getLeft());
+//            textView.setLayoutParams(layoutParams);
+//            textView.setText(player.getPlayerName() + "\n" + player.getStackSize().toString());
+//            textView.setGravity(Gravity.CENTER);
+//            textView.setTextColor(0xFF000000);
+//            textView.setTextSize(15);
+
+            player.setTextView(graphics.createPlayerView(player));
+
+//            seats.addView(textView);
+        }
+    }
+    public void showAvailableActionButtons(Action lastAction, Action highestBetAction, boolean roundOver) {
+        List<ActionType> availableActions = new ArrayList<>();
+        if (null == lastAction || roundOver) {
+            availableActions.add(ActionType.CHECK);
+            availableActions.add(ActionType.BET);
+            availableActions.add(ActionType.FOLD);
+        } else {
+            Boolean higherStackThanBetAmount = highestBetAction == null ? null : game.getUser().getStackSize() > highestBetAction.getBetValue();
+
+            availableActions = graphics.getAvailableActions(lastAction.getActionType(), highestBetAction == null ? null : highestBetAction.getActionType(),
+                    higherStackThanBetAmount);
+        }
+
+
+        btnCheck.setVisibility(View.VISIBLE);
+        if (availableActions.contains(ActionType.CALL)) {
+            btnCheck.setText("CALL");
+        } else {
+            btnCheck.setText("CHECK");
+        }
+        if (availableActions.contains(ActionType.RAISE)) {
+            btnBet.setText("RAISE");
+            if (game.getUser().getStackSize() > highestBetAction.getBetValue() * 2) {
+                minBet = highestBetAction.getBetValue() * 2;
+            } else {
+                minBet = game.getUser().getStackSize();
+                betBar.setMax(0);
+            }
+
+            betValue.setText("" + minBet);
+        } else {
+            btnBet.setText("BET");
+            minBet = game.getBigBlindValue();
+            betValue.setText("" + minBet);
+        }
+        if (availableActions.contains(ActionType.ALL_IN)) {
+            btnBet.setText("ALL IN");
+            btnCheck.setVisibility(View.GONE);
+        }
+
     }
 
 

@@ -1,16 +1,13 @@
 package hu.onlineholdem.restclient.util;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Point;
-import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
@@ -25,10 +22,7 @@ import java.util.List;
 import java.util.Random;
 
 import hu.onlineholdem.restclient.R;
-import hu.onlineholdem.restclient.activity.GameBrowserActivity;
-import hu.onlineholdem.restclient.entity.Action;
 import hu.onlineholdem.restclient.entity.Card;
-import hu.onlineholdem.restclient.entity.Game;
 import hu.onlineholdem.restclient.entity.Player;
 import hu.onlineholdem.restclient.enums.ActionType;
 
@@ -52,11 +46,7 @@ public class GraphicStuff {
     private TextView betValue;
     private RelativeLayout board;
     private String packageName;
-    private Game game;
     private Activity activity;
-    private List<Player> players;
-    private int betAmount;
-    private int minBet;
     private RelativeLayout dealerLayout;
 
     public GraphicStuff(Context context) {
@@ -82,33 +72,17 @@ public class GraphicStuff {
         btnCheck = (Button) activity.findViewById(R.id.btnCheck);
         btnBet = (Button) activity.findViewById(R.id.btnBet);
         btnFold = (Button) activity.findViewById(R.id.btnFold);
-        final TextView betValue = (TextView) activity.findViewById(R.id.betValue);
 
-        betBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                betValue.setText("" + (i + minBet));
-                betAmount = i + minBet;
-            }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
-        });
     }
 
-    public void dealFlop() {
+    public void dealFlop(Card flopOne, Card flopTwo, Card flopThree) {
 
-        int resId = resources.getIdentifier(game.getBoard().get(0).toString(), "drawable", packageName);
-        int res2Id = resources.getIdentifier(game.getBoard().get(1).toString(), "drawable", packageName);
-        int res3Id = resources.getIdentifier(game.getBoard().get(2).toString(), "drawable", packageName);
+        final int resId = resources.getIdentifier(flopOne.toString(), "drawable", packageName);
+        final int res2Id = resources.getIdentifier(flopTwo.toString(), "drawable", packageName);
+        final int res3Id = resources.getIdentifier(flopThree.toString(), "drawable", packageName);
 
-        Animation flop1Anim = createAnimation(screenWidth / 2, screenWidth / 2 - 300, 0, screenHeight / 4, true);
-        flop1Anim.setStartOffset(2000);
+        Animation flop1Anim = createAnimation(screenWidth / 2, screenWidth / 2 - screenWidth / 6, 0, screenHeight / 3, true);
         flop1 = new ImageView(context);
         board.addView(flop1);
         flop1.setAnimation(flop1Anim);
@@ -116,8 +90,7 @@ public class GraphicStuff {
         flop1.setVisibility(View.VISIBLE);
         flop1.startAnimation(flop1Anim);
 
-        Animation flop2Anim = createAnimation(screenWidth / 2, screenWidth / 2 - 200, 0, screenHeight / 4, true);
-        flop2Anim.setStartOffset(2000);
+        Animation flop2Anim = createAnimation(screenWidth / 2, screenWidth / 2 - screenWidth / 10, 0, screenHeight / 3, true);
         flop2 = new ImageView(context);
         board.addView(flop2);
         flop2.setAnimation(flop2Anim);
@@ -125,8 +98,7 @@ public class GraphicStuff {
         flop2.setVisibility(View.VISIBLE);
         flop2.startAnimation(flop2Anim);
 
-        Animation flop3Anim = createAnimation(screenWidth / 2, screenWidth / 2 - 100, 0, screenHeight / 4, true);
-        flop3Anim.setStartOffset(2000);
+        Animation flop3Anim = createAnimation(screenWidth / 2, screenWidth / 2 - screenWidth / 32, 0, screenHeight / 3, true);
         flop3 = new ImageView(context);
         board.addView(flop3);
         flop3.setAnimation(flop3Anim);
@@ -136,11 +108,11 @@ public class GraphicStuff {
 
     }
 
-    public void dealTurn() {
+    public void dealTurn(Card turnCard) {
 
-        int resId = resources.getIdentifier(game.getBoard().get(3).toString(), "drawable", packageName);
+        int resId = resources.getIdentifier(turnCard.toString(), "drawable", packageName);
 
-        Animation turnAnim = createAnimation(screenWidth / 2, screenWidth / 2, 0, screenHeight / 4, true);
+        Animation turnAnim = createAnimation(screenWidth / 2, screenWidth / 2 + screenWidth / 26, 0, screenHeight / 3, true);
         turn = new ImageView(context);
         board.addView(turn);
         turn.setAnimation(turnAnim);
@@ -150,11 +122,11 @@ public class GraphicStuff {
 
     }
 
-    public void dealRiver() {
+    public void dealRiver(Card riverCard) {
 
-        int resId = resources.getIdentifier(game.getBoard().get(4).toString(), "drawable", packageName);
+        int resId = resources.getIdentifier(riverCard.toString(), "drawable", packageName);
 
-        Animation riverAnim = createAnimation(screenWidth / 2, screenWidth / 2 + 100, 0, screenHeight / 4, true);
+        Animation riverAnim = createAnimation(screenWidth / 2, screenWidth / 2 + screenWidth / 9, 0, screenHeight / 3, true);
         river = new ImageView(context);
         board.addView(river);
         river.setAnimation(riverAnim);
@@ -164,40 +136,36 @@ public class GraphicStuff {
 
     }
 
-    public void deal() {
+    public void deal(Player player) {
 
-        for (Player player : players) {
+        final int resId = player.isUser() ? resources.getIdentifier(player.getCardOne().toString(), "drawable", packageName)
+                : resources.getIdentifier("back", "drawable", packageName);
 
-            final int resId = player.isUser() ? resources.getIdentifier(player.getCardOne().toString(), "drawable", packageName)
-                    : resources.getIdentifier("back", "drawable", packageName);
+        TextView textView = player.getTextView();
+        Animation card1Anim = createAnimation(screenWidth / 2, textView.getLeft() + screenWidth / 20, 0, textView.getTop() - screenHeight / 20, true);
+        ImageView card1 = new ImageView(context);
+        board.addView(card1);
+        card1.setAnimation(card1Anim);
+        card1.setImageResource(resId);
+        card1.startAnimation(card1Anim);
+        player.setCard1View(card1);
 
-            TextView textView = player.getTextView();
-            Animation card1Anim = createAnimation(screenWidth / 2, textView.getLeft() + screenWidth / 20, 0, textView.getTop() - screenHeight / 20, true);
-            ImageView card1 = new ImageView(context);
-            board.addView(card1);
-            card1.setAnimation(card1Anim);
-            card1.setImageResource(resId);
-            card1.startAnimation(card1Anim);
-            player.setCard1View(card1);
+        final int res2Id = player.isUser() ? resources.getIdentifier(player.getCardTwo().toString(), "drawable", packageName)
+                : resources.getIdentifier("back", "drawable", packageName);
 
-            final int res2Id = player.isUser() ? resources.getIdentifier(player.getCardTwo().toString(), "drawable", packageName)
-                    : resources.getIdentifier("back", "drawable", packageName);
-
-            Animation card2Anim = createAnimation(screenWidth / 2, textView.getLeft() + screenWidth / 13, 0, textView.getTop() - screenHeight / 20, true);
-            ImageView card2 = new ImageView(context);
-            board.addView(card2);
-            card2.setAnimation(card2Anim);
-            card2.setImageResource(res2Id);
-            card2.startAnimation(card2Anim);
-            player.setCard2View(card2);
-
-        }
+        Animation card2Anim = createAnimation(screenWidth / 2, textView.getLeft() + screenWidth / 13, 0, textView.getTop() - screenHeight / 20, true);
+        ImageView card2 = new ImageView(context);
+        board.addView(card2);
+        card2.setAnimation(card2Anim);
+        card2.setImageResource(res2Id);
+        card2.startAnimation(card2Anim);
+        player.setCard2View(card2);
 
     }
 
-    public void showCards(){
-        for(Player player : players){
-            if(!player.isUser()){
+    public void showCards(List<Player> players) {
+        for (Player player : players) {
+            if (!player.isUser()) {
                 final int resId = resources.getIdentifier(player.getCardOne().toString(), "drawable", packageName);
                 final int res2Id = resources.getIdentifier(player.getCardTwo().toString(), "drawable", packageName);
                 player.getCard2View().setImageResource(res2Id);
@@ -208,93 +176,10 @@ public class GraphicStuff {
         board.invalidate();
     }
 
-    public void endRound() {
-
-        for(Player player : players){
-            player.getTextView().setText(player.getPlayerName() + "\n" + player.getStackSize().toString());
-        }
-
-        List<Player> playerList = new ArrayList<>();
-        playerList.addAll(players);
-        for (Player player : playerList) {
-            if (player.getStackSize() == 0) {
-                seats.removeView(player.getTextView());
-                players.remove(player);
-            }
-            board.removeView(player.getCard1View());
-            board.removeView(player.getCard2View());
-            player.setCard1View(null);
-            player.setCard2View(null);
-            player.setAmountInPot(0);
-        }
-        for (RelativeLayout chip : game.getPotChips()) {
-            board.removeView(chip);
-        }
-        board.removeView(flop1);
-        board.removeView(flop2);
-        board.removeView(flop3);
-        board.removeView(turn);
-        board.removeView(river);
-        game.setBoard(new ArrayList<Card>());
 
 
-    }
-
-    public void assignChips(List<Player> winners){
-        if (winners.size() > 1) {
-//            List<List<RelativeLayout>> chipsList = splitChips(game.getPotChips(), winners.size());
-//
-//            int splitPotAmount = game.getPotSize() / winners.size();
-//
-//            List<Player> winnerList = new ArrayList<>();
-//            winnerList.addAll(winners);
-//
-//            for (Player winner : winnerList) {
-//                if(winner.getAmountToWin() <= splitPotAmount){
-//                    game.setPotSize(game.getPotSize() - winner.getAmountToWin());
-//                    List<List<RelativeLayout>> layoutList = new ArrayList<>();
-//                    layoutList.addAll(chipsList);
-//                    for (List<RelativeLayout> relativeLayouts : layoutList) {
-//                        for (RelativeLayout chips : relativeLayouts) {
-//                            chips.animate().setDuration(500).x(winner.getTextView().getLeft()).y(winner.getTextView().getTop());
-//                        }
-//                        chipsList.remove(relativeLayouts);
-//                    }
-//                    winner.setStackSize(winner.getStackSize() + winner.getAmountToWin());
-//                    winners.remove(winner);
-//                }
-//            }
-//            for (Player winner : winners) {
-//                List<List<RelativeLayout>> layoutList = new ArrayList<>();
-//                layoutList.addAll(chipsList);
-//                for (List<RelativeLayout> relativeLayouts : layoutList) {
-//                    for (RelativeLayout chips : relativeLayouts) {
-//                        chips.animate().setDuration(500).x(winner.getTextView().getLeft()).y(winner.getTextView().getTop());
-//                    }
-//                    chipsList.remove(relativeLayouts);
-//                }
-//                winner.setStackSize(winner.getStackSize() + game.getPotSize() / winners.size());
-//            }
-        } else {
-            if(winners.get(0).getAmountToWin() >= game.getPotSize()){
-                for (final RelativeLayout chips : game.getPotChips()) {
-                    chips.animate().setDuration(500).x(winners.get(0).getTextView().getLeft()).y(winners.get(0).getTextView().getTop());
-                }
-            }
-            else {
-                game.getPotChips().get(0).animate().setDuration(500).x(winners.get(0).getTextView().getLeft()).y(winners.get(0).getTextView().getTop());
-                game.getPotChips().remove(0);
-                game.setPotSize(game.getPotSize() - winners.get(0).getAmountToWin());
-                List<Player> remainingPotWinners = new ArrayList<>();
-                remainingPotWinners.addAll(winners);
-                remainingPotWinners.remove(winners.get(0));
-                if(remainingPotWinners.size() > 0){
-//                    assignChips(remainingPotWinners);
-                }
-
-            }
-
-        }
+    public void assignChips(RelativeLayout chip, Player winner) {
+       chip.animate().setDuration(500).x(winner.getTextView().getLeft()).y(winner.getTextView().getTop());
     }
 
 
@@ -308,134 +193,91 @@ public class GraphicStuff {
         return translateAnimation;
     }
 
-
-    public Position getPlayerPostion(int order) {
-        switch (order) {
-            case 1:
-                return new Position(screenWidth / 6 * 5, screenHeight / 14);
-            case 2:
-                return new Position(screenWidth / 10 * 8, screenHeight / 11 * 3);
-            case 3:
-                return new Position(screenWidth / 3 * 2, screenHeight / 7 * 3);
-            case 4:
-                return new Position(screenWidth / 5 * 2, screenHeight / 7 * 3);
-            case 5:
-                return new Position(screenWidth / 6, screenHeight / 7 * 3);
-            case 6:
-                return new Position(screenWidth / 40, screenHeight / 11 * 3);
-            case 7:
-                return new Position(screenWidth / 18, screenHeight / 14);
-        }
-        return null;
-    }
-
-    public void showCurrentPlayer(Player currentPlayer) {
+    public void showCurrentPlayer(Player currentPlayer, List<Player> players) {
         currentPlayer.getTextView().setBackgroundResource(R.drawable.seatactive);
         for (Player player : players) {
             if (!player.equals(currentPlayer)) {
                 player.getTextView().setBackgroundResource(R.drawable.seatnotactive);
             }
         }
-        if (currentPlayer.isUser()) {
-            betBar.setMax(currentPlayer.getStackSize() - minBet);
-            betBar.setProgress(0);
-        }
     }
 
-    public void moveBet(int amount, long playerId) {
+    public void moveBet(Player player) {
 
-        Player actionPlayer = null;
-        for (Player player : players) {
-            if (player.getPlayerId() == playerId) {
-                actionPlayer = player;
-                break;
-            }
-        }
-
-        if (null != actionPlayer.getChipLayout()) {
-            TextView existingChipsTextViw = (TextView) actionPlayer.getChipLayout().getChildAt(0);
-            existingChipsTextViw.setText(amount + "");
+        if (null != player.getChipLayout()) {
+            TextView existingChipsTextViw = (TextView) player.getChipLayout().getChildAt(0);
+            existingChipsTextViw.setText(player.getBetAmount() + "");
         } else {
-            RelativeLayout relativeLayout = new RelativeLayout(context);
-            TextView chipsTextView = new TextView(context);
-            chipsTextView.setTextSize(15);
-            chipsTextView.setText(amount + "");
-            relativeLayout.addView(chipsTextView);
-            ImageView chipsImageView = new ImageView(context);
-            chipsImageView.setImageResource(R.drawable.chips);
-            relativeLayout.addView(chipsImageView);
+            RelativeLayout relativeLayout = (RelativeLayout) LayoutInflater.from(context).inflate(R.layout.chips, null);
+            TextView chipsTextView = (TextView) relativeLayout.getChildAt(0);
+            chipsTextView.setText(player.getBetAmount().toString());
 
 
-            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 12, screenHeight / 18);
-            Position position = getChipsPosition(actionPlayer);
+            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 12, screenHeight / 8);
+            Position position = getChipsPosition(player);
             layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
             relativeLayout.setLayoutParams(layoutParams);
 
             board.addView(relativeLayout);
-            actionPlayer.setChipLayout(relativeLayout);
+            player.setChipLayout(relativeLayout);
         }
-
-        actionPlayer.getTextView().setText(actionPlayer.getPlayerName() + "\n" + actionPlayer.getStackSize().toString());
+        if (null != player.getPlayerName()) {
+            player.getTextView().setText(player.getPlayerName() + "\n" + player.getStackSize().toString());
+        } else {
+            player.getTextView().setText(player.getStackSize().toString());
+        }
 
 
     }
 
-    public void moveFold(long playerId) {
+    public void moveFold(Player player) {
 
-        Player actionPlayer = null;
-        for (Player player : players) {
-            if (player.getPlayerId() == playerId) {
-                actionPlayer = player;
-                break;
-            }
-        }
+        Animation card1Anim = createAnimation(player.getTextView().getRight() - 150,
+                screenWidth / 2, player.getTextView().getTop() - 40, 0, false);
+        player.getCard1View().setAnimation(card1Anim);
 
-        Animation card1Anim = createAnimation(actionPlayer.getTextView().getLeft() + screenWidth / 20, screenWidth / 2, actionPlayer.getTextView().getTop() - screenHeight / 20, 0, false);
-        actionPlayer.getCard1View().setAnimation(card1Anim);
+        Animation card2Anim = createAnimation(player.getTextView().getRight() - 110,
+                screenWidth / 2, player.getTextView().getTop() - 40, 0, false);
+        player.getCard2View().setAnimation(card2Anim);
+        player.getCard1View().startAnimation(player.getCard1View().getAnimation());
+        board.removeView(player.getCard1View());
 
-        Animation card2Anim = createAnimation(actionPlayer.getTextView().getLeft() + screenWidth / 13, screenWidth / 2, actionPlayer.getTextView().getTop() - screenHeight / 20, 0, false);
-        actionPlayer.getCard2View().setAnimation(card2Anim);
-        actionPlayer.getCard1View().startAnimation(actionPlayer.getCard1View().getAnimation());
-        board.removeView(actionPlayer.getCard1View());
-
-        actionPlayer.getCard2View().startAnimation(actionPlayer.getCard2View().getAnimation());
-        board.removeView(actionPlayer.getCard2View());
+        player.getCard2View().startAnimation(player.getCard2View().getAnimation());
+        board.removeView(player.getCard2View());
 
     }
 
-    public void collectChips(List<Player> playersInRound) {
+    public void collectChips(Player player) {
 
-
-        for (Player player : playersInRound) {
-            if (null != player.getChipLayout()) {
-                int chipsShiftX = new Random().nextInt(100) - 50;
-                int chipsShiftY = new Random().nextInt(20) - 10;
-                TextView chipsText = (TextView) player.getChipLayout().getChildAt(0);
-                chipsText.setText("");
-                player.getChipLayout().animate().x(screenWidth / 2 + chipsShiftX).y(screenHeight / 7 + chipsShiftY);
-                game.getPotChips().add(player.getChipLayout());
-            }
-            player.setChipLayout(null);
-            player.setBetAmount(0);
+        if (null != player.getChipLayout()) {
+            int chipsShiftX = new Random().nextInt(100) - 50;
+            int chipsShiftY = new Random().nextInt(20) - 10;
+            TextView chipsText = (TextView) player.getChipLayout().getChildAt(0);
+            chipsText.setText("");
+            player.getChipLayout().animate().x(screenWidth / 2 + chipsShiftX).y(screenHeight / 7 + chipsShiftY);
         }
     }
 
     public Position getChipsPosition(Player player) {
-        switch (player.getOrder()) {
+        switch (player.getPosition()) {
             case 1:
-                return new Position(player.getTextView().getLeft() - 70, player.getTextView().getTop() + 20);
+                return new Position(player.getTextView().getLeft() - getPixels(20), player.getTextView().getTop() + getPixels(80));
             case 2:
-                return new Position(player.getTextView().getLeft() - 50, player.getTextView().getTop() - 20);
+                return new Position(player.getTextView().getLeft() - getPixels(50), player.getTextView().getTop() + getPixels(20));
             case 3:
-                return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 100);
+                return new Position(player.getTextView().getLeft() - getPixels(50), player.getTextView().getTop() - getPixels(20));
             case 4:
-                return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 100);
+                return new Position(player.getTextView().getLeft() + getPixels(50), player.getTextView().getTop() - getPixels(80));
             case 5:
-                return new Position(player.getTextView().getLeft() + 50, player.getTextView().getTop() - 100);
+                return new Position(player.getTextView().getLeft() + getPixels(80), player.getTextView().getTop() - getPixels(80));
             case 6:
-                return new Position(player.getTextView().getLeft() + 220, player.getTextView().getTop() + 20);
+                return new Position(player.getTextView().getLeft() + getPixels(80), player.getTextView().getTop() - getPixels(80));
             case 7:
-                return new Position(player.getTextView().getLeft() + 220, player.getTextView().getTop() + 20);
+                return new Position(player.getTextView().getLeft() + getPixels(200), player.getTextView().getTop() - getPixels(40));
+            case 8:
+                return new Position(player.getTextView().getLeft() + getPixels(200), player.getTextView().getTop() + getPixels(20));
+            case 9:
+                return new Position(player.getTextView().getLeft() + getPixels(200), player.getTextView().getTop() + getPixels(80));
         }
         return null;
     }
@@ -464,39 +306,13 @@ public class GraphicStuff {
         return null;
     }
 
-    public int getPixels(int dp){
+    public int getPixels(int dp) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                 (float) dp, context.getResources().getDisplayMetrics());
     }
 
 
-    public void createPlayers() {
-        players = new ArrayList<>();
-        players.addAll(game.getPlayers());
-        for (Player player : players) {
-
-            TextView textView = new TextView(context);
-            textView.setBackgroundResource(R.drawable.seatnotactive);
-
-            RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 5, screenHeight / 6);
-            Position position = getPlayerPostion(player.getOrder());
-            layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
-
-            textView.setTop(position.getTop());
-            textView.setLeft(position.getLeft());
-            textView.setLayoutParams(layoutParams);
-            textView.setText(player.getPlayerName() + "\n" + player.getStackSize().toString());
-            textView.setGravity(Gravity.CENTER);
-            textView.setTextColor(0xFF000000);
-            textView.setTextSize(15);
-
-            player.setTextView(textView);
-
-            seats.addView(textView);
-        }
-    }
-
-    public void addDealer(){
+    public void addDealer(Player dealer) {
         dealerLayout = new RelativeLayout(context);
         ImageView dealerBtn = new ImageView(context);
         dealerBtn.setImageResource(R.drawable.dealer);
@@ -506,7 +322,7 @@ public class GraphicStuff {
 
 
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 20, screenHeight / 20);
-        Position position = getDealerBtnPosition(game.getDealer());
+        Position position = getDealerBtnPosition(dealer);
         layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
         dealerLayout.setLayoutParams(layoutParams);
         dealerLayout.addView(dealerBtn);
@@ -532,110 +348,34 @@ public class GraphicStuff {
 
     }
 
-    public void moveDealer(){
-        Position dealerPos = getDealerBtnPosition(game.getDealer());
+    public void moveDealer(Player dealer) {
+        Position dealerPos = getDealerBtnPosition(dealer);
         dealerLayout.animate().setDuration(500).x(dealerPos.getLeft()).y(dealerPos.getTop());
     }
 
-    public void showAvailableActionButtons(Action lastAction, Action highestBetAction, boolean roundOver) {
-        List<ActionType> availableActions = new ArrayList<>();
-        if (null == lastAction || roundOver) {
-            availableActions.add(ActionType.CHECK);
-            availableActions.add(ActionType.BET);
-            availableActions.add(ActionType.FOLD);
-        } else {
-            Boolean higherStackThanBetAmount = highestBetAction == null ? null : game.getUser().getStackSize() > highestBetAction.getBetValue();
-
-            availableActions = getAvailableActions(lastAction.getActionType(), highestBetAction == null ? null : highestBetAction.getActionType(),
-                    higherStackThanBetAmount);
-        }
-
-
-        btnCheck.setVisibility(View.VISIBLE);
-        if (availableActions.contains(ActionType.CALL)) {
-            btnCheck.setText("CALL");
-        } else {
-            btnCheck.setText("CHECK");
-        }
-        if (availableActions.contains(ActionType.RAISE)) {
-            btnBet.setText("RAISE");
-            if(game.getUser().getStackSize() > highestBetAction.getBetValue() * 2){
-                minBet = highestBetAction.getBetValue() * 2;
-            } else {
-                minBet = game.getUser().getStackSize();
-                betBar.setMax(0);
-            }
-
-            betValue.setText("" + minBet);
-        } else {
-            btnBet.setText("BET");
-            minBet = game.getBigBlindValue();
-            betValue.setText("" + minBet);
-        }
-        if (availableActions.contains(ActionType.ALL_IN)) {
-            btnBet.setText("ALL IN");
-            btnCheck.setVisibility(View.GONE);
-        }
-
+    public void removePlayerCards(Player player){
+        board.removeView(player.getCard1View());
+        board.removeView(player.getCard2View());
     }
 
-    public void updateGame(Game game) {
+    public void removeChips(RelativeLayout chip){
+        board.removeView(chip);
+    }
 
-//        this.game.setPotSize(game.getPotSize());
-        potSize.setText(game.getPotSize().toString());
-        if(game.getBoard().size() > this.game.getBoard().size()){
-            for(Card card : game.getBoard()){
-                if(game.getBoard().indexOf(card) > this.game.getBoard().size() - 1){
-                    this.game.getBoard().add(card);
-                }
-            }
-        }
-        this.game.setDealer(game.getDealer());
-        this.game.setSmallBlind(game.getSmallBlind());
-        this.game.setSmallBlindValue(game.getSmallBlindValue());
-        this.game.setBigBlind(game.getBigBlind());
-        this.game.setBigBlindValue(game.getBigBlindValue());
-        for (Player player : players) {
+    public void removeBoard(){
+        board.removeView(flop1);
+        board.removeView(flop2);
+        board.removeView(flop3);
+        board.removeView(turn);
+        board.removeView(river);
+    }
 
-            if(game.getPlayers().contains(player)){
-                for (Player newPlayer : game.getPlayers()) {
-                    if (player.getPlayerId().equals(newPlayer.getPlayerId())) {
-                        player.setPlayerTurn(newPlayer.isPlayerTurn());
-                        player.setPlayerInTurn(newPlayer.getPlayerInTurn());
-                        player.setPlayerWinner(newPlayer.isPlayerWinner());
-                        player.setPlayerRaiser(newPlayer.isPlayerRaiser());
-                        player.setStackSize(newPlayer.getStackSize());
-                        player.setCardOne(newPlayer.getCardOne());
-                        player.setCardTwo(newPlayer.getCardTwo());
-                    }
-                }
-            } else {
-                seats.removeView(player.getTextView());
-                if(player.isUser()){
-                    AlertDialog alertDialog = new AlertDialog.Builder(
-                            context).create();
+    public void updatePotSize(Integer size) {
+        potSize.setText(size.toString());
+    }
 
-                    alertDialog.setTitle("Game Over!");
-                    alertDialog.setMessage("You have finished " + game.getPlayers().size() + 1 + ". place!");
-
-                    final long userId = player.getUserId();
-                    alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL,"Back to Game Browser", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            Intent gameBrowserActivity = new Intent(context.getApplicationContext(), GameBrowserActivity.class);
-                            gameBrowserActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                            Bundle bundle = new Bundle();
-                            bundle.putLong("userId", userId);
-                            gameBrowserActivity.putExtras(bundle);
-                            context.startActivity(gameBrowserActivity);
-                        }
-                    });
-
-                    alertDialog.show();
-                }
-            }
-
-        }
-
+    public void removeSeat(Player player) {
+        seats.removeView(player.getTextView());
     }
 
 
@@ -706,35 +446,64 @@ public class GraphicStuff {
         return availableActions;
     }
 
-    public static List<List<RelativeLayout>> splitChips(List<RelativeLayout> list, int numberOfLists) {
+    public TextView createPlayerView(Player player){
+        TextView textView = new TextView(context);
+        textView.setBackgroundResource(R.drawable.seatnotactive);
 
-        int sizeOfSubList = list.size() / numberOfLists;
-        List<List<RelativeLayout>> subLists = new ArrayList<>(numberOfLists);
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 5, screenHeight / 6);
+        Position position = getPlayerPosition(player.getPosition());
+        layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
 
-        List<RelativeLayout> subList = new ArrayList<>();
-        for (RelativeLayout relativeLayout : list) {
-            if(subLists.size() == numberOfLists - 1){
-                subList = list.subList(list.indexOf(relativeLayout) - 1, list.size()-1);
-                subLists.add(subList);
-                break;
-            }
-            if (subList.size() < sizeOfSubList) {
-                subList.add(relativeLayout);
-            }
-            if (subList.size() == sizeOfSubList || list.indexOf(relativeLayout) == list.size() - 1) {
-                subLists.add(subList);
-                subList = new ArrayList<>();
-            }
+        textView.setTop(position.getTop());
+        textView.setLeft(position.getLeft());
+        textView.setLayoutParams(layoutParams);
+        textView.setText(player.getPlayerName() + "\n" + player.getStackSize().toString());
+        textView.setGravity(Gravity.CENTER);
+        textView.setTextColor(0xFF000000);
+        textView.setTextSize(15);
 
+        seats.addView(textView);
+        return  textView;
+    }
+
+    public List<List<RelativeLayout>> splitChips(List<RelativeLayout> list, int numberOfLists) {
+
+        List<List<RelativeLayout>> subLists = new ArrayList<>();
+
+        for (int i = 0; i < numberOfLists; i++) {
+            subLists.add(new ArrayList<RelativeLayout>());
+        }
+
+        int index = 0;
+
+        for (RelativeLayout layout : list) {
+            subLists.get(index).add(layout);
+            index = (index + 1) % numberOfLists;
         }
         return subLists;
     }
 
-    public Game getGame() {
-        return game;
-    }
-
-    public void setGame(Game game) {
-        this.game = game;
+    public Position getPlayerPosition(int pos) {
+        switch (pos) {
+            case 1:
+                return new Position(screenWidth / 5 * 3, screenHeight / 15);
+            case 2:
+                return new Position(screenWidth / 10 * 8, screenHeight / 5);
+            case 3:
+                return new Position(screenWidth / 10 * 8, screenHeight / 7 * 3);
+            case 4:
+                return new Position(screenWidth / 25 * 16, screenHeight / 5 * 3);
+            case 5:
+                return new Position(screenWidth / 5 * 2, screenHeight / 5 * 3);
+            case 6:
+                return new Position(screenWidth / 6, screenHeight / 5 * 3);
+            case 7:
+                return new Position(screenWidth / 70, screenHeight / 7 * 3);
+            case 8:
+                return new Position(screenWidth / 70, screenHeight / 5);
+            case 9:
+                return new Position(screenWidth / 5, screenHeight / 15);
+        }
+        return null;
     }
 }
