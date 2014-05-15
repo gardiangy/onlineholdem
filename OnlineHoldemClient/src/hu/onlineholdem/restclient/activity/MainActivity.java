@@ -21,7 +21,7 @@ import hu.onlineholdem.restclient.entity.Player;
 import hu.onlineholdem.restclient.enums.ActionType;
 import hu.onlineholdem.restclient.response.Response;
 import hu.onlineholdem.restclient.task.RefreshTask;
-import hu.onlineholdem.restclient.task.WebServiceTask;
+import hu.onlineholdem.restclient.task.PostTask;
 
 public class MainActivity extends Activity {
 
@@ -72,7 +72,7 @@ public class MainActivity extends Activity {
 
         TextView betValue = (TextView) findViewById(R.id.betValue);
 
-        WebServiceTask wst = new PostGameTask(WebServiceTask.POST_TASK, this,"Posting data...");
+        PostTask wst = new PostGamePostTask(this);
 
         ActionType actionType = null;
         int btnId = vw.getId();
@@ -148,10 +148,10 @@ public class MainActivity extends Activity {
         }
     }
 
-    private class PostGameTask extends WebServiceTask{
+    private class PostGamePostTask extends PostTask {
 
-        public PostGameTask(int taskType, Context mContext, String processMessage) {
-            super(taskType, mContext, processMessage);
+        public PostGamePostTask(Context mContext) {
+            super(mContext);
         }
 
         @Override

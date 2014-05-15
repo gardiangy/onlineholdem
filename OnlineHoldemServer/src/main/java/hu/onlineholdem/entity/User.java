@@ -35,7 +35,7 @@ public class User implements Serializable {
 	private List<Player> players;
 
     //bi-directional many-to-one association to Rankings
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name="rank_id")
     private Rankings rankings;
 

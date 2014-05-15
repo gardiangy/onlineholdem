@@ -26,7 +26,7 @@ public class LoginResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response postAction(LoginBO loginBO) {
+    public Response login(LoginBO loginBO) {
 
         User user = userDAO.findByUserName(loginBO.getUserName());
         if (null == user) {

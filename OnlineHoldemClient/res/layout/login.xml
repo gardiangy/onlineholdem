@@ -48,7 +48,8 @@
         android:text="You dont have an account? \nRegister here"
         android:gravity="center"
         android:textSize="20sp"
-        android:textColor="#0b84aa"/>
+        android:textColor="#0b84aa"
+        android:onClick="register"/>
     <TextView android:id="@+id/errorMsg"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -56,5 +57,31 @@
         android:textSize="20sp"
         android:gravity="center"
         android:layout_marginTop="10dip"/>
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="bottom">
+
+        <Button
+
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Change IP"
+            android:layout_marginRight="10dp"
+            android:id="@+id/btnShowIP"
+            android:onClick="showIP"/>
+
+        <EditText
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:id="@+id/ipText"
+            android:visibility="invisible"/>
+
+    </LinearLayout>
 
 </LinearLayout>

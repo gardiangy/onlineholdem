@@ -161,6 +161,7 @@ public class SinglePlayerActivity extends Activity {
             player.setPlayerId(Long.valueOf(pl.get("player_id")));
             player.setAmountInPot(0);
             player.setOrder(Integer.valueOf(pl.get("player_order")));
+            player.setPosition(Integer.valueOf(pl.get("player_position")));
             player.setPlayStyle(PlayStyle.valueOf(pl.get("player_style")));
             if (Boolean.valueOf(pl.get("player_is_user"))){
                 player.setIsUser(true);
@@ -174,10 +175,6 @@ public class SinglePlayerActivity extends Activity {
             this.players.add(player);
         }
 
-    }
-
-    public void startGame(View view) {
-        gameThread.start();
     }
 
     public void moveCheck(View view){

@@ -28,37 +28,24 @@ import java.util.ArrayList;
 
 import hu.onlineholdem.restclient.response.Response;
 
-public abstract class WebServiceTask extends AsyncTask<String, Response, Response> {
+public abstract class PostTask extends AsyncTask<String, Response, Response> {
 
     public abstract void handleResponse(Response response);
     public abstract Response parseJson(JSONObject jsonObject);
 
-    public static final int POST_TASK = 1;
-    public static final int GET_TASK = 2;
-
-    private static final String TAG = "WebServiceTask";
+    private static final String TAG = "PostTask";
 
     private static final int CONN_TIMEOUT = 3000;
     private static final int SOCKET_TIMEOUT = 5000;
 
     private boolean serverNotResponding = false;
 
-    private int taskType = GET_TASK;
     private Context mContext = null;
-    private String processMessage = "Processing...";
 
     private ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
 
-    private ProgressDialog pDlg = null;
-
-    private boolean run = true;
-
-    public WebServiceTask(int taskType, Context mContext,
-                          String processMessage) {
-
-        this.taskType = taskType;
+    public PostTask(Context mContext) {
         this.mContext = mContext;
-        this.processMessage = processMessage;
     }
 
     public void addNameValuePair(String name, String value) {
@@ -66,22 +53,8 @@ public abstract class WebServiceTask extends AsyncTask<String, Response, Respons
         params.add(new BasicNameValuePair(name, value));
     }
 
-    private void showProgressDialog() {
-
-        pDlg = new ProgressDialog(mContext);
-        pDlg.setMessage(processMessage);
-        pDlg.setProgressDrawable(mContext.getWallpaper());
-        pDlg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        pDlg.setCancelable(false);
-        pDlg.show();
-
-    }
-
     @Override
     protected void onPreExecute() {
-
-        //hideKeyboard();
-        //showProgressDialog();
 
     }
 
@@ -105,15 +78,14 @@ public abstract class WebServiceTask extends AsyncTask<String, Response, Respons
     }
 
 
-
     @Override
     protected void onPostExecute(Response response) {
 
-        if(serverNotResponding){
+        if (serverNotResponding) {
             Toast.makeText(mContext, "Server not responding", Toast.LENGTH_SHORT).show();
-        } else {
-            handleResponse(response);
         }
+        handleResponse(response);
+
 
     }
 
@@ -135,25 +107,19 @@ public abstract class WebServiceTask extends AsyncTask<String, Response, Respons
         HttpResponse response = null;
 
         try {
-            switch (taskType) {
 
-                case POST_TASK:
-                    HttpPost httppost = new HttpPost(url);
-                    JSONObject json = new JSONObject();
-                    for (NameValuePair pair : params) {
-                        json.put(pair.getName(), pair.getValue());
-                    }
-                    httppost.setEntity(new StringEntity(json.toString()));
-                    httppost.setHeader("Accept", "application/json");
-                    httppost.setHeader("Content-type", "application/json");
+                HttpPost httppost = new HttpPost(url);
+                JSONObject json = new JSONObject();
+                for (NameValuePair pair : params) {
+                    json.put(pair.getName(), pair.getValue());
+                }
+                httppost.setEntity(new StringEntity(json.toString()));
+                httppost.setHeader("Accept", "application/json");
+                httppost.setHeader("Content-type", "application/json");
 
-                    response = httpclient.execute(httppost);
-                    break;
-                case GET_TASK:
-                    HttpGet httpget = new HttpGet(url);
-                    response = httpclient.execute(httpget);
-                    break;
-            }
+                response = httpclient.execute(httppost);
+
+
         } catch (SocketTimeoutException | ConnectTimeoutException | NullPointerException e) {
             serverNotResponding = true;
             Log.e(TAG, e.getLocalizedMessage(), e);

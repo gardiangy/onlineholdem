@@ -154,7 +154,7 @@ table {
 
 .row {
     display: inline-block;
-    width: 70%;
+    width: 100%;
     padding: 10px 0 10px 0;
 }
 
@@ -221,6 +221,7 @@ table {
     background: #222;
     position: absolute;
     z-index: 100;
+    min-width: 500px;
 }
 
 .popup .row{

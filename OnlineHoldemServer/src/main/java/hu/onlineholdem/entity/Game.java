@@ -49,7 +49,7 @@ public class Game implements Serializable {
     private Integer bigBlindValue;
 
     //bi-directional many-to-one association to Action
-    @OneToMany(mappedBy = "game", cascade = {CascadeType.ALL})
+    @OneToMany(mappedBy = "game", cascade = {CascadeType.ALL}, orphanRemoval = true)
     private List<Action> actions;
 
     //bi-directional many-to-one association to Player
@@ -63,22 +63,22 @@ public class Game implements Serializable {
     private List<Card> flop;
 
     @ManyToOne
-    @JoinColumn(name="game_turn", nullable=false)
+    @JoinColumn(name="game_turn", nullable=true)
     private Card turn;
 
     @ManyToOne
-    @JoinColumn(name="game_river", nullable=false)
+    @JoinColumn(name="game_river", nullable=true)
     private Card river;
 
     @ManyToOne
     @JoinColumn(name="game_dealer", nullable=true)
     private Player dealer;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name="game_small_blind", nullable=true)
     private Player smallBlind;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name="game_big_blind", nullable=true)
     private Player bigBlind;
 

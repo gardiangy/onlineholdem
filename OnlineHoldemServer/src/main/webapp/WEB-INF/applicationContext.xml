@@ -32,8 +32,14 @@
 
     <bean id="gameChecker" class="hu.onlineholdem.bean.GameStartCheckerBean"  />
 
+    <bean id="blindCreator" class="hu.onlineholdem.bean.BlindCreatorBean"  />
+
     <bean id="gameCheckerThread" class="java.lang.Thread" init-method="start">
         <constructor-arg ref="gameChecker"/>
+    </bean>
+
+    <bean id="blindCreatorThread" class="java.lang.Thread" init-method="start">
+        <constructor-arg ref="blindCreator"/>
     </bean>
 
     <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">

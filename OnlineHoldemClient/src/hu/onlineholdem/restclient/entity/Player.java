@@ -36,6 +36,8 @@ public class Player implements Serializable {
     private Boolean playerRaiser;
     private Boolean playerWinner;
     private PlayStyle playStyle;
+    private Card cardOneLastRound;
+    private Card cardTwoLastRound;
 
 	public Player() {
 	}
@@ -222,6 +224,22 @@ public class Player implements Serializable {
 
     public void setPosition(Integer position) {
         this.position = position;
+    }
+
+    public Card getCardOneLastRound() {
+        return cardOneLastRound;
+    }
+
+    public void setCardOneLastRound(Card cardOneLastRound) {
+        this.cardOneLastRound = cardOneLastRound;
+    }
+
+    public Card getCardTwoLastRound() {
+        return cardTwoLastRound;
+    }
+
+    public void setCardTwoLastRound(Card cardTwoLastRound) {
+        this.cardTwoLastRound = cardTwoLastRound;
     }
 
     @Override

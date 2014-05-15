@@ -1,19 +1,16 @@
 package hu.onlineholdem.resource;
 
+import hu.onlineholdem.bean.BlindCreatorBean;
 import hu.onlineholdem.bo.ActionBO;
-import hu.onlineholdem.dao.ActionDAO;
-import hu.onlineholdem.dao.CardDAO;
-import hu.onlineholdem.dao.GameDAO;
-import hu.onlineholdem.dao.PlayerDAO;
-import hu.onlineholdem.entity.Action;
-import hu.onlineholdem.entity.Card;
-import hu.onlineholdem.entity.Game;
-import hu.onlineholdem.entity.Player;
+import hu.onlineholdem.dao.*;
+import hu.onlineholdem.entity.*;
 import hu.onlineholdem.enums.ActionType;
+import hu.onlineholdem.enums.GameState;
 import hu.onlineholdem.enums.ResponseType;
 import hu.onlineholdem.response.Response;
 import hu.onlineholdem.util.EvaluatedHand;
 import hu.onlineholdem.util.HandEvaluator;
+import hu.onlineholdem.util.PlayerComperator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +18,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 @Path("/action")
@@ -38,6 +36,12 @@ public class ActionResource {
 
     @Autowired
     private CardDAO cardDAO;
+
+    @Autowired
+    private BlindCreatorBean blindCreator;
+
+    @Autowired
+    private UserDAO userDAO;
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -64,16 +68,18 @@ public class ActionResource {
                 playersInRound.add(pl);
             }
         }
+        Collections.sort(playersInRound, new PlayerComperator());
 
         int highestBetAmount = 0;
         Action lastAction = null;
+        boolean preFlop = game.getFlop() == null || game.getFlop().size() == 0;
 
         if (game.getActions().size() == 0) {
             action.setActionRound(1);
         } else {
             lastAction = game.getActions().get(game.getActions().size() - 1);
 
-            if (player.getPlayerOrder() <= lastAction.getPlayer().getPlayerOrder() && !makeMovesAgain(playersInRound)) {
+            if (player.getPlayerOrder() <= lastAction.getPlayer().getPlayerOrder() && !makeMovesAgain(playersInRound,game.getBigBlind(),preFlop)) {
                 action.setActionRound(lastAction.getActionRound() + 1);
                 setRaiser(player, game);
             } else {
@@ -124,18 +130,21 @@ public class ActionResource {
                         action.setBetValue(0);
                         pl.setPlayerBetAmount(0);
                     }
-                    pl.setPlayerTurn(false);
 
                 } else {
-                    if (isBettingRoundOver(playersInRound, player)) {
+                    if (isBettingRoundOver(playersInRound, player, game.getBigBlind(),preFlop) && !makeMovesAgain(playersInRound,game.getBigBlind(),preFlop)) {
+                        System.out.println("betting round over");
                         for (Player nextPlayer : game.getPlayers()) {
                             if (nextPlayer.equals(playersInRound.get(0))) {
-                                nextPlayer.setPlayerTurn(true);
+                                setNextPlayer(game.getPlayers(),nextPlayer);
+                                System.out.println("nextPlayer: " + nextPlayer.getUser().getUserName());
                             }
                         }
                     } else {
+                        System.out.println("betting round not over");
                         if (playersInRound.indexOf(pl) == playersInRound.indexOf(player) + 1) {
-                            pl.setPlayerTurn(true);
+                            setNextPlayer(game.getPlayers(),pl);
+                            System.out.println("nextPlayer: " + pl.getUser().getUserName());
                         }
                     }
 
@@ -144,6 +153,8 @@ public class ActionResource {
 
 
         }
+
+        boolean newRound = false;
 
         int newPotSize = game.getPotSize();
         if (action.getActionType().equals(ActionType.RAISE)) {
@@ -154,6 +165,8 @@ public class ActionResource {
         }
         game.setPotSize(newPotSize);
 
+        int playersWithStack = 0;
+
         if (game.getActions().size() == 0) {
             action.setActionRound(1);
         } else {
@@ -161,21 +174,64 @@ public class ActionResource {
             if (playersInRound.size() == 1) {
                 endRound(playersInRound, game, action);
                 startNewRound(game);
-            } else if (isBettingRoundOver(playersInRound, player) && !makeMovesAgain(playersInRound)) {
+                newRound = true;
+            } else if (isBettingRoundOver(playersInRound, player,game.getBigBlind(),preFlop) && !makeMovesAgain(playersInRound,game.getBigBlind(),preFlop)) {
+                System.out.println("round over");
+
+                for (Player pl : game.getPlayers()) {
+                    if (pl.getStackSize() > 0) {
+                        playersWithStack++;
+                    }
+                }
 
                 if (null == game.getFlop() || game.getFlop().size() == 0) {
+                    System.out.println("dealing flop");
                     game.setFlop(new ArrayList<Card>());
                     game.getFlop().add(getNextCard(game));
                     game.getFlop().add(getNextCard(game));
                     game.getFlop().add(getNextCard(game));
+
+                    if(playersWithStack < 2){
+                        game.setTurn(getNextCard(game));
+                        System.out.println("dealing turn");
+                        game.setRiver(getNextCard(game));
+                        System.out.println("dealing river");
+                        int playerSize = endRound(playersInRound, game, action);
+                        if(playerSize > 1){
+                            startNewRound(game);
+                        }
+                        newRound = true;
+                    }
                 } else if (null == game.getTurn()) {
+                    System.out.println("dealing turn");
                     game.setTurn(getNextCard(game));
+                    if(playersWithStack < 2){
+                        game.setRiver(getNextCard(game));
+                        System.out.println("dealing river");
+                        int playerSize = endRound(playersInRound, game, action);
+                        if(playerSize > 1){
+                            startNewRound(game);
+                        }
+                        newRound = true;
+                    }
                 } else {
                     if (null == game.getRiver()) {
+                        System.out.println("dealing river");
                         game.setRiver(getNextCard(game));
+                        if(playersWithStack < 2){
+                            int playerSize =  endRound(playersInRound, game, action);
+                            if(playerSize > 1){
+                                startNewRound(game);
+                            }
+                            newRound = true;
+                        }
                     } else {
-                        endRound(playersInRound, game, action);
-                        startNewRound(game);
+
+                        int playerSize = endRound(playersInRound, game, action);
+                        if(playerSize > 1){
+                            startNewRound(game);
+                        }
+                        newRound = true;
                     }
                 }
                 for (Player pl : game.getPlayers()) {
@@ -186,33 +242,34 @@ public class ActionResource {
 
         }
 
-        int playersWithNoStack = 0;
-        for (Player pl : game.getPlayers()) {
-            if (pl.getStackSize() == 0) {
-                playersWithNoStack++;
+
+
+        List<Player> playerList = new ArrayList<>();
+        List<Player> playersToRemove= new ArrayList<>();
+        playerList.addAll(game.getPlayers());
+        if(newRound){
+            for(Player pl : playerList){
+                if(pl.getStackSize() == 0){
+                    game.getPlayers().remove(pl);
+                    playersToRemove.add(pl);
+                }
             }
-        }
-        if (playersWithNoStack >= game.getPlayers().size() - 1) {
-            if (null == game.getFlop()) {
-                game.setFlop(new ArrayList<Card>());
-                game.getFlop().add(getNextCard(game));
-                game.getFlop().add(getNextCard(game));
-                game.getFlop().add(getNextCard(game));
-            }
-            if (null == game.getTurn()) {
-                game.setTurn(getNextCard(game));
-            }
-            if (null == game.getRiver()) {
-                game.setRiver(getNextCard(game));
-            }
-            endRound(playersInRound, game, action);
-            startNewRound(game);
         }
 
 
-        game.getActions().add(action);
+        if(!playersToRemove.contains(action.getPlayer())){
+            game.getActions().add(action);
+        }
+        if(game.getPlayers().size() == 1){
+            game.setGameState(GameState.FINISHED);
+        }
 
         Game persistedGame = gameDAO.save(game);
+
+        if(newRound && playersWithStack > 1){
+            blindCreator.setGameId(persistedGame.getGameId());
+            blindCreator.setAddBlinds(true);
+        }
 
         Response response = new Response();
         response.setResponseObject(persistedGame);
@@ -273,17 +330,43 @@ public class ActionResource {
     }
 
 
-    public boolean makeMovesAgain(List<Player> players) {
-        int amount = players.get(0).getPlayerBetAmount();
+    public boolean makeMovesAgain(List<Player> players, Player bigBlind, boolean preFlop) {
+        int highestBetAmount = players.get(0).getPlayerBetAmount();
+        for(Player player : players){
+            if(player.getPlayerBetAmount() > highestBetAmount){
+                highestBetAmount = player.getPlayerBetAmount();
+            }
+        }
         for (Player player : players) {
-            if ((null != player.getPlayerBetAmount() && player.getPlayerBetAmount() != amount && player.getStackSize() > 0)) {
+            if(preFlop && player.equals(bigBlind)){
+                if(player.getPlayerBetAmount() + player.getPlayerAmountInPot() != highestBetAmount && player.getStackSize() > 0
+                        && player.getActions().get(0).getActionType().equals(ActionType.CHECK)){
+                    return true;
+                }
+            }
+            else if ((null != player.getPlayerBetAmount() && player.getPlayerBetAmount() != highestBetAmount && player.getStackSize() > 0)) {
                 return true;
             }
         }
         return false;
     }
 
-    public void endRound(List<Player> playersInRound, Game game, Action action) {
+    public void setNextPlayer(List<Player> players, Player nextPlayer){
+        for(Player player : players){
+            if(player.equals(nextPlayer)){
+                player.setPlayerTurn(true);
+                player.setPlayerTurnTime(new Date());
+            } else {
+                player.setPlayerTurn(false);
+            }
+        }
+    }
+
+    public int endRound(List<Player> playersInRound, Game game, Action action) {
+        System.out.println("ending round");
+        for (Player pl : game.getPlayers()) {
+            pl.setPlayerWinner(false);
+        }
         if (playersInRound.size() == 1) {
             playersInRound.get(0).setStackSize(playersInRound.get(0).getStackSize() + game.getPotSize());
             playersInRound.get(0).setPlayerWinner(true);
@@ -316,35 +399,63 @@ public class ActionResource {
             }
 
         }
+        int playersWithStack = 0;
 
         List<Player> players = new ArrayList<>();
         players.addAll(game.getPlayers());
         for (Player player : players) {
             player.setPlayerAmountInPot(0);
             if (player.getStackSize() == 0) {
+                List<Action> actions = new ArrayList<>();
+                actions.addAll(game.getActions());
+                for(Action ac : actions){
+                    if(ac.getPlayer().equals(player)){
+                        game.getActions().remove(ac);
+                    }
+                }
+                if(game.getBigBlind().equals(player)){
+                    game.setBigBlind(null);
+                }
+                if(game.getSmallBlind().equals(player)){
+                    game.setSmallBlind(null);
+                }
+                if(game.getDealer().equals(player)){
+                    game.setDealer(null);
+                }
+                game = gameDAO.save(game);
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
                 game.getPlayers().remove(player);
+                int finishingPos = game.getPlayers().size() + 1;
+                User user = userDAO.findByUserName(player.getUser().getUserName());
+                if(null == user.getRankings()){
+                    Rankings rank = new Rankings();
+                    rank.setRankPlayedGames(1);
+                    rank.setRankPoint(100 - (10 * finishingPos));
+                    user.setRankings(rank);
+                    userDAO.save(user);
+                } else {
+                    Rankings existingRank = user.getRankings();
+                    existingRank.setRankPlayedGames(existingRank.getRankPlayedGames() + 1);
+                    existingRank.setRankPoint(existingRank.getRankPoint() + (100 - (10 * finishingPos)));
+                    userDAO.save(user);
+                }
+            } else {
+                playersWithStack++;
             }
+
         }
-        int dealerIndex = players.indexOf(game.getDealer());
-        game.setDealer(dealerIndex == players.size() - 1 ? players.get(0) : players.get(dealerIndex + 1));
-        setBlindPlayers(game);
+        if(playersWithStack > 1){
+            int dealerIndex = players.indexOf(game.getDealer());
+            game.setDealer(dealerIndex == players.size() - 1 ? players.get(0) : players.get(dealerIndex + 1));
+            setBlindPlayers(game);
+        }
 
-        Action smallBlindAction = new Action();
-        smallBlindAction.setActionRound(action.getActionRound() + 1);
-        smallBlindAction.setBetValue(game.getSmallBlindValue());
-        smallBlindAction.setGame(game);
-        smallBlindAction.setPlayer(game.getSmallBlind());
-        smallBlindAction.setActionType(ActionType.BET);
+        return game.getPlayers().size();
 
-        Action bigBlindAction = new Action();
-        bigBlindAction.setActionRound(action.getActionRound() + 1);
-        bigBlindAction.setBetValue(game.getBigBlindValue());
-        bigBlindAction.setGame(game);
-        bigBlindAction.setPlayer(game.getBigBlind());
-        bigBlindAction.setActionType(ActionType.BET);
-
-        game.getActions().add(smallBlindAction);
-        game.getActions().add(bigBlindAction);
     }
 
     public List<Action> getLastRoundActions(List<Action> actions, int actionRound) {
@@ -358,15 +469,23 @@ public class ActionResource {
     }
 
 
-    public boolean isBettingRoundOver(List<Player> playersInRound, Player actualPlayer) {
+    public boolean isBettingRoundOver(List<Player> playersInRound, Player actualPlayer, Player bigBlind, boolean preFlop) {
         for (Player player : playersInRound) {
             if (player.equals(actualPlayer)) {
-                if (playersInRound.size() > playersInRound.indexOf(player) + 1) {
-                    if (playersInRound.get(playersInRound.indexOf(player) + 1).getPlayerRaiser()) {
-                        return true;
+                int nextPlayerIndex = playersInRound.indexOf(player) + 1;
+                if (playersInRound.size() > nextPlayerIndex) {
+                    Player nextPlayer = playersInRound.get(nextPlayerIndex);
+                    if (nextPlayer.getPlayerRaiser()) {
+                        if(nextPlayer.equals(bigBlind) && preFlop){
+                            return false;
+                        } else {
+                            return true;
+                        }
+
                     }
                 } else {
-                    if (!actualPlayer.equals(playersInRound.get(0)) && playersInRound.get(0).getPlayerRaiser()) {
+                    if (!actualPlayer.equals(playersInRound.get(0)) &&
+                            (playersInRound.get(0).getPlayerRaiser() || actualPlayer.equals(bigBlind))) {
                         return true;
                     }
                 }
@@ -376,9 +495,23 @@ public class ActionResource {
     }
 
     public void startNewRound(Game game) {
+
+        int playersWithStack = 0;
+        for(Player pl : game.getPlayers()){
+            if(pl.getStackSize() > 0){
+                playersWithStack++;
+            }
+        }
+
+        if(playersWithStack < 2){
+            return;
+        }
+
         game.setFlop(null);
         game.setTurn(null);
         game.setRiver(null);
+
+//        setOrder(game.getPlayers(),game.getSmallBlind(),game.getBigBlind(),true);
 
         List<Card> deck = cardDAO.findAll();
         Collections.shuffle(deck);
@@ -386,8 +519,10 @@ public class ActionResource {
         List<Player> players = game.getPlayers();
         Player playerWithLowestOrder = players.get(0);
         for (Player player : players) {
+            player.setCardOneLastRound(player.getCardOne());
             player.setCardOne(deck.get(0));
             deck.remove(0);
+            player.setCardTwoLastRound(player.getCardTwo());
             player.setCardTwo(deck.get(0));
             deck.remove(0);
             if (player.getPlayerOrder() < playerWithLowestOrder.getPlayerOrder()) {
@@ -396,11 +531,18 @@ public class ActionResource {
             player.setPlayerAmountInPot(0);
             player.setPlayerBetAmount(0);
             player.setPlayerTurn(false);
-            player.setPlayerInTurn(true);
+//            player.setPlayerInTurn(true);
         }
         playerWithLowestOrder.setPlayerTurn(true);
+        if(null != game.getBigBlind()){
+            game.getBigBlind().setStackSize(game.getBigBlind().getStackSize() - game.getBigBlindValue());
+        }
+        if(null != game.getSmallBlind()){
+            game.getSmallBlind().setStackSize(game.getSmallBlind().getStackSize() - game.getSmallBlindValue());
+        }
 
-        game.setPotSize(0);
+
+
     }
 
     public void setRaiser(Player raiser, Game game) {
@@ -431,6 +573,42 @@ public class ActionResource {
         Player bigBlind = smallBlindIndex == players.size() - 1 ? players.get(0) : players.get(smallBlindIndex + 1);
         game.setBigBlind(bigBlind);
         game.setSmallBlind(smallBlind);
+    }
+
+    public void setOrder(List<Player> players, Player smallBlind, Player bigBlind, boolean preFlop) {
+        int order = 1;
+
+        int bigBlindIndex = players.indexOf(bigBlind);
+        int firstPlayerIndex;
+        if (preFlop) {
+            firstPlayerIndex = players.size() - 1 > bigBlindIndex ? bigBlindIndex + 1 : 0;
+        } else {
+            firstPlayerIndex = players.indexOf(smallBlind);
+            if (firstPlayerIndex == -1) {
+                firstPlayerIndex = players.indexOf(bigBlind) == -1 ? 0 : players.indexOf(bigBlind);
+            }
+        }
+        for (Player player : players) {
+
+            if (players.indexOf(player) == firstPlayerIndex) {
+                order = 1;
+                player.setPlayerOrder(order);
+                order++;
+            }
+
+            if (players.indexOf(player) > firstPlayerIndex) {
+                player.setPlayerOrder(order);
+                order++;
+            }
+        }
+        for (Player player : players) {
+            if (players.indexOf(player) < firstPlayerIndex) {
+                player.setPlayerOrder(order);
+                order++;
+            }
+
+        }
+
     }
 
 

@@ -166,8 +166,10 @@ public class GraphicStuff {
     public void showCards(List<Player> players) {
         for (Player player : players) {
             if (!player.isUser()) {
-                final int resId = resources.getIdentifier(player.getCardOne().toString(), "drawable", packageName);
-                final int res2Id = resources.getIdentifier(player.getCardTwo().toString(), "drawable", packageName);
+                final int resId = resources.getIdentifier(null == player.getCardOneLastRound() ? player.getCardOne().toString()
+                        : player.getCardOneLastRound().toString(), "drawable", packageName);
+                final int res2Id = resources.getIdentifier(null == player.getCardTwoLastRound() ? player.getCardTwo().toString()
+                        : player.getCardTwoLastRound().toString(), "drawable", packageName);
                 player.getCard2View().setImageResource(res2Id);
                 player.getCard1View().setImageResource(resId);
 
@@ -261,23 +263,23 @@ public class GraphicStuff {
     public Position getChipsPosition(Player player) {
         switch (player.getPosition()) {
             case 1:
-                return new Position(player.getTextView().getLeft() - getPixels(20), player.getTextView().getTop() + getPixels(80));
+                return new Position(player.getTextView().getLeft() - getPixels(20), player.getTextView().getTop() + getPixels(40));
             case 2:
-                return new Position(player.getTextView().getLeft() - getPixels(50), player.getTextView().getTop() + getPixels(20));
+                return new Position(player.getTextView().getLeft() - getPixels(40), player.getTextView().getTop() + getPixels(20));
             case 3:
-                return new Position(player.getTextView().getLeft() - getPixels(50), player.getTextView().getTop() - getPixels(20));
+                return new Position(player.getTextView().getLeft() - getPixels(40), player.getTextView().getTop() - getPixels(20));
             case 4:
-                return new Position(player.getTextView().getLeft() + getPixels(50), player.getTextView().getTop() - getPixels(80));
+                return new Position(player.getTextView().getLeft() + getPixels(40), player.getTextView().getTop() - getPixels(60));
             case 5:
-                return new Position(player.getTextView().getLeft() + getPixels(80), player.getTextView().getTop() - getPixels(80));
+                return new Position(player.getTextView().getLeft() + getPixels(80), player.getTextView().getTop() - getPixels(60));
             case 6:
-                return new Position(player.getTextView().getLeft() + getPixels(80), player.getTextView().getTop() - getPixels(80));
+                return new Position(player.getTextView().getLeft() + getPixels(80), player.getTextView().getTop() - getPixels(60));
             case 7:
-                return new Position(player.getTextView().getLeft() + getPixels(200), player.getTextView().getTop() - getPixels(40));
+                return new Position(player.getTextView().getLeft() + getPixels(150), player.getTextView().getTop() - getPixels(30));
             case 8:
-                return new Position(player.getTextView().getLeft() + getPixels(200), player.getTextView().getTop() + getPixels(20));
+                return new Position(player.getTextView().getLeft() + getPixels(150), player.getTextView().getTop() + getPixels(20));
             case 9:
-                return new Position(player.getTextView().getLeft() + getPixels(200), player.getTextView().getTop() + getPixels(80));
+                return new Position(player.getTextView().getLeft() + getPixels(140), player.getTextView().getTop() + getPixels(40));
         }
         return null;
     }
@@ -451,13 +453,18 @@ public class GraphicStuff {
         textView.setBackgroundResource(R.drawable.seatnotactive);
 
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenWidth / 5, screenHeight / 6);
-        Position position = getPlayerPosition(player.getPosition());
+        Position position = getPlayerPosition(player);
         layoutParams.setMargins(position.getLeft(), position.getTop(), 0, 0);
 
         textView.setTop(position.getTop());
         textView.setLeft(position.getLeft());
         textView.setLayoutParams(layoutParams);
-        textView.setText(player.getPlayerName() + "\n" + player.getStackSize().toString());
+        if(null != player.getPlayerName()){
+            textView.setText(player.getPlayerName() + "\n" + player.getStackSize().toString());
+        } else {
+            textView.setText(player.getStackSize().toString());
+        }
+
         textView.setGravity(Gravity.CENTER);
         textView.setTextColor(0xFF000000);
         textView.setTextSize(15);
@@ -483,8 +490,8 @@ public class GraphicStuff {
         return subLists;
     }
 
-    public Position getPlayerPosition(int pos) {
-        switch (pos) {
+    public Position getPlayerPosition(Player player) {
+        switch (player.getPosition()) {
             case 1:
                 return new Position(screenWidth / 5 * 3, screenHeight / 15);
             case 2:

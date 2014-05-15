@@ -183,6 +183,8 @@ public class GameResource {
         game.setGameName(createGameBO.getGameName());
         game.setMaxPlayerNumber(createGameBO.getMaxPlayerNumber());
         game.setStartingStackSize(createGameBO.getStartingStackSize());
+        game.setSmallBlindValue(10);
+        game.setBigBlindValue(20);
         game.setPotSize(0);
         game.setGameState(GameState.REGISTERING);
         game.setStartTime(createGameBO.getStartTime());
@@ -239,7 +241,7 @@ public class GameResource {
     @GET
     @Path("user/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getGamesContainingName(@PathParam("userId") Long userId) {
+    public Response getGameByUser(@PathParam("userId") Long userId) {
 
       User user = userDAO.findOne(userId);
       Game game = null;

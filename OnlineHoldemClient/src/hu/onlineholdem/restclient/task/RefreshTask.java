@@ -52,7 +52,11 @@ public abstract class RefreshTask extends AsyncTask<String, Response, Response> 
         while (run) {
 
             SystemClock.sleep(500 + wait);
+            if(!run){
+                return null;
+            }
             HttpResponse httpResponse = doResponse(url);
+            Log.i(TAG,"refresh");
 
             try {
                 String data = EntityUtils.toString(httpResponse.getEntity());
@@ -72,11 +76,13 @@ public abstract class RefreshTask extends AsyncTask<String, Response, Response> 
 
     @Override
     protected void onProgressUpdate(Response... response) {
+        Log.i(TAG,"onProgressUpdate");
         handleResponse(response[0]);
     }
 
     @Override
     protected void onPostExecute(Response response) {
+        Log.i(TAG,"onPostExecute");
         if(serverNotResponding){
             Toast.makeText(context, "Server not responding", Toast.LENGTH_SHORT).show();
         } else {
@@ -86,6 +92,7 @@ public abstract class RefreshTask extends AsyncTask<String, Response, Response> 
 
     public void stopTask(){
         run = false;
+        Log.i(TAG,"stopRefresh");
     }
 
     private HttpParams getHttpParams() {

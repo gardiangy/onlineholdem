@@ -35,15 +35,17 @@ import hu.onlineholdem.restclient.entity.Game;
 import hu.onlineholdem.restclient.entity.Player;
 import hu.onlineholdem.restclient.enums.GameState;
 import hu.onlineholdem.restclient.response.Response;
+import hu.onlineholdem.restclient.task.PostTask;
 import hu.onlineholdem.restclient.task.RefreshTask;
-import hu.onlineholdem.restclient.task.WebServiceTask;
 import hu.onlineholdem.restclient.util.DateTimeDialog;
 import hu.onlineholdem.restclient.util.GameListAdapter;
 
 public class GameBrowserActivity extends Activity implements DateTimeDialog.DateTimeDialogListener {
 
     private static final String TAG = "GameBrowserActivity";
-    private static final String SERVICE_URL = "http://192.168.1.104:8010/rest";
+    private static final String IP = "80.98.102.139:8080";
+    private String SERVICE_URL = "http://" + IP + "/rest";
+    private String newIP;
 
     private ExpandableListView list;
     private GameListAdapter listAdapter;
@@ -73,6 +75,10 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
 
         Bundle bundle = getIntent().getExtras();
         userId = bundle.getLong("userId");
+        newIP = bundle.getString("IP");
+        if(!newIP.equals(IP)){
+            SERVICE_URL = "http://" + newIP + "/rest";
+        }
 
         playerNumPicker = (NumberPicker) findViewById(R.id.playerNumPicker);
         playerNumPicker.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
@@ -148,7 +154,7 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
 
         String postURL = SERVICE_URL + "/game/create";
 
-        WebServiceTask wst = new PostGameTask(WebServiceTask.POST_TASK, this, "Posting data...");
+        PostTask wst = new PostGamePostTask(this);
         wst.addNameValuePair("gameName", gameName.getText().toString());
         wst.addNameValuePair("startingStackSize", startingStackSize.getText().toString());
         wst.addNameValuePair("maxPlayerNumber", String.valueOf(playerNumPicker.getValue()));
@@ -185,7 +191,7 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
 
         String postURL = SERVICE_URL + "/game/join";
 
-        WebServiceTask wst = new PostGameTask(WebServiceTask.POST_TASK, this, "Posting data...");
+        PostTask wst = new PostGamePostTask(this);
         wst.addNameValuePair("userId", userId.toString());
         wst.addNameValuePair("gameId", id);
 
@@ -197,7 +203,7 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
 
         String postURL = SERVICE_URL + "/game/leave";
 
-        WebServiceTask wst = new PostGameTask(WebServiceTask.POST_TASK, this, "Posting data...");
+        PostTask wst = new PostGamePostTask(this);
         wst.addNameValuePair("userId", userId.toString());
         wst.addNameValuePair("gameId", id);
 
@@ -232,6 +238,7 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
                             Bundle bundle = new Bundle();
                             bundle.putLong("userId", userId);
                             bundle.putLong("gameId", game.getGameId());
+                            bundle.putString("IP", newIP);
                             intent.putExtras(bundle);
                             startActivity(intent);
                             finish();
@@ -341,15 +348,18 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
         }
     }
 
-    private class PostGameTask extends WebServiceTask {
+    private class PostGamePostTask extends PostTask {
 
-        public PostGameTask(int taskType, Context mContext, String processMessage) {
-            super(taskType, mContext, processMessage);
+        public PostGamePostTask(Context mContext) {
+            super(mContext);
         }
 
         @Override
         public void handleResponse(Response response) {
-            handleGameResponse(response);
+            if(null != response){
+                handleGameResponse(response);
+            }
+
         }
 
         @Override

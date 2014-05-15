@@ -63,7 +63,7 @@ public class GameThread extends Thread {
     private boolean stopThread = false;
     private int smallBlind;
     private int bigBlind;
-    private long timePassedSinceBlindRaise;
+    private long timePassedSinceBlindRaise = System.currentTimeMillis();
 
     public GameThread(List<Player> players, TextView potsize, Button btnCheck, Button btnBet, Button btnFold,
                       SeekBar betBar, TextView betValue, Context context, GraphicStuff graphs) {

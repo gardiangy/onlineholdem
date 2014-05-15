@@ -4,6 +4,7 @@ import hu.onlineholdem.util.EvaluatedHand;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -54,7 +55,12 @@ public class Player implements Serializable {
     @Column(name="player_amount_to_win")
     private Integer playerAmountToWin;
 
-	//bi-directional many-to-one association to User
+    @Column(name="player_turn_time")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date playerTurnTime;
+
+
+    //bi-directional many-to-one association to User
 	@ManyToOne(fetch=FetchType.LAZY)
 	@JoinColumn(name="user_id", nullable=false)
 	private User user;
@@ -66,7 +72,7 @@ public class Player implements Serializable {
 
     //bi-directional many-to-one association to Action
 
-    @OneToMany(mappedBy="player", cascade={CascadeType.ALL})
+    @OneToMany(mappedBy="player")
     private List<Action> actions;
 
     @ManyToOne
@@ -76,6 +82,14 @@ public class Player implements Serializable {
     @ManyToOne
     @JoinColumn(name="player_card_two", nullable=false)
     private Card cardTwo;
+
+    @ManyToOne
+    @JoinColumn(name="player_card_one_last_round", nullable=false)
+    private Card cardOneLastRound;
+
+    @ManyToOne
+    @JoinColumn(name="player_card_two_last_round", nullable=false)
+    private Card cardTwoLastRound;
 
     @Transient
     private EvaluatedHand evaluatedHand;
@@ -219,6 +233,31 @@ public class Player implements Serializable {
 
     public void setPlayerPosition(Integer playerPosition) {
         this.playerPosition = playerPosition;
+    }
+
+    public Card getCardOneLastRound() {
+        return cardOneLastRound;
+    }
+
+    public void setCardOneLastRound(Card cardOneLastRound) {
+        this.cardOneLastRound = cardOneLastRound;
+    }
+
+    public Card getCardTwoLastRound() {
+        return cardTwoLastRound;
+    }
+
+    public void setCardTwoLastRound(Card cardTwoLastRound) {
+        this.cardTwoLastRound = cardTwoLastRound;
+    }
+
+    @JsonIgnore
+    public Date getPlayerTurnTime() {
+        return playerTurnTime;
+    }
+
+    public void setPlayerTurnTime(Date playerTurnTime) {
+        this.playerTurnTime = playerTurnTime;
     }
 
     @Override

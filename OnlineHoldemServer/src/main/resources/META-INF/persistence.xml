@@ -4,7 +4,6 @@
   version="2.0" xmlns="http://java.sun.com/xml/ns/persistence">
 	<persistence-unit name="default" transaction-type="RESOURCE_LOCAL">
 		<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
-		<class>hu.onlineholdem.entity.Message</class>
 		<class>hu.onlineholdem.entity.Game</class>
 		<class>hu.onlineholdem.entity.Player</class>
 		<class>hu.onlineholdem.entity.User</class>

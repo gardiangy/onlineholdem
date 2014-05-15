@@ -47,6 +47,11 @@ $(function () {
         table.fnReloadAjax();
     });
 
+    var param = window.location.href.split("?")[1];
+    if(param === "register"){
+        $("#menu2").click();
+    }
+
     $("#btn-join-game").on("click", function () {
         if (undefined == sessionStorage.userId) {
             showLoginForm();

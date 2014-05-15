@@ -3,9 +3,12 @@ package hu.onlineholdem.restclient.activity;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -16,15 +19,21 @@ import hu.onlineholdem.restclient.R;
 import hu.onlineholdem.restclient.entity.User;
 import hu.onlineholdem.restclient.enums.ResponseType;
 import hu.onlineholdem.restclient.response.Response;
-import hu.onlineholdem.restclient.task.WebServiceTask;
+import hu.onlineholdem.restclient.task.PostTask;
 
 public class LoginActivity extends Activity{
 
-    private static final String SERVICE_URL = "http://192.168.1.104:8010/rest";
+    private static final String IP = "80.98.102.139:8080";
+    private String newIP;
+    private String URL = "http://" + IP  + "/";
+    private String SERVICE_URL = "http://" + IP + "/rest";
 
     private EditText inputUserName;
     private EditText inputPassword;
     private TextView errorMsg;
+
+    private Button btnShowIP;
+    private EditText ipText;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -35,19 +44,41 @@ public class LoginActivity extends Activity{
         inputUserName = (EditText) findViewById(R.id.textUserName);
         inputPassword = (EditText) findViewById(R.id.textPassword);
         errorMsg = (TextView) findViewById(R.id.errorMsg);
+        btnShowIP = (Button) findViewById(R.id.btnShowIP);
+        ipText = (EditText) findViewById(R.id.ipText);
+        ipText.setText(IP);
+        TextView register = (TextView) findViewById(R.id.link_to_register);
+        register.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(URL + "?register"));
+                startActivity(browserIntent);
+            }
+        });
     }
 
     public void login(View vw) {
 
+        newIP = ipText.getText().toString();
+        if(!newIP.equals(IP)){
+            URL = "http://" + newIP  + "/";
+            SERVICE_URL = "http://" + newIP + "/rest";
+        }
+
         String postURL = SERVICE_URL + "/login";
 
-        WebServiceTask wst = new LoginTask(WebServiceTask.POST_TASK, this,"Posting data...");
+        PostTask wst = new LoginPostTask(this);
 
         wst.addNameValuePair("type", "LOGIN");
         wst.addNameValuePair("userName", inputUserName.getText() != null ? inputUserName.getText().toString() : "");
         wst.addNameValuePair("userPassword",  inputPassword.getText() != null ? inputPassword.getText().toString() : "");
 
         wst.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,new String[]{postURL});
+
+    }
+
+    public void showIP(View vw) {
+        ipText.setVisibility(View.VISIBLE);
 
     }
     public void handleLoginResponse(Response response) {
@@ -58,6 +89,7 @@ public class LoginActivity extends Activity{
             gameBrowserActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             Bundle bundle = new Bundle();
             bundle.putLong("userId", ((User) response.getResponseObject()).getUserId());
+            bundle.putString("IP", newIP);
             gameBrowserActivity.putExtras(bundle);
             startActivity(gameBrowserActivity);
             finish();
@@ -93,15 +125,17 @@ public class LoginActivity extends Activity{
         return loginResponse;
     }
 
-    private class LoginTask extends WebServiceTask {
+    private class LoginPostTask extends PostTask {
 
-        public LoginTask(int taskType, Context mContext, String processMessage) {
-            super(taskType, mContext, processMessage);
+        public LoginPostTask(Context mContext) {
+            super(mContext);
         }
 
         @Override
         public void handleResponse(Response response) {
-            handleLoginResponse(response);
+            if(null != response){
+                handleLoginResponse(response);
+            }
         }
 
         @Override
@@ -109,7 +143,7 @@ public class LoginActivity extends Activity{
             try {
                 return parseLoginJson(jsonObject);
             } catch (JSONException e) {
-                e.printStackTrace();
+                Log.e("LoginPostTask", e.getLocalizedMessage(), e);
             }
             return null;
         }
