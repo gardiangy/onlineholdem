@@ -38,32 +38,32 @@ public class GameStartCheckerBean implements Runnable{
                     if(game.getGameState().equals(GameState.FINISHED)){
                         gameDAO.delete(game);
                     }
-                    for(Player pl : game.getPlayers()){
-                        if(pl.getPlayerTurn() && null != pl.getPlayerTurnTime()){
-                            long currentTime = System.currentTimeMillis();
-                            long diff = currentTime - pl.getPlayerTurnTime().getTime();
-                            if(diff/1000 > 30){
-                                ActionBO actionBO = new ActionBO();
-                                boolean fold = false;
-                                for(Player player : game.getPlayers()){
-                                    if(player.getPlayerBetAmount() > game.getBigBlindValue()){
-                                        actionBO.setActionType(ActionType.FOLD.name());
-                                        fold = true;
-                                    }
-                                }
-                                if(!fold){
-                                    actionBO.setActionType(ActionType.CHECK.name());
-                                }
-                                actionBO.setBetValue("0");
-                                actionBO.setGameId(game.getGameId());
-                                actionBO.setPlayerId(pl.getPlayerId());
-
-                                actionResource.postAction(actionBO);
-                            }
-                        }
-
-
-                    }
+//                    for(Player pl : game.getPlayers()){
+//                        if(pl.getPlayerTurn() && null != pl.getPlayerTurnTime()){
+//                            long currentTime = System.currentTimeMillis();
+//                            long diff = currentTime - pl.getPlayerTurnTime().getTime();
+//                            if(diff/1000 > 30){
+//                                ActionBO actionBO = new ActionBO();
+//                                boolean fold = false;
+//                                for(Player player : game.getPlayers()){
+//                                    if(player.getPlayerBetAmount() > game.getBigBlindValue()){
+//                                        actionBO.setActionType(ActionType.FOLD.name());
+//                                        fold = true;
+//                                    }
+//                                }
+//                                if(!fold){
+//                                    actionBO.setActionType(ActionType.CHECK.name());
+//                                }
+//                                actionBO.setBetValue("0");
+//                                actionBO.setGameId(game.getGameId());
+//                                actionBO.setPlayerId(pl.getPlayerId());
+//
+//                                actionResource.postAction(actionBO);
+//                            }
+//                        }
+//
+//
+//                    }
                     if(game.getStartTime().before(new Date()) && game.getGameState().equals(GameState.REGISTERING)
                             && game.getPlayers().size() > 1){
                         game.setGameState(GameState.STARTED);

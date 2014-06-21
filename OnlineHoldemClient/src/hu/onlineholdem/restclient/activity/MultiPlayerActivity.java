@@ -95,7 +95,7 @@ public class MultiPlayerActivity extends Activity {
 
         graphics = new GraphicStuff(this);
 
-        multiThread = new MultiPlayerThread(userId,this,btnCheck,btnBet,btnFold,betBar,betValue,gameId,graphics);
+        multiThread = new MultiPlayerThread(userId,this,btnCheck,btnBet,btnFold,betBar,betValue,gameId,graphics,SERVICE_URL,newIP);
         multiThread.start();
 
     }

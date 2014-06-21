@@ -39,8 +39,9 @@ import hu.onlineholdem.restclient.util.PlayerComperator;
 
 public class MultiPlayerThread extends Thread{
 
-    private static final String SERVICE_URL = "http://192.168.1.101:8080/rest";
+    private final String SERVICE_URL;
     private static final String TAG = "MultiplayerThread";
+    private final String newIP;
 
     private boolean init = false;
     private boolean flopDealt = false;
@@ -80,7 +81,8 @@ public class MultiPlayerThread extends Thread{
     private boolean actionButtonsVisible;
     private List<Player> lostPlayers = new ArrayList<>();
 
-    public MultiPlayerThread(long userId, Context context, Button btnCheck, Button btnBet, Button btnFold, SeekBar betBar, TextView betValue, long gameId,GraphicStuff graphics) {
+    public MultiPlayerThread(long userId, Context context, Button btnCheck, Button btnBet, Button btnFold,
+                             SeekBar betBar, TextView betValue, long gameId,GraphicStuff graphics, String SERVICE_URL, String newIP) {
         this.userId = userId;
         this.context = context;
         this.btnCheck = btnCheck;
@@ -90,6 +92,8 @@ public class MultiPlayerThread extends Thread{
         this.betValue = betValue;
         this.gameId = gameId;
         this.graphics = graphics;
+        this.SERVICE_URL = SERVICE_URL;
+        this.newIP = newIP;
         activity = (MultiPlayerActivity) context;
     }
 
@@ -321,7 +325,7 @@ public class MultiPlayerThread extends Thread{
 
 
         }
-        if(!activity.isSendingAction()){
+        if(!activity.isSendingAction() && players.size() > 1){
             if(!endAnimationStarted || endAnimationFinished){
                 showCurrentPlayer(roundOver);
             }
@@ -604,7 +608,10 @@ public class MultiPlayerThread extends Thread{
         this.game.setSmallBlindValue(game.getSmallBlindValue());
         this.game.setBigBlindValue(game.getBigBlindValue());
 
-        for (final Player player : this.game.getPlayers()) {
+        List<Player> playerList = new ArrayList<>();
+        playerList.addAll(this.game.getPlayers());
+
+        for (final Player player : playerList) {
 
             if(game.getPlayers().contains(player)){
                 for (Player newPlayer : game.getPlayers()) {
@@ -702,8 +709,7 @@ public class MultiPlayerThread extends Thread{
         handDealt = false;
 
         for(final Player lostPlayer : lostPlayers){
-            activity.runOnUiThread(new Runnable() {
-                @Override
+            new Handler().postDelayed(new Runnable(){
                 public void run() {
                     graphics.removeSeat(lostPlayer);
                     if(lostPlayer.isUser() && !gameOverDialogShown){
@@ -713,13 +719,14 @@ public class MultiPlayerThread extends Thread{
                         alertDialog.setTitle("Game Over!");
                         alertDialog.setMessage("You have finished " + (game.getPlayers().size() + 1) + ". place!");
 
-                        final long userId = lostPlayer.getUserId();
+//                        final long userId = lostPlayer.getUserId();
                         alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL,"Back to Game Browser", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 Intent gameBrowserActivity = new Intent(context.getApplicationContext(), GameBrowserActivity.class);
                                 gameBrowserActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                                 Bundle bundle = new Bundle();
                                 bundle.putLong("userId", userId);
+                                bundle.putString("IP", newIP);
                                 gameBrowserActivity.putExtras(bundle);
                                 context.startActivity(gameBrowserActivity);
                             }
@@ -729,29 +736,41 @@ public class MultiPlayerThread extends Thread{
                         gameOverDialogShown = true;
                     }
                 }
-            });
+            }, 500);
+//            activity.runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//
+//                }
+//            });
         }
 
-        if(this.game.getPlayers().size() == 1 && !gameOverDialogShown){
-            AlertDialog alertDialog = new AlertDialog.Builder(
-                    context).create();
+        if(this.game.getPlayers().size() == 1 && this.game.getPlayers().get(0).isUser()){
 
-            alertDialog.setTitle("Congratulation!");
-            alertDialog.setMessage("You have won the game!");
+            new Handler().postDelayed(new Runnable(){
+                public void run() {
+                    AlertDialog alertDialog = new AlertDialog.Builder(
+                            context).create();
 
-            final long userId = game.getPlayers().get(0).getUserId();
-            alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL,"Back to Game Browser", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    Intent gameBrowserActivity = new Intent(context.getApplicationContext(), GameBrowserActivity.class);
-                    gameBrowserActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    Bundle bundle = new Bundle();
-                    bundle.putLong("userId", userId);
-                    gameBrowserActivity.putExtras(bundle);
-                    context.startActivity(gameBrowserActivity);
+                    alertDialog.setTitle("Congratulation!");
+                    alertDialog.setMessage("You have won the game!");
+
+//                    final long userId = game.getPlayers().get(0).getUserId();
+                    alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL,"Back to Game Browser", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent gameBrowserActivity = new Intent(context.getApplicationContext(), GameBrowserActivity.class);
+                            gameBrowserActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            Bundle bundle = new Bundle();
+                            bundle.putLong("userId", userId);
+                            bundle.putString("IP", newIP);
+                            gameBrowserActivity.putExtras(bundle);
+                            context.startActivity(gameBrowserActivity);
+                        }
+                    });
+
+                    alertDialog.show();
                 }
-            });
-
-            alertDialog.show();
+            }, 500);
         }
 
     }

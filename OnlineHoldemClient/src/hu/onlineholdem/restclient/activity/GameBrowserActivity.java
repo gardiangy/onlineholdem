@@ -147,7 +147,7 @@ public class GameBrowserActivity extends Activity implements DateTimeDialog.Date
             return;
         }
 
-        if (startTimeString.length() == 0) {
+        if (null == startTimeString) {
             Toast.makeText(this, "Start Time is required!", Toast.LENGTH_SHORT).show();
             return;
         }

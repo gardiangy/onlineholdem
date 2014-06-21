@@ -121,7 +121,7 @@ public class ActionResource {
                         pl.setPlayerAmountInPot(null == pl.getPlayerAmountInPot() ? amountToCall : pl.getPlayerAmountInPot() + amountToCall);
                     }
                     if (actionType.equals(ActionType.ALL_IN)) {
-                        pl.setPlayerBetAmount(pl.getStackSize());
+                        pl.setPlayerBetAmount(highestBetAmount - pl.getPlayerBetAmount());
                         pl.setStackSize(0);
                         action.setBetValue(pl.getPlayerBetAmount());
                         pl.setPlayerAmountInPot(null == pl.getPlayerAmountInPot() ? pl.getPlayerBetAmount() : pl.getPlayerAmountInPot() + pl.getPlayerBetAmount());
@@ -166,6 +166,11 @@ public class ActionResource {
         game.setPotSize(newPotSize);
 
         int playersWithStack = 0;
+        for (Player pl : game.getPlayers()) {
+            if (pl.getStackSize() > 0) {
+                playersWithStack++;
+            }
+        }
 
         if (game.getActions().size() == 0) {
             action.setActionRound(1);
@@ -177,12 +182,6 @@ public class ActionResource {
                 newRound = true;
             } else if (isBettingRoundOver(playersInRound, player,game.getBigBlind(),preFlop) && !makeMovesAgain(playersInRound,game.getBigBlind(),preFlop)) {
                 System.out.println("round over");
-
-                for (Player pl : game.getPlayers()) {
-                    if (pl.getStackSize() > 0) {
-                        playersWithStack++;
-                    }
-                }
 
                 if (null == game.getFlop() || game.getFlop().size() == 0) {
                     System.out.println("dealing flop");
