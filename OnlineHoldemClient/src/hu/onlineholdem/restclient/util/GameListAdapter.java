@@ -9,6 +9,7 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
 
@@ -77,6 +78,7 @@ public class GameListAdapter extends BaseExpandableListAdapter {
             view = infalInflater.inflate(R.layout.list_group, null);
             viewHolder = new ViewHolder();
             viewHolder.playerNum = (TextView) view.findViewById(R.id.listHeaderPlayerNum);
+            viewHolder.starTime = (TextView) view.findViewById(R.id.listHeaderStarTime);
             viewHolder.header = (TextView) view.findViewById(R.id.listHeader);
             viewHolder.header.setTypeface(null, Typeface.BOLD);
             viewHolder.id = (TextView) view.findViewById(R.id.rowId);
@@ -90,6 +92,8 @@ public class GameListAdapter extends BaseExpandableListAdapter {
         viewHolder.header.setText(header);
         viewHolder.id.setText(game.getGameId().toString());
         viewHolder.playerNum.setText(game.getPlayers().size() + " / " + game.getMaxPlayerNumber());
+        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd hh:mm");
+        viewHolder.starTime.setText(sdf.format(game.getStartTime()));
 
         viewHolder.joinBtn.setFocusable(false);
         viewHolder.joinBtn.setOnClickListener(new Button.OnClickListener() {
@@ -157,6 +161,7 @@ public class GameListAdapter extends BaseExpandableListAdapter {
 
     public static class ViewHolder {
         public TextView playerNum;
+        public TextView starTime;
         public TextView header;
         public TextView id;
         public Button joinBtn;
